@@ -1,0 +1,127 @@
+<div class="relative overlay-container">
+    <div *ngIf="isLoading" class="absolute overlay-loader">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    </div>
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="close()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle>
+        {{ mode === 'add' ? 'Add PRA User' : 'Edit PRA User' }}
+    </h2>
+
+    <form [formGroup]="form" (ngSubmit)="submitHandler()" style="width: 640px;">
+        <div fxLayout="row wrap">
+
+            <!-- Display Name -->
+            <div fxFlex="100" class="mb-16">
+                <mat-form-field class="full-width">
+                    <mat-label>Display Name</mat-label>
+                    <input matInput formControlName="displayName" placeholder="Display Name" />
+                    <mat-error *ngIf="displayName?.hasError('required')">
+                        Display name is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Username & Email -->
+            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px">
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Username</mat-label>
+                        <input matInput formControlName="username" placeholder="Username" />
+                        <mat-error *ngIf="username?.hasError('required')">
+                            Username is <strong>required</strong>
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Email Address</mat-label>
+                        <input matInput type="email" formControlName="email" placeholder="Email Address" />
+                        <mat-error *ngIf="email?.hasError('required')">
+                            Email address is <strong>required</strong>
+                        </mat-error>
+                        <mat-error *ngIf="email?.hasError('email')">
+                            Please enter a valid email address.
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <!-- Role & Business Unit -->
+            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" class="mt-16">
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>User Role</mat-label>
+                        <mat-select formControlName="role">
+                            <mat-option *ngFor="let r of userRoles" [value]="r">{{ r }}</mat-option>
+                        </mat-select>
+                        <mat-error *ngIf="role?.hasError('required')">
+                            User role is <strong>required</strong>
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Business Unit</mat-label>
+                        <mat-select formControlName="businessUnit"
+                            [disabled]="role?.value === 'Super Admin' || role?.value === 'Data Center Engineer'">
+                            <mat-option [value]="null">— None —</mat-option>
+                            <mat-option *ngFor="let bu of businessUnits"
+                                [value]="bu">{{ businessUnitLabels[bu] }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <!-- Password & Retype -->
+            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" class="mt-16">
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Password</mat-label>
+                        <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password"
+                            placeholder="Password" autocomplete="new-password" />
+                        <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword"
+                            [attr.aria-label]="'Toggle password visibility'" type="button">
+                            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                        </button>
+                        <mat-error *ngIf="password?.hasError('required') && mode === 'add'">
+                            Password is <strong>required</strong>
+                        </mat-error>
+                        <mat-error *ngIf="password?.hasError('minlength')">
+                            Password must be at least {{ PraUserOverlayComponent.MIN_PASSWORD_LENGTH }} characters long.
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Retype Password</mat-label>
+                        <input matInput [type]="hideRetypePassword ? 'password' : 'text'"
+                            formControlName="retypePassword" placeholder="Retype Password"
+                            autocomplete="new-password" />
+                        <button mat-icon-button matSuffix (click)="hideRetypePassword = !hideRetypePassword"
+                            [attr.aria-label]="'Toggle retype password visibility'" type="button">
+                            <mat-icon>{{ hideRetypePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                        </button>
+                        <mat-error *ngIf="retypePassword?.hasError('required') && mode === 'add'">
+                            Retype password is <strong>required</strong>
+                        </mat-error>
+                        <mat-error *ngIf="mustMatchError && retypePassword?.dirty">
+                            Passwords do not match.
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div fxFlex="100" class="mt-32" fxLayout="row" fxLayoutAlign="end center">
+                <span fxFlex></span>
+                <button mat-raised-button color="primary" [disabled]="form.invalid || isLoading">
+                    {{ mode === 'add' ? 'Save' : 'Update' }}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

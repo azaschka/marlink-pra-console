@@ -1,0 +1,47 @@
+<div
+    fxLayout="column"
+    fxLayoutAlign="center center"
+    class="file-input-container"
+    [class.dragover]="isDragOver"
+    appDragDrop
+    (fileDropped)="onFileDrop($event)"
+    (dragover)="isDragOver = true"
+    (dragleave)="isDragOver = false"
+    (click)="fileInput.click()"
+>
+    <div
+        class="file-input-preview"
+        fxLayout="column"
+        fxLayoutAlign="center center"
+    >
+        <div
+            class="file-input-preview-overlay"
+            fxLayout="column"
+            fxLayoutAlign="center center"
+            style.minHeight="{{ dragAreaHeight }}px"
+        >
+            <!-- https://stackoverflow.com/questions/59461119/angular-input-file-selecting-the-same-file -->
+            <input
+                hidden
+                type="file"
+                #fileInput
+                (change)="onFileInput($event)"
+                [accept]="acceptedFileEndings"
+                [multiple]="multipleFiles"
+                (click)="$any($event.target).value = null"
+            />
+            <div
+                class="file-input-hint"
+                fxLayout="column"
+                fxLayoutAlign="center center"
+                style.paddingRight="{{ dragAreaHintHorizontalPadding }}"
+                style.paddingLeft="{{ dragAreaHintHorizontalPadding }}"
+            >
+                <mat-icon *ngIf="!mustHideIcon" class="mb-20"
+                    >system_update_alt</mat-icon
+                >
+                <span class="text-align-center">{{ dragAreaHint }}</span>
+            </div>
+        </div>
+    </div>
+</div>

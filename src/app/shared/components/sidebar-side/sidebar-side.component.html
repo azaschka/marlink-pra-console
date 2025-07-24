@@ -1,0 +1,75 @@
+<div class="sidebar-panel">
+    <div id="scroll-area" class="navigation-hold" fxLayout="column">
+        <div class="sidebar-hold">
+            <!-- App Logo -->
+            <div class="branding">
+                <img [src]="logoUrl" alt="Marlink Logo" class="app-logo" />
+
+                <!-- <span style="margin: auto" *ngIf="layoutConf.sidebarStyle !== 'compact'"></span>
+                <div class="sidebar-compact-switch" [ngClass]="{ active: layoutConf.sidebarCompactToggle }"
+                    (click)="toggleCollapse()" *ngIf="layoutConf.sidebarStyle !== 'compact'">
+                    <span></span>
+                </div> -->
+            </div>
+            <!-- Sidebar user -->
+            <div class="app-user">
+                <div class="app-user-photo">
+                    <mat-icon>person_outline</mat-icon>
+                </div>
+                <span class="app-user-name mb-8">{{ displayName }}
+                    <button *ngIf="isLoggedInUser" mat-icon-button mat-xs-button matTooltip="Sign Out"
+                        (click)="logoutUser()">
+                        <mat-icon>exit_to_app</mat-icon>
+                    </button>
+                </span>
+
+                <!-- Small buttons -->
+                <!-- <div class="app-user-controls">
+                    <button
+                        class="text-muted"
+                        mat-icon-button
+                        mat-xs-button
+                        [matMenuTriggerFor]="appUserMenu"
+                    >
+                        <mat-icon>settings</mat-icon>
+                    </button>
+                    <button
+                        class="text-muted"
+                        mat-icon-button
+                        mat-xs-button
+                        matTooltip="Lock Screen"
+                        routerLink="/sessions/lockscreen"
+                    >
+                        <mat-icon>lock</mat-icon>
+                    </button>
+                    <button
+                        class="text-muted"
+                        mat-icon-button
+                        mat-xs-button
+                        matTooltip="Sign Out"
+                        routerLink="/sessions/signin"
+                    >
+                        <mat-icon>exit_to_app</mat-icon>
+                    </button>
+                    <mat-menu #appUserMenu="matMenu">
+                        <button mat-menu-item routerLink="/profile/overview">
+                            <mat-icon>account_box</mat-icon>
+                            <span>Profile</span>
+                        </button>
+                        <button mat-menu-item routerLink="/profile/settings">
+                            <mat-icon>settings</mat-icon>
+                            <span>Account Settings</span>
+                        </button>
+                    </mat-menu>
+                </div> -->
+            </div>
+
+            <!-- Navigation -->
+            <app-sidenav *ngIf="isLoggedInUser" [items]="menuItems" [hasIconMenu]="hasIconTypeMenuItem"
+                [iconMenuTitle]="iconTypeMenuTitle"></app-sidenav>
+        </div>
+    </div>
+    <div class="absolute bottom full-width">
+        <p class="text-muted text-12 mx-24">PRA Console v0.1.0</p>
+    </div>
+</div>

@@ -1,0 +1,144 @@
+<div class="h-full signin-container">
+    <header>
+        <a href="/" title="Marlink" target="_blank">
+            <img src="../../../../assets/images/logos/logo-marlink.svg" alt="Logo Marlink">
+        </a>
+    </header>
+
+    <section>
+        <div class="auth-container">
+            <form class="auth-widget" [formGroup]="signinForm" (ngSubmit)="signin()">
+                <div class="auth-widget-loading-container" [style.opacity]="isLoading ? '1' : '0'">
+                    <div class="auth-widget-loading"></div>
+                </div>
+
+                <div class="auth-widget-container" [style.opacity]="isLoading ? '0' : '1'">
+                    <div class="auth-widget-content-wrapper">
+                        <div class="auth-widget-header">
+                            <h1 translate="sessions.signIn.headline"></h1>
+                        </div>
+
+                        <div class="auth-widget-content">
+                            <div class="auth-widget-input-container auth-widget-input-username">
+                                <div class="auth-widget-input-wrapper">
+                                    <input matInput [formControl]="signinForm.controls['username']"
+                                        class="auth-widget-input" type="text" placeholder="Username*" autocomplete="off"
+                                        autocapitalize="off" autocorrect="off" spellcheck="false">
+                                </div>
+                                <!-- <small
+                                    *ngIf="signinForm.controls['username'].hasError('required') && signinForm.controls['username'].touched"
+                                    class="form-error-msg" style="color: gold; font-size: 12px;">
+                                    Username is required
+                                </small> -->
+                            </div>
+
+                            <div class="auth-widget-input-container auth-widget-input-password">
+                                <div class="auth-widget-input-wrapper">
+                                    <input matInput [formControl]="signinForm.controls['password']"
+                                        class="auth-widget-input" type="password" name="Password"
+                                        placeholder="Password*" autocomplete="off" autocapitalize="off"
+                                        autocorrect="off" spellcheck="false" aria-label="Password">
+                                </div>
+                                <!-- <small
+                                        *ngIf="signinForm.controls['password'].hasError('required') && signinForm.controls['password'].touched"
+                                        class="form-error-msg" style="color: gold; font-size: 12px;">
+                                        Password is required
+                                    </small> -->
+                            </div>
+
+                            <!-- <div class="auth-widget-alternatives">
+                                <div>
+                                    <a class="auth-widget-alternative-link" href="cfg.htm"
+                                        title="Change client configuration or black and white list">SkyFile Remote
+                                        Configuration login</a>
+                                </div>
+                                <div>
+                                    <a class="auth-widget-alternative-link" href="regnoad.htm"
+                                        title="Mobile software for creating U.S. arrival/departure notices">SkyFile NOAD
+                                        registration</a>
+                                </div>
+                            </div> -->
+                        </div>
+                    </div>
+
+                    <button #submitButton class="auth-widget-button" type="submit" name="Login" value="Login"
+                        aria-label="Login" [disabled]="signinForm.invalid">
+                        <span class="auth-widget-button-label" translate="sessions.signIn.form.buttons.signIn"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <p></p>
+
+        <div class="banner-container">
+            <div class="banner">
+                <p>Manage your solutions and access your invoices online</p>
+                <a href="https://portal-360.com" target="_blank">PORTAL360</a>
+            </div>
+        </div>
+
+        <p class="legal">All rights reserved &copy; Marlink {{currentYear}}</p>
+    </footer>
+</div>
+<!-- <div class="session-form-hold">
+
+        <mat-card>
+            <mat-card-content>
+                <div class="text-center pt-8 pb-16">
+                    <img width="60px" src="assets/images/logos/marlink-logo-small.png" alt="Marlink logo" />
+                    <p class="text-muted m-0">PRA Console</p>
+                </div>
+
+                <p *ngIf="errorMsg" class="text-center">
+                    <small class="text-red">{{ errorMsg }}</small>
+                </p>
+
+                <form [formGroup]="signinForm" (ngSubmit)="signin()">
+                    <div class="">
+                        <mat-form-field class="full-width">
+                            <input matInput name="username" [formControl]="signinForm.controls['username']"
+                                placeholder="Username" value="" />
+                        </mat-form-field>
+                        <small *ngIf="
+                                signinForm.controls['username'].hasError(
+                                    'required'
+                                ) && signinForm.controls['username'].touched
+                            " class="form-error-msg">
+                            Username is required
+                        </small>
+                    </div>
+
+                    <div class="">
+                        <mat-form-field class="full-width">
+                            <input type="password" name="password" matInput
+                                [formControl]="signinForm.controls['password']" placeholder="Password" value="" />
+                        </mat-form-field>
+                        <small *ngIf="
+                                signinForm.controls['password'].hasError(
+                                    'required'
+                                ) && signinForm.controls['password'].touched
+                            " class="form-error-msg">
+                            Password is required
+                        </small>
+                    </div>
+
+                    <div class="pt-8 pb-16">
+                        <mat-checkbox name="rememberMe" [formControl]="signinForm.controls['rememberMe']"
+                            class="pb-16">Remember this computer</mat-checkbox>
+                    </div>
+
+                    <button mat-raised-button class="mat-primary full-width mb-16" [disabled]="signinForm.invalid">
+                        Sign in
+                    </button>
+                    <!-- <div class="text-center">
+            <a [routerLink]="'/sessions/forgot-password'" class="mat-primary text-center full-width">Forgot password</a>
+            <span fxFlex></span>
+            <a [routerLink]="'/sessions/signup'" class="mat-primary text-center full-width">Create a new account</a>
+          </div> --><!--
+</form>
+</mat-card-content>
+</mat-card>
+</div> -->

@@ -1,0 +1,50 @@
+.mat-row {
+    min-height: 36px;
+}
+
+.progress-row {
+    height: 0;
+    min-height: 0;
+    &.hidden {
+        display: none;
+    }
+    .mat-header-cell {
+        padding: 0;
+        border: none;
+    }
+}
+
+.mat-column-status {
+    flex: 0 0 46px;
+    width: 46px;
+    justify-content: center;
+    text-align: center;
+}
+.mat-column-serviceName {
+    flex: 0 0 18%;
+    width: 18%;
+}
+.mat-column-actionType {
+    flex: 0 0 8%;
+    width: 8%;
+}
+// .mat-column-actionName {
+//     flex: 0 0 16%;
+//     width: 16%;
+// }
+.mat-column-actionName {
+    flex: 0 0 25%;
+    width: 25%;
+}
+.mat-column-transactionId {
+    flex: 0 0 25%;
+    width: 25%;
+}
+// .mat-column-initiatedBy {
+//     flex: 0 0 13%;
+//     width: 13%;
+// }
+.mat-column-creationDate {
+    flex: 0 0 150px;
+    width: 150px;
+}

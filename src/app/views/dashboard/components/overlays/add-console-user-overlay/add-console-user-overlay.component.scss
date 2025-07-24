@@ -1,0 +1,18 @@
+.loader {
+    margin-top: -24px;
+    margin-left: -24px;
+    margin-right: -24px;
+    width: calc(100% + 48px);
+}
+
+.close-button {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    transform: translate(100%, -100%) !important;
+}
+
+.mat-input-element:disabled,
+.mat-form-field-type-mat-native-select.mat-form-field-disabled .mat-form-field-infix::after {
+    color: rgba(0, 0, 0, 0.6) !important;
+}

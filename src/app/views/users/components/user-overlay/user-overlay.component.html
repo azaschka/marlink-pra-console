@@ -1,0 +1,132 @@
+<div class="relative overlay-container">
+    <div *ngIf="isLoading" class="absolute overlay-loader">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    </div>
+
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="close()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle>
+        {{ mode === 'add' ? 'Add new User' : 'Edit User' }}
+    </h2>
+
+    <form [formGroup]="userFormGroup" (ngSubmit)="submitHandler()" style="width: 640px;">
+        <div fxLayout="row wrap">
+            <!-- Display Name -->
+            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
+                <mat-form-field class="full-width">
+                    <mat-label>Display Name</mat-label>
+                    <input matInput formControlName="publicDisplayName" placeholder="Display Name" />
+                    <mat-error *ngIf="publicDisplayName?.hasError('required')">
+                        Display name is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Username & Email -->
+            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Username</mat-label>
+                        <input matInput formControlName="username" placeholder="Username" />
+                        <mat-error *ngIf="username?.hasError('required')">
+                            Username is <strong>required</strong>
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Email Address</mat-label>
+                        <input matInput type="email" formControlName="email" placeholder="Email Address" />
+                        <mat-error *ngIf="email?.hasError('required')">
+                            Email address is <strong>required</strong>
+                        </mat-error>
+                        <mat-error *ngIf="email?.hasError('email')">
+                            Please enter a valid email address.
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <!-- Password & Retype -->
+            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Password</mat-label>
+                        <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password"
+                            placeholder="Password" autocomplete="new-password" />
+                        <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword"
+                            [attr.aria-label]="'Toggle password visibility'" type="button">
+                            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                        </button>
+                        <mat-error *ngIf="password?.hasError('required') && mode === 'add'">
+                            Password is <strong>required</strong>
+                        </mat-error>
+                        <mat-error *ngIf="password?.hasError('minlength')">
+                            Password must be at least {{ UserOverlayComponent.MIN_PASSWORD_LENGTH }} characters long.
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Retype Password</mat-label>
+                        <input matInput [type]="hideRetypePassword ? 'password' : 'text'"
+                            formControlName="retypePassword" placeholder="Retype Password"
+                            autocomplete="new-password" />
+                        <button mat-icon-button matSuffix (click)="hideRetypePassword = !hideRetypePassword"
+                            [attr.aria-label]="'Toggle retype password visibility'" type="button">
+                            <mat-icon>{{ hideRetypePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                        </button>
+                        <mat-error *ngIf="retypePassword?.hasError('required') && mode === 'add'">
+                            Retype password is <strong>required</strong>
+                        </mat-error>
+                        <mat-error *ngIf="retypePassword?.hasError('mustMatch') && retypePassword?.dirty">
+                            Passwords do not match.
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <!-- Group Policies: Chips & Autocomplete -->
+            <div fxFlex="100" class="mt-24">
+                <h5 class="mb-16">Assigned Group Policies:</h5>
+                <div class="mb-24">
+                    <mat-chip-list>
+                        <div *ngIf="selectedGroupPolicies.length" class="chip-list-scroll full-width">
+                            <mat-chip *ngFor="let policy of selectedGroupPolicies" [removable]="true"
+                                (removed)="removeGroupPolicy(policy)">
+                                {{ policy.name }}
+                                <button matChipRemove aria-label="Remove group policy">
+                                    <mat-icon>cancel</mat-icon>
+                                </button>
+                            </mat-chip>
+                        </div>
+                    </mat-chip-list>
+                    <div *ngIf="!selectedGroupPolicies.length" class="text-empty">No group policies assigned.</div>
+                </div>
+
+                <mat-form-field class="full-width">
+                    <mat-label>Add Group Policy</mat-label>
+                    <input type="text" matInput [formControl]="groupPolicyInputCtrl" [matAutocomplete]="auto"
+                        placeholder="Search and add group policy..." />
+                    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addGroupPolicy($event.option.value)">
+                        <mat-option *ngFor="let policy of filteredGroupPolicies$ | async" [value]="policy">
+                            {{ policy.name }}
+                        </mat-option>
+                    </mat-autocomplete>
+                </mat-form-field>
+            </div>
+
+            <!-- Submit -->
+            <div fxFlex="100" class="mt-32" fxLayout="row" fxLayoutAlign="end center">
+                <span fxFlex></span>
+                <button mat-raised-button color="primary" [disabled]="userFormGroup.invalid || isLoading">
+                    {{ mode === 'add' ? 'Save' : 'Update' }}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

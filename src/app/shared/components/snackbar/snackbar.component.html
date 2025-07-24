@@ -1,0 +1,23 @@
+<div
+    fxLayout="row"
+    fxLayoutAlign="start center"
+    (click)="snackbarRef.dismiss()"
+>
+    <button mat-icon-button (click)="snackbarRef.dismiss()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <span class="message no-selection pl-16 pr-24" fxFlex>{{
+        snackbarData.message
+    }}</span>
+
+    <div *ngIf="snackbarData.action">
+        <button
+            mat-stroked-button
+            color="accent"
+            (click)="actionButtonClickHandler()"
+        >
+            {{ snackbarData.action }}
+        </button>
+    </div>
+</div>

@@ -1,0 +1,29 @@
+<div class="relative">
+    <h2 matDialogTitle>Find and remove duplicate Subscriptions</h2>
+
+    <div fxLayout="column" style="width: 480px" fxLayoutGap="16">
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16">
+            <ng-container *ngIf="isRemovingDuplicateSubscriptions">
+                <mat-spinner diameter="24"></mat-spinner>
+                <span>Finding and removing duplicate subscriptions ...</span>
+            </ng-container>
+            <ng-container *ngIf="hasRemovedDuplicateSubscriptions">
+                <mat-icon>done</mat-icon>
+                <span>All done.</span>
+            </ng-container>
+        </div>
+
+        <div *ngIf="migrationProcessCompleted" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16">
+            <mat-icon>done</mat-icon>
+            <span>Process completed!</span>
+        </div>
+
+        <div fxLayout="column" *ngIf="
+                migrationProcessCompleted
+            " class="mt-24">
+            <button mat-raised-button color="primary" (click)="closeDialog()">
+                Close dialog
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,179 @@
+import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { MatTableDataSource } from "@angular/material/table";
+import { MatSort } from "@angular/material/sort";
+import { MatPaginator } from "@angular/material/paginator";
+import { MatDialog } from "@angular/material/dialog";
+import { Subscription } from "rxjs";
+import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
+import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
+import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
+import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
+// import {
+//     UserOverlayComponent,
+//     UserOverlayDialogData,
+// } from "./components/user-overlay/user-overlay.component";
+import { PraUsersService } from "./pra-users.service";
+import { PraUser } from "./models";
+import { BusinessUnitLabels } from "./enums";
+import {
+    PraUserOverlayComponent,
+    PraUserOverlayDialogData,
+} from "./components/pra-user-overlay/pra-user-overlay.component";
+import { UserOverlayDialogData } from "../users/components/user-overlay/user-overlay.component";
+
+@Component({
+    selector: "app-pra-users",
+    templateUrl: "./pra-users.component.html",
+    styleUrls: ["./pra-users.component.scss"],
+})
+export class PraUsersComponent implements OnInit, OnDestroy {
+    private static readonly DEFAULT_PAGE_SIZE = 20;
+    private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
+    private static readonly DISPLAYED_COLUMNS = [
+        "businessUnit",
+        "displayName",
+        "email",
+        "role",
+        "lastModificationDate",
+        "creationDate",
+        "actions",
+    ];
+
+    @ViewChild(MatSort, { static: true }) sort!: MatSort;
+    @ViewChild(MatPaginator) paginator!: MatPaginator;
+
+    public BusinessUnitLabels = BusinessUnitLabels;
+
+    public dataSource = new MatTableDataSource<PraUser>();
+    public defaultPageSize = PraUsersComponent.DEFAULT_PAGE_SIZE;
+    public pageSizeOptions = PraUsersComponent.PAGE_SIZE_OPTIONS;
+    public displayedColumns = PraUsersComponent.DISPLAYED_COLUMNS;
+
+    public isLoading = true;
+    public filterValue = "";
+    public dataCount = 0;
+
+    private readonly subscriptionsToClear: Subscription;
+
+    constructor(
+        private readonly dialog: MatDialog,
+        private readonly jwtAuthService: JwtAuthService,
+        private readonly praUsersService: PraUsersService,
+        private readonly confirmDialog: ConfirmDialogService,
+        private readonly errorDialog: ErrorDialogService,
+        private readonly notificationDialog: NotificationDialogService
+    ) {
+        this.subscriptionsToClear = new Subscription();
+    }
+
+    public async ngOnInit(): Promise<void> {
+        this.jwtAuthService.getPraUser();
+        this.addListeners();
+        await this.loadPage();
+    }
+
+    public ngOnDestroy(): void {
+        this.subscriptionsToClear.unsubscribe();
+    }
+
+    public applyFilter(): void {
+        this.dataSource.filter = this.filterValue.trim().toLowerCase();
+        this.dataSource.paginator?.firstPage();
+    }
+
+    public removeFilter(): void {
+        this.filterValue = "";
+        this.applyFilter();
+    }
+
+    public addUserHandler(): void {
+        this.dialog
+            .open(PraUserOverlayComponent, {
+                data: { mode: "add" } as PraUserOverlayDialogData,
+                disableClose: true,
+                width: "720px",
+            })
+            .afterClosed()
+            .subscribe((created: boolean) => {
+                if (created) {
+                    this.notificationDialog.show({
+                        message: "User has been created successfully.",
+                    });
+                    this.loadPage();
+                }
+            });
+    }
+
+    public editUserHandler(user: PraUser): void {
+        this.dialog
+            .open(PraUserOverlayComponent, {
+                data: { mode: "edit", user } as PraUserOverlayDialogData,
+                disableClose: true,
+                width: "720px",
+            })
+            .afterClosed()
+            .subscribe((updated: boolean) => {
+                if (updated) {
+                    this.notificationDialog.show({
+                        message: `User "${user.displayName}" updated successfully.`,
+                    });
+                    this.loadPage();
+                }
+            });
+    }
+
+    public async deleteUserHandler(user: PraUser): Promise<void> {
+        const confirmed = await this.confirmDialog.show({
+            title: "Delete PRA User",
+            message: `Are you sure you want to delete user:<br><strong>${user.displayName}</strong>?`,
+        });
+
+        if (confirmed) {
+            this.isLoading = true;
+            try {
+                await this.praUsersService.deletePraUser(user.id);
+                this.notificationDialog.show({
+                    message: `User ${user.displayName} has been deleted.`,
+                });
+                await this.loadPage();
+            } catch (err: any) {
+                this.errorDialog.show({
+                    title: "Delete PRA User Failed",
+                    message:
+                        err?.message ||
+                        "The user could not be deleted. Please try again later.",
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        }
+    }
+
+    private async loadPage(): Promise<void> {
+        this.isLoading = true;
+        try {
+            const items = await this.praUsersService.fetchPraUsers();
+            this.dataSource.data = items;
+            this.dataSource.sort = this.sort;
+            this.dataSource.paginator = this.paginator;
+            this.dataCount = items.length;
+        } catch (err: any) {
+            await this.errorDialog.show({
+                title: "Error",
+                message: err?.message ?? "Unexpected error",
+            });
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    private addListeners(): void {
+        this.subscriptionsToClear.add(
+            this.jwtAuthService.praUser.subscribe((user) => {
+                if (!user || user.role === "None") {
+                    this.jwtAuthService.checkTokenIsValid();
+                }
+            })
+        );
+    }
+}

@@ -1,0 +1,102 @@
+{
+  "general": {
+    "buttons": {
+      "save": "Save",
+      "cancel": "Cancel"
+    }
+  },
+  "sessions": {
+    "signIn": {
+      "headline": "PRA Console",
+      "form": {
+        "placeholders": {
+          "username": "Username"
+        },
+        "errors": {
+          "username": "Username is required",
+          "password": "Password is required"
+        },
+        "labels": {
+          "remember": "Remember this computer"
+        },
+        "buttons": {
+          "signIn": "Login",
+          "forgotPassword": "Forgot password"
+        }
+      }
+    },
+    "signUp": {},
+    "forgotPassword": {}
+  },
+  "views": {
+    "dashboard": {
+      "headline": "Dashboard"
+    },
+    "sites": {
+      "headline": "Sites",
+      "buttons": {
+        "import": "Import from Excel",
+        "add": "Add new Site"
+      }
+    },
+    "customers": {
+      "headline": "Customers",
+      "buttons": {
+        "export": "Export to CSV",
+        "add": "Add new Customer"
+      }
+    },
+    "users": {
+      "headline": "Users",
+      "buttons": {
+        "export": "Export to CSV",
+        "add": "Add new User"
+      }
+    },
+    "group-policies": {
+      "headline": "Group Policies",
+      "buttons": {
+        "export": "Export to CSV"
+      }
+    },
+    "jump-groups": {
+      "headline": "Jump Groups",
+      "buttons": {
+        "export": "Export to CSV"
+      }
+    },
+    "jump-assets": {
+      "headline": "Jump Assets",
+      "buttons": {
+        "export": "Export to CSV"
+      },
+      "types": {
+        "remoteRdps": "Remote RDPs",
+        "remoteVncs": "Remote VNCs",
+        "shellJumps": "Shell Jumps",
+        "webJumps": "Web Jumps",
+        "protocolTunnelJumps": "Protocol Tunnel Jumps",
+        "jumpClients": "Jump Clients"
+      }
+    },
+    "pra-users": {
+      "headline": "PRA Users",
+      "buttons": {
+        "add": "Add new PRA User"
+      }
+    },
+    "bt-backups": {
+      "headline": "BT Backups",
+      "buttons": {
+        "manualBackup": "Trigger Manual Backup"
+      }
+    },
+    "logs": {
+      "headline": "System Log",
+      "buttons": {
+        "clear": "Clear System Log",
+        "export": "Export to CSV"
+      }
+    }
+  }
+}

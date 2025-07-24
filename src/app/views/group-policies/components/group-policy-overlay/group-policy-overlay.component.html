@@ -1,0 +1,55 @@
+<div class="relative overlay-container">
+    <div *ngIf="isLoading" class="absolute overlay-loader">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    </div>
+
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="close()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle>Edit Group Policy</h2>
+
+    <form [formGroup]="userFormGroup" style="width: 640px;">
+        <div fxLayout="row wrap">
+            <!-- Policy Name -->
+            <div fxFlex="100" fxLayout="row" fxLayoutAlign="start center">
+                <mat-form-field class="full-width">
+                    <mat-label>Group Policy Name</mat-label>
+                    <input matInput [value]="groupPolicy.name" readonly />
+                </mat-form-field>
+            </div>
+
+            <!-- Members: Chips & Autocomplete -->
+            <div fxFlex="100" class="mt-24 mb-16">
+                <h5 class="mb-16">Assigned Users:</h5>
+                <div class="mb-24">
+                    <div *ngIf="groupPolicyMembers.length" class="chip-list-scroll full-width">
+                        <mat-chip-list>
+                            <mat-chip *ngFor="let member of groupPolicyMembers" [removable]="true"
+                                (removed)="removeUserFromPolicy(member)">
+                                {{ member.user.publicDisplayName || member.user.username }}
+                                <button matChipRemove aria-label="Remove user from group policy">
+                                    <mat-icon>cancel</mat-icon>
+                                </button>
+                            </mat-chip>
+                        </mat-chip-list>
+                    </div>
+                    <div *ngIf="!groupPolicyMembers.length" class="text-empty">No users assigned to this group policy.
+                    </div>
+                </div>
+
+                <mat-form-field class="full-width">
+                    <mat-label>Add User</mat-label>
+                    <input type="text" matInput [formControl]="userInputCtrl" [matAutocomplete]="auto"
+                        placeholder="Search and add user..." />
+                    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addUserToPolicy($event.option.value)">
+                        <mat-option *ngFor="let user of filteredUsers$ | async" [value]="user">
+                            {{ user.publicDisplayName || user.username }} <span
+                                *ngIf="user.email">&lt;{{user.email}}&gt;</span>
+                        </mat-option>
+                    </mat-autocomplete>
+                </mat-form-field>
+            </div>
+        </div>
+    </form>
+</div>

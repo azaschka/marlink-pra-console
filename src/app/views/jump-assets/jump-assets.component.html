@@ -1,0 +1,27 @@
+<mat-card class="m-16 p-0" [@animate]="{ value: '*', params: { y: '50px', delay: '300ms' } }">
+    <mat-tab-group>
+        <mat-tab label="{{ 'views.jump-assets.types.remoteRdps' | translate }}">
+            <app-remote-rdp></app-remote-rdp>
+        </mat-tab>
+
+        <mat-tab label="{{ 'views.jump-assets.types.remoteVncs' | translate }}">
+            <app-remote-vnc></app-remote-vnc>
+        </mat-tab>
+
+        <mat-tab label="{{ 'views.jump-assets.types.shellJumps' | translate }}">
+            <app-shell-jump></app-shell-jump>
+        </mat-tab>
+
+        <mat-tab label="{{ 'views.jump-assets.types.webJumps' | translate }}">
+            <app-web-jump></app-web-jump>
+        </mat-tab>
+
+        <mat-tab label="{{ 'views.jump-assets.types.protocolTunnelJumps' | translate }}">
+            <app-protocol-tunnel></app-protocol-tunnel>
+        </mat-tab>
+
+        <mat-tab label="{{ 'views.jump-assets.types.jumpClients' | translate }}">
+            <app-jump-clients></app-jump-clients>
+        </mat-tab>
+    </mat-tab-group>
+</mat-card>

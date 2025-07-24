@@ -1,0 +1,70 @@
+<div class="relative overlay-container">
+    <div *ngIf="isLoading" class="absolute overlay-loader">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    </div>
+
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="close()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle>
+        {{ mode === 'add' ? 'Add new Customer' : 'Edit Customer' }}
+    </h2>
+
+    <form [formGroup]="customerFormGroup" (ngSubmit)="submitHandler()" style="width: 640px;">
+        <div fxLayout="row wrap" fxLayoutGap="24px">
+            <div fxFlex="100" class="m-0" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Customer Key</mat-label>
+                        <input matInput formControlName="key" [readonly]="mode === 'edit'" placeholder="Customer Key" />
+                        <mat-error *ngIf="key?.hasError('required')">Key is <strong>required</strong></mat-error>
+                    </mat-form-field>
+                </div>
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Customer Name</mat-label>
+                        <input matInput formControlName="name" [readonly]="mode === 'edit'"
+                            placeholder="Customer Name" />
+                        <mat-error *ngIf="name?.hasError('required')">Name is <strong>required</strong></mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <div fxFlex="100" class="m-0 mt-16" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Business Unit</mat-label>
+                        <mat-select formControlName="businessUnit" [disabled]="mode === 'edit'">
+                            <mat-option *ngFor="let unit of businessUnits" [value]="unit.value">
+                                {{ unit.label }}
+                            </mat-option>
+                        </mat-select>
+                        <mat-error *ngIf="businessUnit?.hasError('required')">Business unit is
+                            <strong>required</strong></mat-error>
+                    </mat-form-field>
+                </div>
+                <div fxFlex="50">
+                    <mat-form-field class="full-width">
+                        <mat-label>Billing Type</mat-label>
+                        <mat-select formControlName="billingType">
+                            <mat-option *ngFor="let type of billingTypes" [value]="type.value">
+                                {{ type.label }}
+                            </mat-option>
+                        </mat-select>
+                        <mat-error *ngIf="billingType?.hasError('required')">Billing type is
+                            <strong>required</strong></mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div fxFlex="100" class="mt-32" fxLayout="row" fxLayoutAlign="end center">
+                <span fxFlex></span>
+                <button mat-raised-button color="primary" [disabled]="customerFormGroup.invalid || isLoading">
+                    {{ mode === 'add' ? 'Save' : 'Update' }}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

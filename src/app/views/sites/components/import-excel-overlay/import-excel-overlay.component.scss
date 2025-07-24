@@ -1,0 +1,38 @@
+.drag-drop-area {
+    border: 2px dashed #8ab4f8;
+    border-radius: 12px;
+    background: #f7f9fa;
+    padding: 80px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.5s, background 0.5s;
+
+    &.hover {
+        border-color: #1a73e8;
+        background: #1a73e8;
+    }
+    p {
+        margin: 8px 0 0 0;
+        color: #555;
+    }
+}
+
+.preview-container {
+    p,
+    span {
+        font-size: 13px;
+        line-height: 1.3;
+    }
+}
+
+.excel-preview-tree-container {
+    margin-left: -16px;
+
+    .tree-child-container {
+        padding-left: 16px;
+    }
+
+    .mat-tree-node {
+        padding-left: 8px;
+    }
+}

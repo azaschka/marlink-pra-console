@@ -1,0 +1,20 @@
+.overlay-container {
+    padding: 8px;
+
+    .overlay-loader {
+        margin-top: -32px;
+        margin-left: -32px;
+        width: calc(100% + 48px);
+
+        .mat-progress-bar {
+            border-radius: 4px 4px 0 0;
+        }
+    }
+
+    .overlay-close-button {
+        position: absolute !important;
+        top: -4px !important;
+        right: -4px !important;
+        transform: translate(100%, -100%) !important;
+    }
+}

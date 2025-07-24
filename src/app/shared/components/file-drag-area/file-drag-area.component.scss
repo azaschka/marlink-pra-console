@@ -1,0 +1,61 @@
+.file-input-container {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    border: 0.125rem dashed #001c398a;
+    border-radius: 0.25rem;
+    padding: 0.625rem;
+
+    span {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+    }
+
+    .file-input-preview {
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        width: 100%;
+
+        .file-input-preview-overlay {
+            min-height: 12rem; // overridable
+            width: 100%;
+
+            .file-input-hint {
+                padding-top: 0;
+                padding-right: 18%; // overridable
+                padding-bottom: 0;
+                padding-left: 18%; // overridable
+            }
+        }
+
+        &.file-input-preview-has-preview {
+            .file-input-preview-overlay {
+                // Overlay to make the hint message more visible when there is a preview image
+                background-color: rgba(#001c39, 0.6);
+
+                // Always light text over the above dark bacnground (dark and light mode)
+                color: #fefefe;
+            }
+        }
+    }
+
+    &.file-input-container.dragover,
+    &.file-input-container:hover {
+        cursor: pointer;
+        background-color: #0066aa;
+        border-color: #fefefe;
+        color: #fefefe;
+
+        .file-input-preview {
+            // Hide the preview image
+            background-image: none !important;
+
+            .file-input-preview-overlay {
+                // Hide the preview image overlay
+                // The text colour is set abobe, so no need to change it here
+                background-color: transparent;
+            }
+        }
+    }
+}

@@ -1,0 +1,49 @@
+<div class="relative overlay-container">
+    <div *ngIf="isLoading" class="absolute overlay-loader">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    </div>
+
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="cancel()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle class="mb-32">{{ displayHeadline() }}</h2>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" style="width: 480px;">
+        <div fxLayout="row wrap">
+            <!-- Jump Asset Name -->
+            <div fxFlex="100">
+                <mat-form-field class="full-width">
+                    <mat-label>{{ displayJumpAssetName() }}</mat-label>
+                    <input matInput formControlName="name" [placeholder]="displayJumpAssetName()" />
+                    <mat-error *ngIf="form.get('name')?.hasError('required')">
+                        {{ displayJumpAssetName() }} is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Jump Group -->
+            <div fxFlex="100" class="mt-16">
+                <mat-form-field class="full-width">
+                    <mat-label>Jump Group</mat-label>
+                    <input type="text" matInput [matAutocomplete]="auto" formControlName="jumpGroup" />
+                    <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayJumpGroup">
+                        <mat-option *ngFor="let group of filteredJumpGroups$ | async" [value]="group">
+                            {{ group.name }}
+                        </mat-option>
+                    </mat-autocomplete>
+                    <mat-error *ngIf="form.get('jumpGroup')?.hasError('required')">
+                        Jump Group is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Submit -->
+            <div fxFlex="100" class="mt-16" fxLayout="row" fxLayoutAlign="end center">
+                <div fxLayout="row" fxLayoutAlign="end center" class="mt-32">
+                    <button mat-raised-button color="primary" [disabled]="form.invalid || isLoading">Copy</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

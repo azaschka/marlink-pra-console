@@ -1,0 +1,51 @@
+.mat-row {
+    min-height: 36px;
+}
+
+.progress-row {
+    height: 0;
+    min-height: 0;
+    &.hidden {
+        display: none;
+    }
+    .mat-header-cell {
+        padding: 0;
+        border: none;
+    }
+}
+
+.mat-header-cell,
+.mat-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.mat-column-businessUnit {
+    flex: 0 0 120px;
+    width: 120px;
+}
+.mat-column-displayName {
+    flex: 1 1 auto;
+}
+.mat-column-email {
+    flex: 0 0 22%;
+    width: 22%;
+    word-break: break-all;
+}
+.mat-column-role {
+    flex: 0 0 180px;
+    width: 180px;
+    white-space: nowrap;
+}
+.mat-column-lastModificationDate,
+.mat-column-creationDate {
+    flex: 0 0 150px;
+    width: 150px;
+    white-space: nowrap;
+}
+.mat-column-actions {
+    flex: 0 0 64px;
+    min-width: 64px;
+    width: 64px;
+}

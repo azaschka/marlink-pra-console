@@ -1,0 +1,49 @@
+.status-light {
+    padding: 0 8px;
+
+    /* INFO / Default */
+    &.info::before {
+        background-color: #9e9e9e;
+        border-color: #7d7d7d;
+        box-shadow: 0 0 3px 0.5px #9e9e9e;
+    }
+
+    /* ───── GOOD ───── */
+    &.ok::before,
+    &.online::before,
+    &.agent.installed::before {
+        background-color: #94e185;
+        border-color: #78d965;
+        box-shadow: 0 0 6px 1px #94e185;
+    }
+
+    /* ───── WARNING ───── */
+    &.in-progress::before,
+    &.agent.offline::before,
+    &.warn::before {
+        background-color: #ffc182;
+        border-color: #ffb161;
+        box-shadow: 0 0 6px 1px #ffc182;
+    }
+
+    /* ───── ERROR ───── */
+    &.offline::before,
+    &.agent.uninstalled::before,
+    &.agent.master-uninstalled::before,
+    &.error::before {
+        background-color: #c9404d;
+        border-color: #c42c3b;
+        box-shadow: 0 0 6px 1px #c9404d;
+    }
+
+    &::before {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #444;
+        border: 1px solid #333;
+        box-shadow: 0 0 6px 1px #444;
+    }
+}

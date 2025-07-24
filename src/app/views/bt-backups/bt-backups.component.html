@@ -1,0 +1,75 @@
+<div>
+    <div fxLayout="row" fxLayoutAlign="space-between center" class="m-8 mt-16">
+        <div class="pt-16 px-16" fxFlex="25">
+            <mat-form-field class="full-width">
+                <mat-label>BeyondTrust Instance</mat-label>
+                <mat-select value="1">
+                    <mat-option value="1" selected>Marlink PP BT Instance</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+        <div fxFlex></div>
+        <div class="pl-16">
+            <button mat-raised-button class="m-16" color="primary" translate="views.bt-backups.buttons.manualBackup"
+                (click)="triggerManualBackupHandler()"></button>
+        </div>
+    </div>
+
+    <mat-card class="p-0">
+        <mat-card-content class="p-0">
+            <mat-table [dataSource]="dataSource" matSort>
+                <!-- Loader -->
+                <ng-container matColumnDef="loader">
+                    <mat-header-cell *matHeaderCellDef [attr.colspan]="displayedColumns.length">
+                        <mat-progress-bar [mode]="loaderMode" color="primary"></mat-progress-bar>
+                    </mat-header-cell>
+                    <mat-cell *matCellDef="let row"></mat-cell>
+                </ng-container>
+
+                <!-- Creation Date -->
+                <ng-container matColumnDef="creationDate">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Created</mat-header-cell>
+                    <mat-cell *matCellDef="let row">{{ row.creationDate | date : "dd.MM.yy - HH:mm:ss" }}</mat-cell>
+                </ng-container>
+
+                <!-- File Path -->
+                <ng-container matColumnDef="backupFilePath">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>File</mat-header-cell>
+                    <mat-cell *matCellDef="let row">
+                        <span>{{ row.backupFilePath.split('/').pop() }}</span>
+                    </mat-cell>
+                </ng-container>
+
+                <!-- Actions -->
+                <ng-container matColumnDef="actions">
+                    <mat-header-cell *matHeaderCellDef></mat-header-cell>
+                    <mat-cell *matCellDef="let row">
+                        <button mat-icon-button color="primary" matTooltip="Download Backup *.nsb file"
+                            (click)="downloadBackupHandler(row)">
+                            <mat-icon>download</mat-icon>
+                        </button>
+                        <!-- <button mat-icon-button color="warn" (click)="deleteBackupHandler(row)">
+                            <mat-icon>delete</mat-icon>
+                        </button> -->
+                    </mat-cell>
+                </ng-container>
+
+                <!-- Header / Rows -->
+                <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+                <mat-header-row *matHeaderRowDef="['loader']; sticky: true" class="progress-row"
+                    [class.hidden]="!isLoading"></mat-header-row>
+                <mat-row class="selectable" *matRowDef="let row; columns: displayedColumns"></mat-row>
+
+                <!-- No-data -->
+                <tr class="mat-row" *matNoDataRow style="display: flex">
+                    <td class="mat-cell full-width pt-12" [attr.colspan]="displayedColumns.length">
+                        No backups found.
+                    </td>
+                </tr>
+            </mat-table>
+
+            <mat-paginator #tablePaginator [length]="dataCount" [pageSize]="defaultPageSize"
+                [pageSizeOptions]="pageSizeOptions" showFirstLastButtons></mat-paginator>
+        </mat-card-content>
+    </mat-card>
+</div>

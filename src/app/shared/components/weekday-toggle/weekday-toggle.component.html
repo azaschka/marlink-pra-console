@@ -1,0 +1,5 @@
+<mat-button-toggle-group multiple [value]="value" (change)="onToggleChange($event)">
+    <mat-button-toggle *ngFor="let day of weekDays" [value]="day.value">
+        {{ day.label }}
+    </mat-button-toggle>
+</mat-button-toggle-group>

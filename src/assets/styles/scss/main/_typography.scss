@@ -1,0 +1,157 @@
+/* fallback */
+@font-face {
+    font-family: "Material Icons";
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url(../../../../app/fonts/material-icons.woff2) format("woff2");
+}
+
+@font-face {
+    font-family: "IBM Plex Sans";
+    font-style: normal;
+    font-weight: 300;
+    src: url(../../../../app/fonts/IBMPlexSans-Light.woff) format("woff");
+}
+
+@font-face {
+    font-family: "IBM Plex Sans";
+    font-style: normal;
+    font-weight: 500;
+    src: url(../../../../app/fonts/IBMPlexSans-Medium.woff) format("woff");
+}
+
+.material-icons {
+    font-family: "Material Icons";
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+    margin-bottom: $headings-margin-bottom;
+    margin-top: 0;
+    font-weight: $headings-font-weight;
+    line-height: $headings-line-height;
+    color: $headings-color;
+}
+
+h1,
+.h1 {
+    font-size: $font-size-h1;
+}
+h2,
+.h2 {
+    font-size: $font-size-h2;
+}
+h3,
+.h3 {
+    font-size: $font-size-h3;
+}
+h4,
+.h4 {
+    font-size: $font-size-h4;
+}
+h5,
+.h5 {
+    font-size: $font-size-h5;
+}
+h6,
+.h6 {
+    font-size: $font-size-h6;
+}
+
+a,
+a:focus,
+a:hover {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    outline: 0;
+}
+
+button {
+    outline: 0;
+}
+
+figure {
+    margin: 0;
+}
+
+strong,
+b {
+    font-weight: 500;
+}
+
+.mat-card-title {
+    font: {
+        size: 18px;
+        weight: 500;
+    }
+}
+
+.strikethrough {
+    text-decoration: line-through;
+}
+.text-uppercase {
+    text-transform: uppercase;
+}
+.text-capitalize {
+    text-transform: capitalize;
+}
+
+@for $i from 10 through 78 {
+    .text-#{$i} {
+        font-size: #{$i}px;
+        &.mat-icon {
+            width: #{$i}px !important;
+            height: #{$i}px !important;
+            line-height: #{$i}px !important;
+        }
+    }
+}
+
+.font-weight-light {
+    font-weight: 300;
+}
+.font-weight-normal {
+    font-weight: 300;
+}
+.font-weight-bold {
+    font-weight: 500 !important;
+}
+.font-weight-inherit {
+    font-weight: inherit;
+}
+
+.line-height-1 {
+    line-height: 1 !important;
+}
+.mat-heading-label {
+    font-weight: 500;
+    font-size: $font-size-h6;
+    letter-spacing: 0.92px;
+    text-transform: uppercase;
+    margin: 0;
+    padding-bottom: 1rem;
+}

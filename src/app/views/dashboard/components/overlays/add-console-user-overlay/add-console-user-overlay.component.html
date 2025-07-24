@@ -1,0 +1,60 @@
+<div class="relative">
+    <div *ngIf="isLoading" class="absolute mb-16 loader">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    </div>
+
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="close-button" (click)="closeDialog()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle translate="views.management.users.modal.headlineAdd"></h2>
+
+    <form [formGroup]="consoleUserFormGroup" (ngSubmit)="submitConsoleUserHandler()" style="width: 480px">
+        <div fxLayout="row wrap" fxLayout.lt-sm="column">
+            <div fxFlex="50" class="pr-16">
+                <mat-form-field class="full-width">
+                    <input matInput type="text" formControlName="username" placeholder="Username" required />
+                    <mat-error *ngIf="username.hasError('required')">
+                        Username is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="50" class="pr-16">
+                <mat-form-field class="full-width">
+                    <input matInput type="text" formControlName="password" placeholder="Password" required />
+                    <mat-error *ngIf="password.hasError('required')">
+                        Password is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="50" class="pr-16">
+                <mat-form-field class="full-width">
+                    <input matInput type="text" formControlName="displayName" placeholder="Display Name" required />
+                    <mat-error *ngIf="displayName.hasError('required')">
+                        Display name is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="50" class="pr-16">
+                <mat-form-field class="full-width">
+                    <mat-label>User Role</mat-label>
+                    <mat-select formControlName="role">
+                        <mat-option value="Super Admin">Super Admin</mat-option>
+                        <mat-option value="Admin">Admin</mat-option>
+                        <mat-option value="Data Center Engineer">Data Center Engineer</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="100" class="mt-16">
+                <span fxFlex></span>
+                <button mat-raised-button color="primary" [disabled]="consoleUserFormGroup.invalid || isLoading">
+                    {{ "general.buttons.save" | translate }}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

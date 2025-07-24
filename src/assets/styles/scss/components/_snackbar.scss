@@ -1,0 +1,39 @@
+.mat-snack-bar-container {
+    background: #0066aa !important;
+    color: #fefefe !important;
+
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    line-height: 1.4 !important;
+
+    padding: 24px 32px;
+    border-radius: 12px !important;
+
+    box-shadow: 0 8px 24px rgba(0, 24, 64, 0.2);
+
+    min-width: 300px;
+    max-width: 440px;
+
+    margin-top: 40px !important;
+    display: flex;
+    align-items: center;
+    letter-spacing: 0.01em;
+    text-align: left;
+    animation: snackbarFadeIn 0.35s;
+}
+
+@keyframes snackbarFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mat-simple-snackbar-action {
+    color: #0066aa !important;
+    margin-left: 24px;
+}

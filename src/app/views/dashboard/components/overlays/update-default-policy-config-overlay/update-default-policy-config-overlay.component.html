@@ -1,0 +1,58 @@
+<div class="relative">
+    <div *ngIf="isLoading" class="absolute mb-16 loader">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    </div>
+
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="close-button" (click)="closeDialog()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle translate="views.management.defaultPolicyConfig.modal.headlineUpdate"></h2>
+
+    <form [formGroup]="defaultPolicyConfigFormGroup" (ngSubmit)="submitDefaultPolicyConfigHandler()"
+        style="width: 360px">
+        <div fxLayout="column">
+            <div fxLayout="row">
+                <h4 class="full-width">Content Download Timeout:</h4>
+            </div>
+
+            <div fxLayout="row" fxLayoutAlign="space-between center">
+                <mat-form-field style="width: 100px">
+                    <mat-label>Hours</mat-label>
+                    <mat-select formControlName="contentDownloadTimeoutHours">
+                        <mat-option *ngFor="let hour of hoursArray" [value]="hour">
+                            {{ hour }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field style="width: 100px">
+                    <mat-label>Minutes</mat-label>
+                    <mat-select formControlName="contentDownloadTimeoutMinutes">
+                        <mat-option *ngFor="let minute of minutesArray" [value]="minute">
+                            {{ minute }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field style="width: 100px">
+                    <mat-label>Seconds</mat-label>
+                    <mat-select formControlName="contentDownloadTimeoutSeconds">
+                        <mat-option *ngFor="let second of secondsArray" [value]="second">
+                            {{ second }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div fxLayout="row" class="mt-16">
+                <span fxFlex></span>
+                <button mat-raised-button color="primary" [disabled]="
+                        defaultPolicyConfigFormGroup.invalid || isLoading
+                    ">
+                    {{ "general.buttons.save" | translate }}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

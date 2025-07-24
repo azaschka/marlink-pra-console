@@ -1,0 +1,189 @@
+import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { MatTableDataSource } from "@angular/material/table";
+import { MatSort } from "@angular/material/sort";
+import { MatPaginator } from "@angular/material/paginator";
+import { MatDialog } from "@angular/material/dialog";
+import { Subscription } from "rxjs";
+import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
+import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
+import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
+import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
+import { GroupPoliciesService } from "./group-policies.service";
+import { GroupPolicy } from "./models";
+import { AccessPermissionStatusType } from "./enums";
+import {
+    GroupPolicyOverlayComponent,
+    GroupPolicyOverlayDialogData,
+} from "./components/group-policy-overlay/group-policy-overlay.component";
+import { UserRole } from "../pra-users/enums";
+
+@Component({
+    selector: "app-group-policies",
+    templateUrl: "./group-policies.component.html",
+    styleUrls: ["./group-policies.component.scss"],
+})
+export class GroupPoliciesComponent implements OnInit, OnDestroy {
+    private static readonly DEFAULT_PAGE_SIZE = 20;
+    private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
+    private static readonly DISPLAYED_COLUMNS = [
+        "name",
+        "accessPermissionStatusType",
+        "hasEndpointsAccessPermission",
+        "hasShareOtherTeamPermission",
+        "hasInviteExternalUserPermission",
+        "lastSyncDate",
+        "actions",
+    ];
+
+    @ViewChild(MatSort, { static: true }) sort!: MatSort;
+    @ViewChild(MatPaginator) paginator!: MatPaginator;
+
+    public dataSource = new MatTableDataSource<GroupPolicy>();
+    public defaultPageSize = GroupPoliciesComponent.DEFAULT_PAGE_SIZE;
+    public pageSizeOptions = GroupPoliciesComponent.PAGE_SIZE_OPTIONS;
+    public displayedColumns = GroupPoliciesComponent.DISPLAYED_COLUMNS;
+
+    public isLoading = true;
+    public filterValue = "";
+    public dataCount = 0;
+    public canDelete = false;
+
+    private readonly subscriptionsToClear: Subscription;
+
+    constructor(
+        private readonly dialog: MatDialog,
+        private readonly jwtAuthService: JwtAuthService,
+        private readonly groupPoliciesService: GroupPoliciesService,
+        private readonly confirmDialog: ConfirmDialogService,
+        private readonly errorDialog: ErrorDialogService,
+        private readonly notificationDialog: NotificationDialogService
+    ) {
+        this.subscriptionsToClear = new Subscription();
+    }
+
+    public async ngOnInit(): Promise<void> {
+        this.jwtAuthService.getPraUser();
+        this.addListeners();
+        await this.loadPage();
+    }
+
+    public ngOnDestroy(): void {
+        this.subscriptionsToClear.unsubscribe();
+    }
+
+    public applyFilter(): void {
+        this.dataSource.filter = this.filterValue.trim().toLowerCase();
+        this.dataSource.paginator?.firstPage();
+    }
+
+    public removeFilter(): void {
+        this.filterValue = "";
+        this.applyFilter();
+    }
+
+    public getAccessStatusLightColor(
+        status: AccessPermissionStatusType
+    ): "ok" | "error" | "warn" {
+        switch (status) {
+            case AccessPermissionStatusType.Final:
+                return "warn";
+            case AccessPermissionStatusType.Defined:
+                return "ok";
+            case AccessPermissionStatusType.NotDefined:
+                return "error";
+            default:
+                return "error";
+        }
+    }
+
+    public getAccessStatusTooltip(status: AccessPermissionStatusType): string {
+        switch (status) {
+            case AccessPermissionStatusType.Final:
+                return "Status 'final': Prevents other policies of lower priority from overriding the permission value set by this policy.";
+            case AccessPermissionStatusType.Defined:
+                return "Status 'defined': Controls access permissions with this policy.";
+            case AccessPermissionStatusType.NotDefined:
+                return "Status 'not-defined': No access permissions are set by this policy.";
+            default:
+                return "";
+        }
+    }
+
+    public editGroupPolicyHandler(groupPolicy: GroupPolicy): void {
+        this.dialog
+            .open(GroupPolicyOverlayComponent, {
+                data: { groupPolicy } as GroupPolicyOverlayDialogData,
+                disableClose: true,
+                width: "720px",
+            })
+            .afterClosed()
+            .subscribe((updated: boolean) => {
+                if (updated) {
+                    this.notificationDialog.show({
+                        message: `Group Policy "${groupPolicy.name}" updated successfully.`,
+                    });
+                    this.loadPage();
+                }
+            });
+    }
+
+    public async deleteGroupPolicyHandler(
+        groupPolicy: GroupPolicy
+    ): Promise<void> {
+        const confirmed = await this.confirmDialog.show({
+            title: "Delete Group Policy",
+            message: `Are you sure you want to delete:<br><strong>${groupPolicy.name}</strong>?`,
+        });
+
+        if (confirmed) {
+            this.isLoading = true;
+            try {
+                await this.groupPoliciesService.deleteGroupPolicy(
+                    groupPolicy.id
+                );
+                this.notificationDialog.show({
+                    message: `Group Policy "${groupPolicy.name}" has been deleted.`,
+                });
+                await this.loadPage();
+            } catch (err: any) {
+                this.errorDialog.show({
+                    title: "Delete Group Policy Failed",
+                    message:
+                        err?.message ||
+                        "The group policy could not be deleted. Please try again later.",
+                });
+                this.isLoading = false;
+            }
+        }
+    }
+
+    private async loadPage(): Promise<void> {
+        this.isLoading = true;
+        try {
+            const items = await this.groupPoliciesService.fetchGroupPolicies();
+            this.dataSource.data = items;
+            this.dataSource.sort = this.sort;
+            this.dataSource.paginator = this.paginator;
+            this.dataCount = items.length;
+        } catch (err: any) {
+            await this.errorDialog.show({
+                title: "Error",
+                message: err?.message ?? "Unexpected error",
+            });
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    private addListeners(): void {
+        this.subscriptionsToClear.add(
+            this.jwtAuthService.praUser.subscribe((user) => {
+                if (!user || user.role === "None") {
+                    this.jwtAuthService.checkTokenIsValid();
+                }
+                // Check if the user has the SuperAdmin role to allow deletion of group policies
+                this.canDelete = user.role === UserRole.SuperAdmin;
+            })
+        );
+    }
+}

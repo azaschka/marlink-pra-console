@@ -1,0 +1,36 @@
+.mat-tooltip {
+    background: #001c39 !important;
+    color: #fefefe !important;
+
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    line-height: 1.4 !important;
+
+    padding: 8px 14px !important;
+    border-radius: 8px !important; // <== Für weniger "spitze" Tooltips
+
+    // Schatten (optional)
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 1.5px 4px rgba(0, 0, 0, 0.15) !important;
+
+    // Textausrichtung
+    text-align: left !important;
+
+    // Optional: Letter Spacing
+    letter-spacing: 0.01em !important;
+
+    // Animation-Smoothing (optional)
+    transition: background 0.25s, color 0.25s;
+}
+
+// Optional: Tooltip Arrow färben (ab Angular 15+)
+.mat-tooltip .mat-tooltip-arrow {
+    color: #001c39 !important; // gleiche Farbe wie oben
+}
+
+// Responsive Anpassungen (optional)
+@media (max-width: 600px) {
+    .mat-tooltip {
+        font-size: 12px !important;
+        padding: 8px 10px !important;
+    }
+}

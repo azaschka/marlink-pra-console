@@ -1,0 +1,29 @@
+<div class="relative">
+    <h2 matDialogTitle>Find and remove offline Agents</h2>
+
+    <div fxLayout="column" style="width: 480px" fxLayoutGap="16">
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16">
+            <ng-container *ngIf="isRemovingOfflineAgents">
+                <mat-spinner diameter="24"></mat-spinner>
+                <span [class.text-disabled]="!hasFetchedDuplicateAgents">Removing offline agents ...</span>
+            </ng-container>
+            <ng-container *ngIf="hasRemovedOfflineAgents">
+                <mat-icon>done</mat-icon>
+                <span>Removed all offline agents.</span>
+            </ng-container>
+        </div>
+
+        <div *ngIf="migrationProcessCompleted" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16">
+            <mat-icon>done</mat-icon>
+            <span>Process completed!</span>
+        </div>
+
+        <div fxLayout="column" *ngIf="
+                migrationProcessCompleted
+            " class="mt-24">
+            <button mat-raised-button color="primary" (click)="closeDialog()">
+                Close dialog
+            </button>
+        </div>
+    </div>
+</div>

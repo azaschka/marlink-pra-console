@@ -1,0 +1,75 @@
+.rounded {
+    border-radius: 8px;
+    &-circle {
+        border-radius: 50%;
+    }
+    &.mat-progress-bar,
+    .mat-progress-bar-fill {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+}
+
+.overflow-hidden {
+    overflow: hidden !important;
+}
+
+.mat-dialog-container {
+    overflow: initial !important;
+}
+
+// Positioning
+.relative {
+    position: relative;
+}
+.absolute {
+    position: absolute;
+
+    &.bottom {
+        left: 0;
+        bottom: 0;
+    }
+}
+
+// Mouse Selection
+.cursor-pointer {
+    cursor: pointer;
+}
+.no-select {
+    user-select: none;
+}
+
+// Alignment
+.float-left {
+    float: left;
+}
+.float-right {
+    float: right;
+}
+.float-none {
+    float: none;
+}
+
+// BACKGROUND SIZES
+.background-size-cover {
+    background-size: cover;
+}
+.background-size-contain {
+    background-size: contain;
+}
+.background-size-100 {
+    background-size: 100%;
+}
+
+[dir="rtl"] {
+    .float-left {
+        float: right;
+    }
+    .float-right {
+        float: left;
+    }
+}
+
+.cdk-overlay-pane {
+    max-width: 95vw !important;
+}

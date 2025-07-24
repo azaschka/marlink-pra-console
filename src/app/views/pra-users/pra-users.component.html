@@ -1,0 +1,100 @@
+<div>
+    <div class="m-8 mt-16">
+        <!-- filter -->
+        <div class="pr-16" fxFlex="33">
+            <mat-form-field class="full-width m-16">
+                <input matInput placeholder="Type to filter all columns" [disabled]="!dataSource?.data?.length"
+                    [(ngModel)]="filterValue" (ngModelChange)="applyFilter()" />
+                <button *ngIf="filterValue" matSuffix mat-icon-button aria-label="Clear" (click)="removeFilter()">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </mat-form-field>
+        </div>
+        <div fxFlex></div>
+        <div class="pl-16">
+            <button mat-raised-button class="m-16" color="primary" translate="views.pra-users.buttons.add"
+                (click)="addUserHandler()"></button>
+        </div>
+    </div>
+
+    <mat-card class="p-0">
+        <mat-card-content class="p-0">
+            <mat-table [dataSource]="dataSource" matSort>
+                <!-- Loader -->
+                <ng-container matColumnDef="loader">
+                    <mat-header-cell *matHeaderCellDef [attr.colspan]="displayedColumns.length">
+                        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+                    </mat-header-cell>
+                    <mat-cell *matCellDef="let row"></mat-cell>
+                </ng-container>
+
+                <!-- Business Unit -->
+                <ng-container matColumnDef="businessUnit">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Business Unit</mat-header-cell>
+                    <mat-cell *matCellDef="let row"
+                        [matTooltip]="BusinessUnitLabels[row.businessUnit]">{{ row.businessUnit || '—' }}</mat-cell>
+                </ng-container>
+
+                <!-- Display Name -->
+                <ng-container matColumnDef="displayName">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Display Name</mat-header-cell>
+                    <mat-cell *matCellDef="let row">{{ row.displayName }}</mat-cell>
+                </ng-container>
+
+                <!-- Email Address -->
+                <ng-container matColumnDef="email">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Email Address</mat-header-cell>
+                    <mat-cell *matCellDef="let row">{{ row.email || '—' }}</mat-cell>
+                </ng-container>
+
+                <!-- Role -->
+                <ng-container matColumnDef="role">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Role</mat-header-cell>
+                    <mat-cell *matCellDef="let row">{{ row.role }}</mat-cell>
+                </ng-container>
+
+                <!-- Last Modification Date -->
+                <ng-container matColumnDef="lastModificationDate">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Last Modification</mat-header-cell>
+                    <mat-cell
+                        *matCellDef="let row">{{ row.lastModificationDate | date : "dd.MM.yy - HH:mm:ss" || 'never' }}</mat-cell>
+                </ng-container>
+
+                <!-- Creation Date -->
+                <ng-container matColumnDef="creationDate">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Creation&nbsp;Date</mat-header-cell>
+                    <mat-cell *matCellDef="let row">{{ row.creationDate | date : "dd.MM.yy - HH:mm:ss" }}</mat-cell>
+                </ng-container>
+
+                <!-- Actions -->
+                <ng-container matColumnDef="actions">
+                    <mat-header-cell *matHeaderCellDef></mat-header-cell>
+                    <mat-cell *matCellDef="let row">
+                        <button mat-icon-button color="primary" (click)="editUserHandler(row)">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" (click)="deleteUserHandler(row)">
+                            <mat-icon>delete</mat-icon>
+                        </button>
+                    </mat-cell>
+                </ng-container>
+
+                <!-- Header / Rows -->
+                <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+                <mat-header-row *matHeaderRowDef="['loader']; sticky: true" class="progress-row"
+                    [class.hidden]="!isLoading"></mat-header-row>
+                <mat-row class="selectable" *matRowDef="let row; columns: displayedColumns"></mat-row>
+
+                <!-- No-data -->
+                <tr class="mat-row" *matNoDataRow style="display: flex">
+                    <td class="mat-cell full-width pt-12" [attr.colspan]="displayedColumns.length">
+                        No users found.
+                    </td>
+                </tr>
+            </mat-table>
+
+            <mat-paginator #tablePaginator [length]="dataCount" [pageSize]="defaultPageSize"
+                [pageSizeOptions]="pageSizeOptions" showFirstLastButtons></mat-paginator>
+        </mat-card-content>
+    </mat-card>
+</div>

@@ -1,0 +1,113 @@
+<div class="relative">
+    <div *ngIf="isLoading" class="absolute mb-16 loader">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    </div>
+
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="close-button" (click)="closeDialog()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle translate="views.management.clientVersions.modal.headlineUpdate"></h2>
+
+    <form [formGroup]="clientVersionsFormGroup" (ngSubmit)="submitClientVersionsHandler()" style="width: 480px">
+        <div fxLayout="row wrap" fxLayout.lt-sm="column">
+            <div fxFlex="100" class="pr-16">
+                <h4 class="full-width">EDR Installer</h4>
+            </div>
+
+            <div fxFlex="20" class="pr-16">
+                <mat-form-field class="full-width">
+                    <input matInput type="text" formControlName="installerVersion" placeholder="Version" required />
+                    <mat-error *ngIf="installerVersion.hasError('required')">
+                        Version is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="80" class="pr-16">
+                <mat-form-field class="full-width">
+                    <input matInput type="text" formControlName="installerDownloadUrl" placeholder="Download URL"
+                        required />
+                    <mat-error *ngIf="installerDownloadUrl.hasError('required')">
+                        Download url is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="100" class="pt-8 pr-16">
+                <h4 class="full-width">Apache Webserver</h4>
+            </div>
+
+            <div fxFlex="20" class="pr-16">
+                <mat-form-field class="full-width">
+                    <input matInput type="text" formControlName="apacheVersion" placeholder="Version" required />
+                    <mat-error *ngIf="apacheVersion.hasError('required')">
+                        Version is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="80" class="pr-16">
+                <mat-form-field class="full-width">
+                    <input matInput type="text" formControlName="apacheDownloadUrl" placeholder="Download URL"
+                        required />
+                    <mat-error *ngIf="apacheDownloadUrl.hasError('required')">
+                        Download url is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="100" class="pt-8 pr-16">
+                <h4 class="full-width">PHP Module</h4>
+            </div>
+
+            <div fxFlex="20" class="pr-16">
+                <mat-form-field class="full-width">
+                    <input matInput type="text" formControlName="phpVersion" placeholder="Version" required />
+                    <mat-error *ngIf="phpVersion.hasError('required')">
+                        Version is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="80" class="pr-16">
+                <mat-form-field class="full-width">
+                    <input matInput type="text" formControlName="phpDownloadUrl" placeholder="Download URL" required />
+                    <mat-error *ngIf="phpDownloadUrl.hasError('required')">
+                        Download url is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="100" class="pt-8 pr-16">
+                <h4 class="full-width">Trellix Msi</h4>
+            </div>
+
+            <div fxFlex="20" class="pr-16">
+                <mat-form-field class="full-width">
+                    <input matInput type="text" formControlName="trellixMsiVersion" placeholder="Version" required />
+                    <mat-error *ngIf="trellixMsiVersion.hasError('required')">
+                        Version is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="80" class="pr-16">
+                <mat-form-field class="full-width">
+                    <input matInput type="text" formControlName="trellixMsiDownloadUrl" placeholder="Download URL"
+                        required />
+                    <mat-error *ngIf="trellixMsiDownloadUrl.hasError('required')">
+                        Download url is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="100" class="mt-16">
+                <span fxFlex></span>
+                <button mat-raised-button color="primary" [disabled]="clientVersionsFormGroup.invalid || isLoading">
+                    {{ "general.buttons.save" | translate }}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
