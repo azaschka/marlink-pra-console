@@ -10,7 +10,7 @@ export class PraUsersService {
     public async fetchPraUsers(): Promise<PraUser[]> {
         const params = new HttpParams().set("pageSize", "9999");
         return firstValueFrom(
-            this.http.get<PraUser[]>("pra-users", { params })
+            this.http.get<PraUser[]>("pra-users", { params }),
         );
     }
 
@@ -20,10 +20,10 @@ export class PraUsersService {
 
     public async updatePraUser(
         id: number,
-        body: PraUserUpdateRequest
+        body: PraUserUpdateRequest,
     ): Promise<PraUser> {
         return firstValueFrom(
-            this.http.patch<PraUser>(`pra-users/${id}`, body)
+            this.http.patch<PraUser>(`pra-users/${id}`, body),
         );
     }
 

@@ -1,0 +1,16 @@
+<div class="drag-drop-area" [class.hover]="isHovering" appDragDrop (fileDropped)="onFileDropped($event)"
+    (hover)="isHovering = $event" (click)="fileInput.click()" tabindex="0" role="button"
+    aria-label="Drop Excel file here or click to select">
+
+    <input #fileInput type="file" accept=".xlsx,.xls" hidden (change)="onFileInput($event)" />
+
+    <ng-container *ngIf="!file">
+        <mat-icon fontIcon="upload_file" color="primary"></mat-icon>
+        <p class="text-muted">Drag &amp; Drop your Excel file here<br>or click to select</p>
+    </ng-container>
+
+    <ng-container *ngIf="file">
+        <mat-icon fontIcon="check_circle" color="primary"></mat-icon>
+        <p>{{ file.name }}</p>
+    </ng-container>
+</div>

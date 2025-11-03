@@ -1,0 +1,33 @@
+<div class="relative overlay-container">
+    <div *ngIf="isLoading" class="absolute overlay-loader">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    </div>
+
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="cancel()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle class="mb-32">Update Jump Group</h2>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" style="width: 480px;">
+        <div fxLayout="row wrap">
+            <!-- Name -->
+            <div fxFlex="100">
+                <mat-form-field class="full-width">
+                    <mat-label>Jump Group Name</mat-label>
+                    <input matInput formControlName="name" autocomplete="off" />
+                    <mat-error *ngIf="form.get('name')?.hasError('required')">
+                        Name is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Submit -->
+            <div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
+                <div fxLayout="row" fxLayoutAlign="end center" class="mt-32">
+                    <button mat-raised-button color="primary" [disabled]="form.invalid || isLoading">Update</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

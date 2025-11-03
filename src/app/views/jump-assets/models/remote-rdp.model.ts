@@ -1,3 +1,6 @@
+import { JumpGroup } from "../../jump-groups/models";
+import { Jumpoint } from "../../jumpoints/models";
+import { JumpPolicy } from "../../jump-policies/models";
 import { JumpGroupType, RdpQualityMode, SecureAppType } from "../enums";
 
 export interface RemoteRdp {
@@ -29,4 +32,9 @@ export interface RemoteRdp {
     remoteExeParams?: string;
     targetSystem?: string;
     credentialType?: string;
+
+    /* temporary */
+    jumpGroupName?: string;
+    jumpointName?: string;
+    jumpPolicyName?: string;
 }

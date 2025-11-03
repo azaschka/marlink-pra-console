@@ -1,0 +1,53 @@
+<div class="relative overlay-container">
+    <!-- Progress -->
+    <div class="absolute overlay-loader">
+        <mat-progress-bar *ngIf="isDownloading" [mode]="progressMode"
+            [value]="downloadPercent > -1 ? downloadPercent : 0" color="primary">
+        </mat-progress-bar>
+
+        <div *ngIf="isDownloading && progressMode === 'determinate'" class="progress-label">
+            {{ downloadPercent }} %
+        </div>
+    </div>
+
+    <!-- Close -->
+    <button mat-mini-fab color="primary" class="overlay-close-button" (click)="cancel()" *ngIf="!isDownloading"
+        matTooltip="Cancel">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle class="mb-32">Download Jump Client Installer</h2>
+
+    <div fxLayout="row wrap">
+        <div fxFlex="100">
+            <mat-form-field class="full-width">
+                <mat-label>Platform Type</mat-label>
+                <mat-select [formControl]="platformCtrl" [disabled]="isDownloading">
+                    <mat-option *ngFor="let option of platformOptions" [value]="option.value">
+                        {{ option.label }}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <div fxFlex="100" class="mt-16" *ngIf="platformCtrl.value && downloadUrl">
+            <mat-form-field class="full-width">
+                <mat-label>Download Link</mat-label>
+                <input matInput readonly type="text" [value]="downloadUrl" />
+
+                <button mat-icon-button matSuffix (click)="copyToClipboard(downloadUrl)">
+                    <mat-icon>content_copy</mat-icon>
+                </button>
+            </mat-form-field>
+        </div>
+
+        <div fxFlex="100" class="mt-16">
+            <div class="mt-24" fxLayout="row" fxLayoutAlign="end center">
+                <button mat-raised-button color="primary" [disabled]="platformCtrl.invalid || isDownloading"
+                    (click)="startDownload()">
+                    Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -27,7 +27,7 @@ import { NotificationDialogData } from "./notification-dialog.service";
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                min-width: 300px;
+                min-width: 150px;
             }
             .notification-snackbar .icon {
                 font-size: 22px;

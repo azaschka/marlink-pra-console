@@ -26,4 +26,7 @@ export interface GroupPolicy {
     inferiorJumpItemRoleId?: number;
     unassignedJumpItemRoleId?: number;
     lastSyncDate: string; // ISO string!
+
+    /* temporary */
+    groupMembersCount?: number;
 }

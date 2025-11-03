@@ -7,15 +7,56 @@
         <mat-icon>close</mat-icon>
     </button>
 
-    <h2 matDialogTitle class="mb-32">{{ displayHeadline() }}</h2>
+    <h2 matDialogTitle class="mb-32">Update {{ getAssetTypeName() }}</h2>
 
     <form [formGroup]="form" (ngSubmit)="submit()" style="width: 480px;">
         <div fxLayout="row wrap">
-            <!-- Name (readonly) -->
+            <!-- Name -->
             <div fxFlex="100">
                 <mat-form-field class="full-width">
-                    <mat-label>{{ displayJumpAssetName() }}</mat-label>
-                    <input matInput [value]="data.currentName" readonly />
+                    <mat-label>{{ getAssetTypeName() }} Name</mat-label>
+                    <input matInput formControlName="name" autocomplete="off" />
+                    <mat-error *ngIf="form.get('name')?.hasError('required')">
+                        Name is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Tag -->
+            <div fxFlex="100" class="mt-16">
+                <mat-form-field class="full-width">
+                    <mat-label>{{ getAssetTypeName() }} Tag</mat-label>
+                    <input matInput formControlName="tag" autocomplete="off" />
+                    <mat-error></mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Hostname/IP/URL -->
+            <div [fxFlex]="showPortField() ? 80 : 100" class="mt-16" [class.pr-32]="showPortField()">
+                <mat-form-field class="full-width">
+                    <mat-label>
+                        {{
+                            data.assetType === 'webJump'
+                                ? 'URL'
+                                : 'Hostname / IP'
+                        }}
+                    </mat-label>
+                    <input matInput formControlName="hostname" autocomplete="off"
+                        [type]="data.assetType === 'webJump' ? 'url' : 'text'" />
+                    <mat-error *ngIf="form.get('hostname')?.hasError('required')">
+                        {{ data.assetType === 'webJump' ? 'URL' : 'Hostname/IP' }} is <strong>required</strong>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Port (only for shell jumps and remote vncs) -->
+            <div fxFlex="20" class="mt-16" *ngIf="showPortField()">
+                <mat-form-field class="full-width">
+                    <mat-label>Port</mat-label>
+                    <input matInput formControlName="port" type="number" autocomplete="off" min="1" max="65535" />
+                    <mat-error *ngIf="form.get('port')?.hasError('min') || form.get('port')?.hasError('max')">
+                        Port number must be between <strong>1</strong> and <strong>65535</strong>
+                    </mat-error>
                 </mat-form-field>
             </div>
 
@@ -46,11 +87,18 @@
                             {{ policy.displayName }}
                         </mat-option>
                     </mat-autocomplete>
+                    <mat-error></mat-error>
                 </mat-form-field>
             </div>
 
+            <!-- Must Verify Certificate (only for web jumps) -->
+            <div fxFlex="100" class="mt-16" *ngIf="showMustVerifyCertificate()">
+                <mat-slide-toggle class="full-width" formControlName="mustVerifyCertificate">Verify Certificate
+                </mat-slide-toggle>
+            </div>
+
             <!-- Submit -->
-            <div fxFlex="100" class="mt-16" fxLayout="row" fxLayoutAlign="end center">
+            <div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
                 <div fxLayout="row" fxLayoutAlign="end center" class="mt-32">
                     <button mat-raised-button color="primary" [disabled]="form.invalid || isLoading">Update</button>
                 </div>

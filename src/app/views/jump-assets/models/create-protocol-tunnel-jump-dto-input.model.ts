@@ -5,7 +5,6 @@ export interface CreateProtocolTunnelJumpDtoInput {
     jumpointId: number;
     hostname: string;
     jumpGroupId: number;
-
     jumpGroupType?: JumpGroupType;
     tag?: string;
     comments?: string;

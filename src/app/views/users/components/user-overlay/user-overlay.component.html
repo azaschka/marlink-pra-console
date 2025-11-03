@@ -17,7 +17,7 @@
             <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
                 <mat-form-field class="full-width">
                     <mat-label>Display Name</mat-label>
-                    <input matInput formControlName="publicDisplayName" placeholder="Display Name" />
+                    <input matInput formControlName="publicDisplayName" placeholder="Display Name" appAutoFocus autoFocusDelay="350" />
                     <mat-error *ngIf="publicDisplayName?.hasError('required')">
                         Display name is <strong>required</strong>
                     </mat-error>
@@ -50,44 +50,11 @@
                 </div>
             </div>
 
-            <!-- Password & Retype -->
-            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
-                <div fxFlex="50">
-                    <mat-form-field class="full-width">
-                        <mat-label>Password</mat-label>
-                        <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password"
-                            placeholder="Password" autocomplete="new-password" />
-                        <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword"
-                            [attr.aria-label]="'Toggle password visibility'" type="button">
-                            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                        </button>
-                        <mat-error *ngIf="password?.hasError('required') && mode === 'add'">
-                            Password is <strong>required</strong>
-                        </mat-error>
-                        <mat-error *ngIf="password?.hasError('minlength')">
-                            Password must be at least {{ UserOverlayComponent.MIN_PASSWORD_LENGTH }} characters long.
-                        </mat-error>
-                    </mat-form-field>
-                </div>
-
-                <div fxFlex="50">
-                    <mat-form-field class="full-width">
-                        <mat-label>Retype Password</mat-label>
-                        <input matInput [type]="hideRetypePassword ? 'password' : 'text'"
-                            formControlName="retypePassword" placeholder="Retype Password"
-                            autocomplete="new-password" />
-                        <button mat-icon-button matSuffix (click)="hideRetypePassword = !hideRetypePassword"
-                            [attr.aria-label]="'Toggle retype password visibility'" type="button">
-                            <mat-icon>{{ hideRetypePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                        </button>
-                        <mat-error *ngIf="retypePassword?.hasError('required') && mode === 'add'">
-                            Retype password is <strong>required</strong>
-                        </mat-error>
-                        <mat-error *ngIf="retypePassword?.hasError('mustMatch') && retypePassword?.dirty">
-                            Passwords do not match.
-                        </mat-error>
-                    </mat-form-field>
-                </div>
+            <!-- Regenerate password -->
+            <div *ngIf="mode === 'edit'" fxFlex="100" class="mt-8">
+                <mat-checkbox formControlName="regeneratePassword">
+                    Regenerate password and email user
+                </mat-checkbox>
             </div>
 
             <!-- Group Policies: Chips & Autocomplete -->

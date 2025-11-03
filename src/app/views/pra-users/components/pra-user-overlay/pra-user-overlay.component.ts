@@ -1,6 +1,12 @@
-import { Component, Inject, OnInit } from "@angular/core";
+import { Component, Inject, OnInit, OnDestroy } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
-import { FormGroup, FormControl, Validators } from "@angular/forms";
+import {
+    FormGroup,
+    FormControl,
+    Validators,
+    AbstractControl,
+} from "@angular/forms";
+import { Subject, takeUntil } from "rxjs";
 import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/error-dialog.service";
 import { PraUsersService } from "../../pra-users.service";
 import {
@@ -17,66 +23,88 @@ export interface PraUserOverlayDialogData {
     user?: PraUser;
 }
 
+interface PraUserFormValue {
+    displayName: string;
+    username: string;
+    email: string;
+    role: UserRole;
+    businessUnit: BusinessUnit | null;
+    regeneratePassword: boolean;
+    canManagePraUsers: boolean;
+}
+
+/**
+ * Component for adding or editing PRA users
+ * Handles form validation, business unit logic based on role, and permission management
+ */
 @Component({
     selector: "app-pra-user-overlay",
     templateUrl: "./pra-user-overlay.component.html",
 })
-export class PraUserOverlayComponent implements OnInit {
-    public static readonly MIN_PASSWORD_LENGTH = 6;
-
-    PraUserOverlayComponent = PraUserOverlayComponent;
+export class PraUserOverlayComponent implements OnInit, OnDestroy {
+    /**
+     * Default business unit assigned to new Admin users
+     */
+    private static readonly DEFAULT_BUSINESS_UNIT = BusinessUnit.MT;
 
     public isLoading = false;
-    public hidePassword = true;
-    public hideRetypePassword = true;
 
-    public mode: PraUserOverlayMode;
-    public user?: PraUser;
+    public readonly mode: PraUserOverlayMode;
+    public readonly user?: PraUser;
 
-    public businessUnits = Object.values(BusinessUnit);
-    public businessUnitLabels = BusinessUnitLabels;
-    public userRoles = Object.values(UserRole);
+    public readonly businessUnits = Object.values(BusinessUnit);
+    public readonly businessUnitLabels = BusinessUnitLabels;
+    public readonly userRoles = Object.values(UserRole);
 
-    public form = new FormGroup(
-        {
+    public readonly form: FormGroup;
+
+    private readonly destroy$ = new Subject<void>();
+
+    constructor(
+        public dialogRef: MatDialogRef<PraUserOverlayComponent>,
+        @Inject(MAT_DIALOG_DATA) public data: PraUserOverlayDialogData,
+        private readonly praUsersService: PraUsersService,
+        private readonly errorDialog: ErrorDialogService,
+    ) {
+        this.mode = data.mode;
+        this.user = data.user;
+        this.form = this.createForm();
+    }
+
+    public ngOnInit(): void {
+        this.initializeFormValues();
+        this.setupRoleBasedLogic();
+    }
+
+    public ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
+    /**
+     * Creates the reactive form with all controls and validators
+     */
+    private createForm(): FormGroup {
+        return new FormGroup({
             displayName: new FormControl<string>("", [Validators.required]),
             username: new FormControl<string>("", [Validators.required]),
             email: new FormControl<string>("", [
                 Validators.required,
                 Validators.email,
             ]),
-            password: new FormControl<string>("", []), // dynamic validation
-            retypePassword: new FormControl<string>("", []),
             role: new FormControl<UserRole>(UserRole.Admin, [
                 Validators.required,
             ]),
             businessUnit: new FormControl<BusinessUnit | null>(null, []),
-        },
-        {
-            validators: (fg) => {
-                // Password match validator
-                const pwd = fg.get("password")?.value;
-                const re = fg.get("retypePassword")?.value;
-                if (pwd || re) {
-                    return pwd === re ? null : { mustMatch: true };
-                }
-                return null;
-            },
-        }
-    );
-
-    constructor(
-        public dialogRef: MatDialogRef<PraUserOverlayComponent>,
-        @Inject(MAT_DIALOG_DATA) public data: PraUserOverlayDialogData,
-        private readonly praUsersService: PraUsersService,
-        private readonly errorDialog: ErrorDialogService
-    ) {
-        this.mode = data.mode;
-        this.user = data.user;
+            regeneratePassword: new FormControl<boolean>(false),
+            canManagePraUsers: new FormControl<boolean>(false),
+        });
     }
 
-    public ngOnInit(): void {
-        // Set initial form values for edit mode
+    /**
+     * Sets initial form values in edit mode
+     */
+    private initializeFormValues(): void {
         if (this.mode === "edit" && this.user) {
             this.form.patchValue({
                 displayName: this.user.displayName,
@@ -84,173 +112,233 @@ export class PraUserOverlayComponent implements OnInit {
                 email: this.user.email,
                 role: this.user.role,
                 businessUnit: this.user.businessUnit ?? null,
-            });
-        }
-
-        // Set initial password validators
-        this.updatePasswordValidators();
-
-        // Set default business unit (add mode, admin)
-        if (
-            this.mode === "add" &&
-            this.form.controls.role.value === UserRole.Admin
-        ) {
-            this.form.controls.businessUnit.setValue(BusinessUnit.MT, {
-                emitEvent: false,
-            });
-        }
-
-        // Handle business unit field based on role
-        this.handleBusinessUnitField(this.form.controls.role.value);
-
-        // React to role changes
-        this.form.controls.role.valueChanges.subscribe((role) => {
-            this.handleBusinessUnitField(role);
-        });
-
-        // In edit mode, if admin but no value -> set MT
-        if (
-            this.mode === "edit" &&
-            this.form.controls.role.value === UserRole.Admin &&
-            !this.form.controls.businessUnit.value
-        ) {
-            this.form.controls.businessUnit.setValue(BusinessUnit.MT, {
-                emitEvent: false,
-            });
-        } else if (this.mode === "edit") {
-            // In edit mode, if not admin -> clear business unit
-            this.form.controls.businessUnit.setValue(null, {
-                emitEvent: false,
+                canManagePraUsers: this.user.canManagePraUsers ?? false,
             });
         }
     }
 
-    private handleBusinessUnitField(role: UserRole) {
-        const buCtrl = this.form.controls.businessUnit;
+    /**
+     * Sets up reactive logic for business unit and canManagePraUsers fields based on user role
+     */
+    private setupRoleBasedLogic(): void {
+        const roleControl = this.form.controls["role"];
+        const currentRole = roleControl.value as UserRole;
+
+        // Set initial state
+        this.updateRoleBasedFields(currentRole);
+
+        // React to role changes
+        roleControl.valueChanges
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((role: UserRole) => {
+                this.updateRoleBasedFields(role);
+            });
+    }
+
+    /**
+     * Updates business unit and canManagePraUsers field states based on role
+     */
+    private updateRoleBasedFields(role: UserRole): void {
+        this.updateBusinessUnitField(role);
+        this.updateCanManagePraUsersField(role);
+    }
+
+    /**
+     * Updates business unit field state (enabled/disabled, validators) based on role
+     */
+    private updateBusinessUnitField(role: UserRole): void {
+        const businessUnitControl = this.form.controls["businessUnit"];
+
         if (
             role === UserRole.SuperAdmin ||
             role === UserRole.DataCenterEngineer
         ) {
-            buCtrl.disable({ emitEvent: false });
-            buCtrl.setValue(null, { emitEvent: false });
-            buCtrl.clearValidators();
+            // Super Admin and Data Center Engineer don't need business unit
+            businessUnitControl.disable({ emitEvent: false });
+            businessUnitControl.setValue(null, { emitEvent: false });
+            businessUnitControl.clearValidators();
         } else if (role === UserRole.Admin) {
-            buCtrl.enable({ emitEvent: false });
-            buCtrl.setValidators([Validators.required]);
-            if (!buCtrl.value) {
-                buCtrl.setValue(BusinessUnit.MT, { emitEvent: false });
+            // Admin requires business unit
+            businessUnitControl.enable({ emitEvent: false });
+            businessUnitControl.setValidators([Validators.required]);
+
+            // Set default value if empty
+            if (!businessUnitControl.value) {
+                const defaultValue = this.getDefaultBusinessUnit();
+                businessUnitControl.setValue(defaultValue, {
+                    emitEvent: false,
+                });
             }
         } else {
-            buCtrl.clearValidators();
-            buCtrl.enable({ emitEvent: false });
+            // Other roles: optional business unit
+            businessUnitControl.clearValidators();
+            businessUnitControl.enable({ emitEvent: false });
         }
-        buCtrl.updateValueAndValidity({ emitEvent: false });
+
+        businessUnitControl.updateValueAndValidity({ emitEvent: false });
     }
 
-    // Optional: Auslagerung Passwort-Validatoren
-    private updatePasswordValidators() {
-        if (this.mode === "add") {
-            this.form.controls.password.setValidators([
-                Validators.required,
-                Validators.minLength(
-                    PraUserOverlayComponent.MIN_PASSWORD_LENGTH
-                ),
-            ]);
-            this.form.controls.retypePassword.setValidators([
-                Validators.required,
-            ]);
+    /**
+     * Updates canManagePraUsers field state based on role
+     * Only Admin users can have this permission
+     */
+    private updateCanManagePraUsersField(role: UserRole): void {
+        const canManagePraUsersControl =
+            this.form.controls["canManagePraUsers"];
+
+        if (role === UserRole.Admin) {
+            // Only Admin can manage PRA users
+            canManagePraUsersControl.enable({ emitEvent: false });
         } else {
-            this.form.controls.password.setValidators([
-                Validators.minLength(
-                    PraUserOverlayComponent.MIN_PASSWORD_LENGTH
-                ),
-            ]);
-            this.form.controls.retypePassword.setValidators([]);
+            // Other roles cannot have this permission
+            canManagePraUsersControl.disable({ emitEvent: false });
+            canManagePraUsersControl.setValue(false, { emitEvent: false });
         }
-        this.form.controls.password.updateValueAndValidity();
-        this.form.controls.retypePassword.updateValueAndValidity();
     }
 
+    /**
+     * Gets the default business unit based on context
+     */
+    private getDefaultBusinessUnit(): BusinessUnit {
+        if (this.mode === "edit" && this.user?.businessUnit) {
+            return this.user.businessUnit;
+        }
+        return PraUserOverlayComponent.DEFAULT_BUSINESS_UNIT;
+    }
+
+    /**
+     * Closes the dialog without saving
+     */
     public close(): void {
         this.dialogRef.close(false);
     }
 
+    /**
+     * Handles form submission
+     */
     public async submitHandler(): Promise<void> {
-        if (this.form.invalid) return;
+        if (this.form.invalid) {
+            return;
+        }
+
         this.isLoading = true;
-        const form = this.form.getRawValue(); // alle Werte, auch disabled
         this.form.disable();
 
         try {
+            const formValue = this.form.getRawValue() as PraUserFormValue;
+
             if (this.mode === "add") {
-                const req: PraUserCreateRequest = {
-                    displayName: form.displayName!.trim(),
-                    username: form.username!.trim(),
-                    password: form.password!.trim(),
-                    email: form.email!.trim(),
-                    role: form.role!,
-                    businessUnit:
-                        form.role === UserRole.Admin
-                            ? form.businessUnit ?? undefined
-                            : undefined,
-                };
-                await this.praUsersService.createPraUser(req);
+                await this.createUser(formValue);
             } else {
-                const req: PraUserUpdateRequest = {
-                    displayName: form.displayName!.trim(),
-                    username: form.username!.trim(),
-                    email: form.email!.trim(),
-                    role: form.role!,
-                    businessUnit:
-                        form.role === UserRole.Admin
-                            ? form.businessUnit ?? undefined
-                            : undefined,
-                };
-                if (
-                    form.password &&
-                    form.password.length >=
-                        PraUserOverlayComponent.MIN_PASSWORD_LENGTH
-                ) {
-                    req.password = form.password;
-                }
-                if (!this.user) throw new Error("User missing for edit.");
-                await this.praUsersService.updatePraUser(this.user.id, req);
+                await this.updateUser(formValue);
             }
+
             this.dialogRef.close(true);
-        } catch (err: any) {
-            this.errorDialog.show({
-                title: "Error",
-                message: err?.message ?? "An unknown error occurred.",
-            });
+        } catch (err) {
+            this.handleError(err);
             this.form.enable();
         } finally {
             this.isLoading = false;
         }
     }
 
+    /**
+     * Creates a new PRA user
+     */
+    private async createUser(formValue: PraUserFormValue): Promise<void> {
+        const request: PraUserCreateRequest = {
+            displayName: formValue.displayName.trim(),
+            username: formValue.username.trim(),
+            email: formValue.email.trim(),
+            role: formValue.role,
+            businessUnit: this.getBusinessUnitForRequest(formValue),
+            canManagePraUsers: this.getCanManagePraUsersForRequest(formValue),
+        };
+
+        await this.praUsersService.createPraUser(request);
+    }
+
+    /**
+     * Updates an existing PRA user
+     */
+    private async updateUser(formValue: PraUserFormValue): Promise<void> {
+        if (!this.user) {
+            throw new Error("User data missing for edit operation");
+        }
+
+        const request: PraUserUpdateRequest = {
+            displayName: formValue.displayName.trim(),
+            username: formValue.username.trim(),
+            email: formValue.email.trim(),
+            role: formValue.role,
+            businessUnit: this.getBusinessUnitForRequest(formValue),
+            canManagePraUsers: this.getCanManagePraUsersForRequest(formValue),
+            regeneratePassword: formValue.regeneratePassword,
+        };
+
+        await this.praUsersService.updatePraUser(this.user.id, request);
+    }
+
+    /**
+     * Extracts business unit for API request based on role
+     */
+    private getBusinessUnitForRequest(
+        formValue: PraUserFormValue,
+    ): BusinessUnit | undefined {
+        return formValue.role === UserRole.Admin
+            ? (formValue.businessUnit ?? undefined)
+            : undefined;
+    }
+
+    /**
+     * Extracts canManagePraUsers for API request based on role
+     * Only Admin users can have this permission
+     */
+    private getCanManagePraUsersForRequest(
+        formValue: PraUserFormValue,
+    ): boolean | undefined {
+        return formValue.role === UserRole.Admin
+            ? formValue.canManagePraUsers
+            : undefined;
+    }
+
+    /**
+     * Handles errors during form submission
+     */
+    private handleError(err: unknown): void {
+        const message =
+            err instanceof Error
+                ? err.message
+                : "An unknown error occurred while saving the user.";
+
+        this.errorDialog.show({
+            title: "Error",
+            message,
+        });
+    }
+
     // Template convenience getters
-    get displayName() {
+    get displayName(): AbstractControl | null {
         return this.form.get("displayName");
     }
-    get username() {
+
+    get username(): AbstractControl | null {
         return this.form.get("username");
     }
-    get email() {
+
+    get email(): AbstractControl | null {
         return this.form.get("email");
     }
-    get password() {
-        return this.form.get("password");
-    }
-    get retypePassword() {
-        return this.form.get("retypePassword");
-    }
-    get role() {
+
+    get role(): AbstractControl | null {
         return this.form.get("role");
     }
-    get businessUnit() {
+
+    get businessUnit(): AbstractControl | null {
         return this.form.get("businessUnit");
     }
-    get mustMatchError() {
-        return this.form.hasError("mustMatch");
+
+    get canManagePraUsers(): AbstractControl | null {
+        return this.form.get("canManagePraUsers");
     }
 }

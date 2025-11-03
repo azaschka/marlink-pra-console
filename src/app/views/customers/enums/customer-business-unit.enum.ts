@@ -1,7 +1,7 @@
 export enum CustomerBusinessUnit {
     MT = "MT",
     OA = "OA",
-    DI = "DI",
+    MC = "MC",
     EG = "EG",
     TE = "TE",
 }

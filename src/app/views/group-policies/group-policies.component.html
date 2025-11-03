@@ -38,41 +38,17 @@
                     <mat-cell *matCellDef="let row">{{ row.name }}</mat-cell>
                 </ng-container>
 
-                <!-- Access Status -->
-                <ng-container matColumnDef="accessPermissionStatusType">
-                    <mat-header-cell *matHeaderCellDef>Access Status</mat-header-cell>
+                <!-- Member Count -->
+                <ng-container matColumnDef="groupMembersCount">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Member Count</mat-header-cell>
                     <mat-cell *matCellDef="let row">
-                        <div class="status-light"
-                            matTooltip="{{ getAccessStatusTooltip(row.accessPermissionStatusType) }}"
-                            [ngClass]="getAccessStatusLightColor(row.accessPermissionStatusType)"></div>
-                    </mat-cell>
-                </ng-container>
-
-                <!-- Endpoints Access -->
-                <ng-container matColumnDef="hasEndpointsAccessPermission">
-                    <mat-header-cell *matHeaderCellDef
-                        matTooltip="Indicates whether the group policy users can access endpoints.">Endpoints</mat-header-cell>
-                    <mat-cell *matCellDef="let row">
-                        <div class="status-light" [ngClass]="row.hasEndpointsAccessPermission ? 'ok' : 'error'"></div>
-                    </mat-cell>
-                </ng-container>
-
-                <!-- Share With Other Team -->
-                <ng-container matColumnDef="hasShareOtherTeamPermission">
-                    <mat-header-cell *matHeaderCellDef
-                        matTooltip="Indicates whether the group policy users can share sessions with teams they do not belong to.">Share</mat-header-cell>
-                    <mat-cell *matCellDef="let row">
-                        <div class="status-light" [ngClass]="row.hasShareOtherTeamPermission ? 'ok' : 'error'"></div>
-                    </mat-cell>
-                </ng-container>
-
-                <!-- Invite External -->
-                <ng-container matColumnDef="hasInviteExternalUserPermission">
-                    <mat-header-cell *matHeaderCellDef
-                        matTooltip="Indicates whether the group policy users can invite external users.">Invite</mat-header-cell>
-                    <mat-cell *matCellDef="let row">
-                        <div class="status-light" [ngClass]="row.hasInviteExternalUserPermission ? 'ok' : 'error'">
-                        </div>
+                        <ng-container *ngIf="row.groupMembersCount === undefined">
+                            <mat-progress-spinner [diameter]="18" mode="indeterminate" color="primary"
+                                style="vertical-align: middle;"></mat-progress-spinner>
+                        </ng-container>
+                        <ng-container *ngIf="row.groupMembersCount !== undefined">
+                            {{ row.groupMembersCount }}
+                        </ng-container>
                     </mat-cell>
                 </ng-container>
 
@@ -86,10 +62,11 @@
                 <ng-container matColumnDef="actions">
                     <mat-header-cell *matHeaderCellDef></mat-header-cell>
                     <mat-cell *matCellDef="let row">
-                        <button mat-icon-button color="primary" (click)="editGroupPolicyHandler(row)">
+                        <button mat-icon-button color="primary" [class.disabled]="!isSuperAdmin"
+                            (click)="editGroupPolicyHandler(row)">
                             <mat-icon>edit</mat-icon>
                         </button>
-                        <button mat-icon-button color="warn" [class.disabled]="!canDelete"
+                        <button mat-icon-button color="warn" [class.disabled]="!isSuperAdmin"
                             (click)="deleteGroupPolicyHandler(row)">
                             <mat-icon>delete</mat-icon>
                         </button>

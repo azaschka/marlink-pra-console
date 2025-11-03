@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 export interface ParsedCustomer {
     key: string; // MARLINK CUSTOMER ID
     name: string; // CUSTOMER NAME
+    businessUnit: string; // BUSINESS UNIT
 }
 
 // SITE
@@ -60,6 +61,7 @@ export enum ParsedJumpType {
     RemoteVnc = "remote-vnc",
     ShellJump = "shell-jump",
     WebJump = "web-jump",
+    ProtocolTunnelJump = "protocol-tunnel-jump",
     WinNt32Msi = "winNT-32-msi",
     WinNt64Msi = "winNT-64-msi",
     MacOsxX86 = "mac-osx-x86",
@@ -83,26 +85,79 @@ export interface SiteExcelParseResult {
     site: ParsedSite;
     siteAdministrators: ParsedSiteAdministrator[];
     siteManagers: ParsedSiteManager[];
+    siteApprovers: string[];
     supportTeams: ParsedSupportTeam[];
     users: ParsedUser[];
     jumpAssets: ParsedJumpAsset[];
 }
 
+/**
+ * Service for parsing site-related data from Excel files
+ * Handles parsing of customers, sites, administrators, support teams, users, and jump assets
+ */
 @Injectable()
 export class SiteExcelParserService {
+    // Sheet names
+    private static readonly SHEET_SITE = "site";
+    private static readonly SHEET_SUPPORT_TEAMS = "support_teams";
+    private static readonly SHEET_USERS = "users";
+    private static readonly SHEET_HOSTS = "hosts";
+
+    // Row indices for site sheet
+    private static readonly SITE_SHEET_HEADER_ROW = 1;
+    private static readonly SITE_SHEET_DATA_START_ROW = 2;
+
+    // Row indices for other sheets
+    private static readonly DEFAULT_HEADER_ROW = 0;
+    private static readonly DEFAULT_DATA_START_ROW = 1;
+
+    // Jump asset column indices
+    private static readonly JUMP_ASSET_TEAMS_START_COL = 5;
+    private static readonly JUMP_ASSET_TEAMS_END_COL = 11;
+
+    // Header names for site sheet
+    private static readonly HEADERS = {
+        MARLINK_CUSTOMER_ID: "MARLINK CUSTOMER ID",
+        CUSTOMER_NAME: "CUSTOMER NAME",
+        BUSINESS_UNIT: "BUSINESS UNIT",
+        MARLINK_SITE_ID: "MARLINK SITE ID",
+        SITE_NAME: "SITE NAME",
+        SITE_ADMIN_USERNAME: "SITE ADMINISTRATOR USERNAME",
+        SITE_ADMIN_EMAIL: "SITE ADMINISTRATOR EMAIL",
+        IS_ADMIN_OPERATOR: "IS ADMIN OPERATOR",
+        SITE_MANAGER_USERNAME: "SITE MANAGER USERNAME",
+        SITE_MANAGER_EMAIL: "SITE MANAGER EMAIL",
+        SITE_APPROVER_EMAIL: "SITE APPROVER EMAIL",
+    };
+
+    /**
+     * Parses an Excel file and extracts site-related data
+     * @param file The Excel file to parse
+     * @returns Promise resolving to parsed site data
+     * @throws Error if file parsing fails or required sheets are missing
+     */
     public parse(file: File): Promise<SiteExcelParseResult> {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = (e: any) => {
+
+            reader.onload = (e: ProgressEvent<FileReader>) => {
                 try {
-                    const data = new Uint8Array(e.target.result);
+                    if (!e.target?.result) {
+                        throw new Error("Failed to read file");
+                    }
+
+                    const data = new Uint8Array(e.target.result as ArrayBuffer);
                     const workbook = XLSX.read(data, { type: "array" });
 
+                    this.validateWorkbook(workbook);
+
+                    // Parse all sections
                     const customer = this.parseCustomer(workbook);
                     const site = this.parseSite(workbook);
                     const siteAdministrators =
                         this.parseSiteAdministrators(workbook);
                     const siteManagers = this.parseSiteManagers(workbook);
+                    const siteApprovers = this.parseSiteApprovers(workbook);
                     const supportTeams = this.parseSupportTeams(workbook);
                     const users = this.parseUsers(workbook);
                     const jumpAssets = this.parseJumpAssets(workbook);
@@ -112,80 +167,170 @@ export class SiteExcelParserService {
                         site,
                         siteAdministrators,
                         siteManagers,
+                        siteApprovers,
                         supportTeams,
                         users,
                         jumpAssets,
                     });
                 } catch (err) {
-                    reject(err);
+                    const errorMessage =
+                        err instanceof Error
+                            ? err.message
+                            : "Unknown error occurred while parsing Excel file";
+                    reject(new Error(`Excel parsing failed: ${errorMessage}`));
                 }
             };
-            reader.onerror = reject;
+
+            reader.onerror = () => {
+                reject(new Error("Failed to read Excel file"));
+            };
+
             reader.readAsArrayBuffer(file);
         });
     }
 
+    /**
+     * Validates that the workbook contains all required sheets
+     */
+    private validateWorkbook(workbook: XLSX.WorkBook): void {
+        const requiredSheets = [
+            SiteExcelParserService.SHEET_SITE,
+            SiteExcelParserService.SHEET_SUPPORT_TEAMS,
+            SiteExcelParserService.SHEET_USERS,
+            SiteExcelParserService.SHEET_HOSTS,
+        ];
+
+        const missingSheets = requiredSheets.filter(
+            (sheetName) => !workbook.Sheets[sheetName],
+        );
+
+        if (missingSheets.length > 0) {
+            throw new Error(
+                `Missing required sheet(s): ${missingSheets.join(", ")}`,
+            );
+        }
+    }
+
+    /**
+     * Reads a sheet and returns it as a 2D array
+     */
+    private readSheet(workbook: XLSX.WorkBook, sheetName: string): any[][] {
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) {
+            throw new Error(`Sheet "${sheetName}" not found`);
+        }
+        return XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 });
+    }
+
+    /**
+     * Parses customer information from the site sheet
+     */
     private parseCustomer(workbook: XLSX.WorkBook): ParsedCustomer {
-        const sheet = XLSX.utils.sheet_to_json<any[]>(workbook.Sheets["site"], {
-            header: 1,
-        });
-        const headers = sheet[1] as string[];
-        const row = sheet[2] as any[];
+        const sheet = this.readSheet(
+            workbook,
+            SiteExcelParserService.SHEET_SITE,
+        );
+        const headers = sheet[
+            SiteExcelParserService.SITE_SHEET_HEADER_ROW
+        ] as string[];
+        const row = sheet[SiteExcelParserService.SITE_SHEET_DATA_START_ROW];
+
+        if (!row) {
+            throw new Error("Customer data row not found in site sheet");
+        }
 
         return {
-            key: this.valueByHeader(headers, row, "MARLINK CUSTOMER ID"),
-            name: this.valueByHeader(headers, row, "CUSTOMER NAME"),
+            key: this.getValueByHeader(
+                headers,
+                row,
+                SiteExcelParserService.HEADERS.MARLINK_CUSTOMER_ID,
+            ),
+            name: this.getValueByHeader(
+                headers,
+                row,
+                SiteExcelParserService.HEADERS.CUSTOMER_NAME,
+            ),
+            businessUnit: this.getValueByHeader(
+                headers,
+                row,
+                SiteExcelParserService.HEADERS.BUSINESS_UNIT,
+            ),
         };
     }
 
+    /**
+     * Parses site information from the site sheet
+     */
     private parseSite(workbook: XLSX.WorkBook): ParsedSite {
-        const sheet = XLSX.utils.sheet_to_json<any[]>(workbook.Sheets["site"], {
-            header: 1,
-        });
-        const headers = sheet[1] as string[];
-        const row = sheet[2] as any[];
+        const sheet = this.readSheet(
+            workbook,
+            SiteExcelParserService.SHEET_SITE,
+        );
+        const headers = sheet[
+            SiteExcelParserService.SITE_SHEET_HEADER_ROW
+        ] as string[];
+        const row = sheet[SiteExcelParserService.SITE_SHEET_DATA_START_ROW];
+
+        if (!row) {
+            throw new Error("Site data row not found in site sheet");
+        }
 
         return {
-            key: this.valueByHeader(headers, row, "MARLINK SITE ID"),
-            name: this.valueByHeader(headers, row, "SITE NAME"),
+            key: this.getValueByHeader(
+                headers,
+                row,
+                SiteExcelParserService.HEADERS.MARLINK_SITE_ID,
+            ),
+            name: this.getValueByHeader(
+                headers,
+                row,
+                SiteExcelParserService.HEADERS.SITE_NAME,
+            ),
         };
     }
 
+    /**
+     * Parses site administrators from the site sheet
+     */
     private parseSiteAdministrators(
-        workbook: XLSX.WorkBook
+        workbook: XLSX.WorkBook,
     ): ParsedSiteAdministrator[] {
-        const sheet = XLSX.utils.sheet_to_json<any[]>(workbook.Sheets["site"], {
-            header: 1,
-        });
-        const headers = sheet[1] as string[];
+        const sheet = this.readSheet(
+            workbook,
+            SiteExcelParserService.SHEET_SITE,
+        );
+        const headers = sheet[
+            SiteExcelParserService.SITE_SHEET_HEADER_ROW
+        ] as string[];
         const result: ParsedSiteAdministrator[] = [];
 
-        for (let i = 2; i < sheet.length; i++) {
+        for (
+            let i = SiteExcelParserService.SITE_SHEET_DATA_START_ROW;
+            i < sheet.length;
+            i++
+        ) {
             const row = sheet[i];
-            if (
-                this.valueByHeader(headers, row, "SITE ADMINISTRATOR USERNAME")
-            ) {
+            const username = this.getValueByHeader(
+                headers,
+                row,
+                SiteExcelParserService.HEADERS.SITE_ADMIN_USERNAME,
+            );
+
+            if (username) {
                 result.push({
-                    username: this.valueByHeader(
+                    username,
+                    email: this.getValueByHeader(
                         headers,
                         row,
-                        "SITE ADMINISTRATOR USERNAME"
+                        SiteExcelParserService.HEADERS.SITE_ADMIN_EMAIL,
                     ),
-                    email: this.valueByHeader(
-                        headers,
-                        row,
-                        "SITE ADMINISTRATOR EMAIL"
+                    isAdminOperator: this.parseBoolean(
+                        this.getValueByHeader(
+                            headers,
+                            row,
+                            SiteExcelParserService.HEADERS.IS_ADMIN_OPERATOR,
+                        ),
                     ),
-                    isAdminOperator:
-                        (
-                            this.valueByHeader(
-                                headers,
-                                row,
-                                "IS ADMIN OPERATOR"
-                            ) || ""
-                        )
-                            .toString()
-                            .toLowerCase() === "yes",
                 });
             }
         }
@@ -193,27 +338,38 @@ export class SiteExcelParserService {
         return result;
     }
 
+    /**
+     * Parses site managers from the site sheet
+     */
     private parseSiteManagers(workbook: XLSX.WorkBook): ParsedSiteManager[] {
-        const sheet = XLSX.utils.sheet_to_json<any[]>(workbook.Sheets["site"], {
-            header: 1,
-        });
-        const headers = sheet[1] as string[];
+        const sheet = this.readSheet(
+            workbook,
+            SiteExcelParserService.SHEET_SITE,
+        );
+        const headers = sheet[
+            SiteExcelParserService.SITE_SHEET_HEADER_ROW
+        ] as string[];
         const result: ParsedSiteManager[] = [];
 
-        for (let i = 2; i < sheet.length; i++) {
+        for (
+            let i = SiteExcelParserService.SITE_SHEET_DATA_START_ROW;
+            i < sheet.length;
+            i++
+        ) {
             const row = sheet[i];
+            const username = this.getValueByHeader(
+                headers,
+                row,
+                SiteExcelParserService.HEADERS.SITE_MANAGER_USERNAME,
+            );
 
-            if (this.valueByHeader(headers, row, "SITE MANAGER USERNAME")) {
+            if (username) {
                 result.push({
-                    username: this.valueByHeader(
+                    username,
+                    email: this.getValueByHeader(
                         headers,
                         row,
-                        "SITE MANAGER USERNAME"
-                    ),
-                    email: this.valueByHeader(
-                        headers,
-                        row,
-                        "SITE MANAGER EMAIL"
+                        SiteExcelParserService.HEADERS.SITE_MANAGER_EMAIL,
                     ),
                 });
             }
@@ -222,19 +378,58 @@ export class SiteExcelParserService {
         return result;
     }
 
-    private parseSupportTeams(workbook: XLSX.WorkBook): ParsedSupportTeam[] {
-        const sheet = XLSX.utils.sheet_to_json<any[]>(
-            workbook.Sheets["support_teams"],
-            { header: 1 }
+    /**
+     * Parses site approvers from the site sheet
+     */
+    private parseSiteApprovers(workbook: XLSX.WorkBook): string[] {
+        const sheet = this.readSheet(
+            workbook,
+            SiteExcelParserService.SHEET_SITE,
         );
-        const headers = sheet[0] as string[];
+        const headers = sheet[
+            SiteExcelParserService.SITE_SHEET_HEADER_ROW
+        ] as string[];
+        const result: string[] = [];
+
+        for (
+            let i = SiteExcelParserService.SITE_SHEET_DATA_START_ROW;
+            i < sheet.length;
+            i++
+        ) {
+            const row = sheet[i];
+            const email = this.getValueByHeader(
+                headers,
+                row,
+                SiteExcelParserService.HEADERS.SITE_APPROVER_EMAIL,
+            );
+
+            if (email) {
+                result.push(email);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Parses support teams from the support_teams sheet
+     */
+    private parseSupportTeams(workbook: XLSX.WorkBook): ParsedSupportTeam[] {
+        const sheet = this.readSheet(
+            workbook,
+            SiteExcelParserService.SHEET_SUPPORT_TEAMS,
+        );
         const result: ParsedSupportTeam[] = [];
 
-        for (let i = 1; i < sheet.length; i++) {
+        for (
+            let i = SiteExcelParserService.DEFAULT_DATA_START_ROW;
+            i < sheet.length;
+            i++
+        ) {
             const row = sheet[i];
             if (row && row[0]) {
                 result.push({
-                    teamName: row[0],
+                    teamName: this.sanitizeValue(row[0]),
                     accessLevel: this.parseAccessLevel(row[1]),
                     trustLevel: this.parseTrustLevel(row[2]),
                 });
@@ -244,22 +439,28 @@ export class SiteExcelParserService {
         return result;
     }
 
+    /**
+     * Parses users from the users sheet
+     */
     private parseUsers(workbook: XLSX.WorkBook): ParsedUser[] {
-        const sheet = XLSX.utils.sheet_to_json<any[]>(
-            workbook.Sheets["users"],
-            { header: 1 }
+        const sheet = this.readSheet(
+            workbook,
+            SiteExcelParserService.SHEET_USERS,
         );
-        const headers = sheet[0] as string[];
         const result: ParsedUser[] = [];
 
-        for (let i = 1; i < sheet.length; i++) {
+        for (
+            let i = SiteExcelParserService.DEFAULT_DATA_START_ROW;
+            i < sheet.length;
+            i++
+        ) {
             const row = sheet[i];
             if (row && row[0]) {
                 result.push({
-                    firstName: row[0],
-                    lastName: row[1],
-                    email: row[2],
-                    teamName: row[3],
+                    firstName: this.sanitizeValue(row[0]),
+                    lastName: this.sanitizeValue(row[1]),
+                    email: this.sanitizeValue(row[2]),
+                    teamName: this.sanitizeValue(row[3]),
                 });
             }
         }
@@ -267,29 +468,36 @@ export class SiteExcelParserService {
         return result;
     }
 
+    /**
+     * Parses jump assets from the hosts sheet
+     */
     private parseJumpAssets(workbook: XLSX.WorkBook): ParsedJumpAsset[] {
-        const sheet = XLSX.utils.sheet_to_json<any[]>(
-            workbook.Sheets["hosts"],
-            { header: 1 }
+        const sheet = this.readSheet(
+            workbook,
+            SiteExcelParserService.SHEET_HOSTS,
         );
-        const headers = sheet[0] as string[];
         const result: ParsedJumpAsset[] = [];
 
-        for (let i = 1; i < sheet.length; i++) {
+        for (
+            let i = SiteExcelParserService.DEFAULT_DATA_START_ROW;
+            i < sheet.length;
+            i++
+        ) {
             const row = sheet[i];
             if (row && row[0]) {
-                const protocol = (row[2] || "").toString().toUpperCase();
-                const jumpAsset = {
-                    hostname: row[0],
-                    name: row[1],
-                    jumpItemType: this.parseJumpItemType(row[2]),
-                    jumpType: this.parseJumpType(row[2]),
-                    port: row[3] ? parseInt(row[3], 10) : undefined,
-                    protocolType: this.parseProtocolType(row[2]),
-                    comments: row[4] || undefined,
-                    teams: [row[5], row[6]].filter(Boolean),
-                };
-                result.push(jumpAsset as ParsedJumpAsset);
+                const protocol = this.sanitizeValue(row[2]).toUpperCase();
+                const port = row[3] ? parseInt(row[3], 10) : undefined;
+
+                result.push({
+                    hostname: this.sanitizeValue(row[0]),
+                    name: this.sanitizeValue(row[1]),
+                    jumpItemType: this.parseJumpItemType(protocol),
+                    jumpType: this.parseJumpType(protocol),
+                    port: isNaN(port!) ? undefined : port,
+                    protocolType: this.parseProtocolType(protocol),
+                    comments: row[4] ? this.sanitizeValue(row[4]) : undefined,
+                    teams: this.extractTeams(row),
+                });
             }
         }
 
@@ -297,70 +505,140 @@ export class SiteExcelParserService {
     }
 
     // --- Helper methods ---
-    private valueByHeader(
+
+    /**
+     * Gets a value from a row by header name
+     */
+    private getValueByHeader(
         headers: string[],
         row: any[],
-        headerName: string
+        headerName: string,
     ): string {
         const idx = headers.indexOf(headerName);
-
         return idx !== -1 && row[idx] !== undefined
-            ? row[idx].toString().trim()
+            ? this.sanitizeValue(row[idx])
             : "";
     }
 
-    private parseAccessLevel(val: string): ParsedAccessLevel {
-        return (val || "").toLowerCase().includes("full")
+    /**
+     * Sanitizes a value by converting to string and trimming whitespace
+     */
+    private sanitizeValue(val: any): string {
+        return val !== null && val !== undefined ? val.toString().trim() : "";
+    }
+
+    /**
+     * Parses a boolean value from various formats (YES/NO, true/false, 1/0)
+     */
+    private parseBoolean(val: string): boolean {
+        return val.toLowerCase() === "yes" || val.toLowerCase() === "true";
+    }
+
+    /**
+     * Extracts team names from a row
+     */
+    private extractTeams(row: any[]): string[] {
+        return row
+            .slice(
+                SiteExcelParserService.JUMP_ASSET_TEAMS_START_COL,
+                SiteExcelParserService.JUMP_ASSET_TEAMS_END_COL,
+            )
+            .filter(
+                (v): v is string =>
+                    v !== null &&
+                    v !== undefined &&
+                    typeof v === "string" &&
+                    v.trim() !== "",
+            )
+            .map((s) => s.trim());
+    }
+
+    /**
+     * Parses access level from string value
+     */
+    private parseAccessLevel(val: any): ParsedAccessLevel {
+        const normalized = this.sanitizeValue(val).toLowerCase();
+        return normalized.includes("full")
             ? ParsedAccessLevel.Full
             : ParsedAccessLevel.Limited;
     }
 
-    private parseTrustLevel(val: string): ParsedTrustLevel {
-        const v = (val || "")
-            .toString()
+    /**
+     * Parses trust level from string value
+     */
+    private parseTrustLevel(val: any): ParsedTrustLevel {
+        const normalized = this.sanitizeValue(val)
             .toLowerCase()
             .replace(/[\s\-]/g, "");
 
-        if (v.includes("no")) return ParsedTrustLevel.NoRestrictions;
-        if (v.includes("notify")) return ParsedTrustLevel.NotifyOnly;
+        if (normalized.includes("no")) {
+            return ParsedTrustLevel.NoRestrictions;
+        }
+        if (normalized.includes("notify")) {
+            return ParsedTrustLevel.NotifyOnly;
+        }
 
         return ParsedTrustLevel.RequireAuth;
     }
 
-    private parseJumpItemType(val: string): ParsedJumpItemType {
-        const s = (val || "").toString().toUpperCase();
-
-        if (s.startsWith("JUMP CLIENT")) return ParsedJumpItemType.JumpClient;
-
-        return ParsedJumpItemType.JumpItem;
+    /**
+     * Parses jump item type from protocol string
+     */
+    private parseJumpItemType(protocol: string): ParsedJumpItemType {
+        return protocol.startsWith("JUMP CLIENT")
+            ? ParsedJumpItemType.JumpClient
+            : ParsedJumpItemType.JumpItem;
     }
 
-    private parseJumpType(val: string): ParsedJumpType {
-        const v = (val || "").toString().toUpperCase();
+    /**
+     * Parses jump type from protocol string
+     */
+    private parseJumpType(protocol: string): ParsedJumpType {
+        const protocolMap: Record<string, ParsedJumpType> = {
+            RDP: ParsedJumpType.RemoteRdp,
+            VNC: ParsedJumpType.RemoteVnc,
+            SSH: ParsedJumpType.ShellJump,
+            TELNET: ParsedJumpType.ShellJump,
+            "WEB INTERFACE": ParsedJumpType.WebJump,
+            "PROTOCOL TUNNEL": ParsedJumpType.ProtocolTunnelJump,
+        };
 
-        if (v === "RDP") return ParsedJumpType.RemoteRdp;
-        if (v === "VNC") return ParsedJumpType.RemoteVnc;
-        if (v === "SSH" || v === "TELNET") return ParsedJumpType.ShellJump;
-        if (v === "WEB INTERFACE") return ParsedJumpType.WebJump;
-        if (v.includes("WINDOWS X86")) return ParsedJumpType.WinNt32Msi;
-        if (v.includes("WINDOWS X64")) return ParsedJumpType.WinNt64Msi;
-        if (v.includes("MAC OS")) return ParsedJumpType.MacOsxX86;
-        if (v.includes("PI OS HEADLESS"))
+        // Check exact matches first
+        if (protocolMap[protocol]) {
+            return protocolMap[protocol];
+        }
+
+        // Check partial matches
+        if (protocol.includes("WINDOWS X86")) {
+            return ParsedJumpType.WinNt32Msi;
+        }
+        if (protocol.includes("WINDOWS X64")) {
+            return ParsedJumpType.WinNt64Msi;
+        }
+        if (protocol.includes("MAC OS")) {
+            return ParsedJumpType.MacOsxX86;
+        }
+        if (protocol.includes("PI OS HEADLESS")) {
             return ParsedJumpType.Linux32Armv7Headless;
-        if (v.includes("LINUX X64 HEADLESS"))
+        }
+        if (protocol.includes("LINUX X64 HEADLESS")) {
             return ParsedJumpType.Linux64X86Headless;
-        if (v.includes("LINUX X64")) return ParsedJumpType.Linux64X86;
+        }
+        if (protocol.includes("LINUX X64")) {
+            return ParsedJumpType.Linux64X86;
+        }
 
+        // Default fallback
         return ParsedJumpType.RemoteRdp;
     }
 
-    private parseProtocolType(val: string): string | undefined {
-        const v = (val || "").toString().toUpperCase();
-
-        if (v === "SSH" || v === "TELNET") {
-            return v.toLowerCase();
+    /**
+     * Parses protocol type (ssh/telnet) from protocol string
+     */
+    private parseProtocolType(protocol: string): string | undefined {
+        if (protocol === "SSH" || protocol === "TELNET") {
+            return protocol.toLowerCase();
         }
-
         return undefined;
     }
 }

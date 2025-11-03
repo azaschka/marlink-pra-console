@@ -73,3 +73,34 @@
 .cdk-overlay-pane {
     max-width: 95vw !important;
 }
+
+.scroll-container {
+    max-height: 480px;
+    overflow: auto;
+
+    /* Custom Scrollbar – Webkit Browsers */
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 8px;
+        border: 2px solid #fafbfc;
+        min-height: 24px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: #cbd5e1;
+    }
+
+    &::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+
+    // Optional for Firefox
+    scrollbar-color: #e2e8f0 #fafbfc;
+    scrollbar-width: thin;
+}

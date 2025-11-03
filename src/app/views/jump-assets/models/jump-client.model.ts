@@ -37,4 +37,8 @@ export interface JumpClient {
     lastAccessDate?: Date;
     endpointAgreementPolicyType?: JumpClientEndpointAgreementPolicyType;
     jumpointProxy?: string | null;
+
+    /* temporary */
+    jumpGroupName?: string;
+    jumpPolicyName?: string;
 }

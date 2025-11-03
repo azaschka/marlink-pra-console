@@ -10,7 +10,6 @@ export interface CreateShellJumpDtoInput {
     hostname: string;
     jumpGroupId: number;
     protocolType: ShellJumpProtocolType;
-
     port?: number;
     jumpGroupType?: JumpGroupType;
     terminalType?: ShellJumpTerminalType;

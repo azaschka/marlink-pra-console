@@ -1,14 +1,14 @@
 export enum BusinessUnit {
     MT = "MT",
     OA = "OA",
-    DI = "DI",
+    MC = "MC",
     EG = "EG",
     TE = "TE",
 }
 export const BusinessUnitLabels: Record<BusinessUnit, string> = {
     [BusinessUnit.MT]: "Maritime",
-    [BusinessUnit.OA]: "Omniacces",
-    [BusinessUnit.DI]: "Diverto",
+    [BusinessUnit.OA]: "Omniaccess",
+    [BusinessUnit.MC]: "Marlink Cyber",
     [BusinessUnit.EG]: "EEG",
     [BusinessUnit.TE]: "Telemar",
 };

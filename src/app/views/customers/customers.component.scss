@@ -21,10 +21,15 @@
     text-overflow: ellipsis;
     max-width: 100%;
 }
-
 .mat-column-isDeactivated {
     flex: 0 0 46px;
     width: 46px;
+}
+.mat-column-businessUnit,
+.mat-column-key {
+    flex: 0 0 100px;
+    width: 100px;
+    white-space: nowrap;
 }
 .mat-column-name {
     flex: 1 1 auto;
@@ -34,7 +39,6 @@
     width: 150px;
     justify-content: center;
 }
-.mat-column-key,
 .mat-column-lastModificationDate,
 .mat-column-creationDate {
     flex: 0 0 150px;

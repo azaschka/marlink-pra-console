@@ -1,5 +1,5 @@
 <div class="sidebar-panel">
-    <div id="scroll-area" class="navigation-hold" fxLayout="column">
+    <div class="navigation-hold scroll-area" fxLayout="column">
         <div class="sidebar-hold">
             <!-- App Logo -->
             <div class="branding">
@@ -16,11 +16,12 @@
                 <div class="app-user-photo">
                     <mat-icon>person_outline</mat-icon>
                 </div>
-                <span class="app-user-name mb-8">{{ displayName }}
-                    <button *ngIf="isLoggedInUser" mat-icon-button mat-xs-button matTooltip="Sign Out"
+                <span class="app-user-name mb-8">
+                    <span style="font-weight: 400;">{{ displayName }}</span>
+                    <!-- <button *ngIf="isLoggedInUser" mat-icon-button mat-xs-button matTooltip="Sign Out"
                         (click)="logoutUser()">
                         <mat-icon>exit_to_app</mat-icon>
-                    </button>
+                    </button> -->
                 </span>
 
                 <!-- Small buttons -->
@@ -69,7 +70,7 @@
                 [iconMenuTitle]="iconTypeMenuTitle"></app-sidenav>
         </div>
     </div>
-    <div class="absolute bottom full-width">
-        <p class="text-muted text-12 mx-24">PRA Console v0.1.0</p>
+    <div class="pra-version-info absolute bottom full-width">
+        <p class="mx-24 my-16">PRA Admin v{{ appVersion }}</p>
     </div>
 </div>

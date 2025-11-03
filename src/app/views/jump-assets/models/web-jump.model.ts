@@ -21,4 +21,9 @@ export interface WebJump {
     passwordField?: string | null;
     submitField?: string | null;
     sessionPolicyId?: number | null;
+
+    /* temporary */
+    jumpGroupName?: string;
+    jumpointName?: string;
+    jumpPolicyName?: string;
 }

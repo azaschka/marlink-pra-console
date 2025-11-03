@@ -11,6 +11,10 @@ import { NotificationDialogService } from "../../shared/dialogs/notification-dia
 import { SitesService } from "./sites.service";
 import { Site } from "./models";
 import { ImportExcelOverlayComponent } from "./components/import-excel-overlay/import-excel-overlay.component";
+import { Customer } from "../customers/models";
+import { CustomersService } from "../customers/customers.service";
+import { BusinessUnit } from "../pra-users/enums";
+import { PraDataFilter } from "app/shared/helpers";
 
 @Component({
     selector: "app-sites",
@@ -23,7 +27,8 @@ export class SitesComponent implements OnInit, OnDestroy {
     private static readonly DISPLAYED_COLUMNS = [
         "key",
         "name",
-        "customerKey",
+        "customerName",
+        "jumpointCodeNames",
         "creationDate",
         "lastModificationDate",
         "actions",
@@ -42,12 +47,17 @@ export class SitesComponent implements OnInit, OnDestroy {
     public filterValue = "";
     public dataCount = 0;
 
+    private customers: Customer[] = [];
+
+    private currentBusinessUnit: BusinessUnit | null | undefined;
+
     private readonly subscriptionsToClear: Subscription;
 
     constructor(
         private readonly dialog: MatDialog,
         private readonly jwtAuthService: JwtAuthService,
         private readonly sitesService: SitesService,
+        private readonly customersService: CustomersService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService
@@ -75,6 +85,13 @@ export class SitesComponent implements OnInit, OnDestroy {
         this.applyFilter();
     }
 
+    public downloadTemplateHandler(): void {
+        const link = document.createElement("a");
+        link.href = "assets/templates/PRA Ingestion Template.xlsx";
+        link.download = "PRA Ingestion Template.xlsx";
+        link.click();
+    }
+
     public importExcelHandler(): void {
         this.dialog
             .open(ImportExcelOverlayComponent, {
@@ -83,7 +100,6 @@ export class SitesComponent implements OnInit, OnDestroy {
             .afterClosed()
             .subscribe((result) => {
                 if (result) {
-                    console.log("Imported data:", result);
                     this.loadPage();
                 }
             });
@@ -123,15 +139,29 @@ export class SitesComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.loaderMode = "indeterminate";
         try {
-            const items = await this.sitesService.fetchSites();
-            this.dataSource.data = items;
+            const [sites, customers] = await Promise.all([
+                this.sitesService.fetchSites(),
+                this.customersService.fetchCustomers(),
+            ]);
+            this.customers = customers;
+            const customerBUByKey = new Map(
+                this.customers.map((c) => [c.key, c.businessUnit])
+            );
+            const filteredSites = PraDataFilter.filterByBusinessUnit(
+                sites,
+                this.currentBusinessUnit,
+                [(site) => customerBUByKey.get(site.customerKey) ?? undefined]
+            );
+
+            this.dataSource.data = filteredSites;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
-            this.dataCount = items.length;
+            this.dataCount = filteredSites.length;
 
-            setTimeout(() => {
-                this.loadJumpointCodeName();
-            }, 10);
+            setTimeout(() => this.loadVisibleJumpointCodeNames(), 10);
+            // this.paginator.page.subscribe(() =>
+            //     this.loadVisibleJumpointCodeNames()
+            // );
         } catch (err: any) {
             await this.errorDialog.show({
                 title: "Error",
@@ -142,7 +172,46 @@ export class SitesComponent implements OnInit, OnDestroy {
         }
     }
 
-    private loadJumpointCodeName(): void {}
+    private loadVisibleJumpointCodeNames(): void {
+        const data = this.dataSource.filteredData || this.dataSource.data;
+        const pageIndex = this.paginator.pageIndex || 0;
+        const pageSize = this.paginator.pageSize || 20;
+        const start = pageIndex * pageSize;
+        const end = start + pageSize;
+        const currentPageItems = data; // data.slice(start, end);
+
+        for (const site of currentPageItems) {
+            if (
+                site.jumpPointCodeName === undefined &&
+                !site.jumpPointCodeName?.includes("Loading")
+            ) {
+                site.jumpPointCodeName = "Loading ...";
+                this.sitesService
+                    .fetchSiteJumpoints(site.id)
+                    .then((res) => {
+                        if (res.length) {
+                            site.jumpPointCodeName = res
+                                .map((j) => j.codeName)
+                                .join(", ");
+                        } else {
+                            site.jumpPointCodeName = "Not Available";
+                        }
+                    })
+                    .catch(() => {
+                        site.jumpPointCodeName = "Not Available";
+                    });
+            }
+
+            if (site.customerKey) {
+                const customer = this.customers.find(
+                    (c) => c.key === site.customerKey
+                );
+                site.customerName = customer ? customer.name : "—";
+            } else {
+                site.customerName = "—";
+            }
+        }
+    }
 
     private addListeners(): void {
         this.subscriptionsToClear.add(
@@ -150,6 +219,8 @@ export class SitesComponent implements OnInit, OnDestroy {
                 if (!user || user.role === "None") {
                     this.jwtAuthService.checkTokenIsValid();
                 }
+
+                this.currentBusinessUnit = user.businessUnit;
             })
         );
     }

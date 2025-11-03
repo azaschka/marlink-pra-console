@@ -1,6 +1,11 @@
 import { Injectable } from "@angular/core";
-import { HttpClient, HttpParams } from "@angular/common/http";
+import {
+    HttpClient,
+    HttpErrorResponse,
+    HttpParams,
+} from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
+import { ErrorUtils } from "../../shared/helpers";
 import {
     User,
     UserCreateRequest,
@@ -19,7 +24,19 @@ export class UsersService {
     }
 
     public async createUser(body: UserCreateRequest): Promise<User> {
-        return firstValueFrom(this.http.post<User>("users", body));
+        try {
+            return await firstValueFrom(this.http.post<User>("users", body));
+        } catch (error) {
+            if (error && error instanceof HttpErrorResponse) {
+                const messages = ErrorUtils.extractMessages(error.error);
+                let errorMessage = "- Status code: " + error.status;
+                errorMessage += "<br>- " + messages.join("<br>- ");
+
+                throw new Error(errorMessage);
+            }
+
+            throw new Error("Failed to create user. Please try again later.");
+        }
     }
 
     public async updateUser(

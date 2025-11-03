@@ -9,11 +9,13 @@ import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confir
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { CustomersService } from "./customers.service";
+import { BusinessUnit } from "../pra-users/enums";
 import { Customer } from "./models";
 import {
     CustomerOverlayComponent,
     CustomerOverlayDialogData,
 } from "./components/customer-overlay/customer-overlay.component";
+import { PraDataFilter } from "app/shared/helpers";
 
 @Component({
     selector: "app-customers",
@@ -25,6 +27,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
         "isDeactivated",
+        "businessUnit",
         "key",
         "name",
         "totalLicenseUsage",
@@ -44,6 +47,8 @@ export class CustomersComponent implements OnInit, OnDestroy {
     public isLoading = true;
     public filterValue = "";
     public dataCount = 0;
+
+    private currentBusinessUnit: BusinessUnit | null | undefined;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -115,7 +120,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
     public async deactivateCustomerHandler(customer: Customer): Promise<void> {
         const confirmed = await this.confirmDialog.show({
             title: "Deactivate Customer",
-            message: `Are you sure you want to deactivate customer:<br><strong>${customer.name} (${customer.key})</strong>?<br><br>The deactivation <strong>cannot be undone!</strong>`,
+            message: `Are you sure you want to deactivate customer:<br><strong>${customer.name} (${customer.key})</strong>?<br><br>When deactivated, all associated users won't be able to login to the system until the customer is reactivated.`,
         });
         if (confirmed) {
             this.isLoading = true;
@@ -137,27 +142,50 @@ export class CustomersComponent implements OnInit, OnDestroy {
         }
     }
 
-    public async reactivateCustomerHandler(user: Customer): Promise<void> {
-        await this.confirmDialog.show({
+    public async reactivateCustomerHandler(customer: Customer): Promise<void> {
+        const confirmed = await this.confirmDialog.show({
             title: "Reactivate Customer",
-            message: `Reactivating a customer is not implemented yet.`,
+            message: `Are you sure you want to reactivate customer:<br><strong>${customer.name} (${customer.key})</strong>?`,
         });
+        if (confirmed) {
+            this.isLoading = true;
+            try {
+                await this.customersService.reactivateCustomer(customer.id);
+                this.notificationDialog.show({
+                    message: `Customer "${customer.name}" has been reactivated.`,
+                });
+                await this.loadPage();
+            } catch (err: any) {
+                this.errorDialog.show({
+                    title: "Reactivate Customer Failed",
+                    message:
+                        err?.message ||
+                        "The customer could not be reactivated. Please try again later.",
+                });
+                this.isLoading = false;
+            }
+        }
     }
 
     private async loadPage(): Promise<void> {
         this.isLoading = true;
         try {
             const items = await this.customersService.fetchCustomers();
+            const filteredItems = PraDataFilter.filterByBusinessUnit(
+                items,
+                this.currentBusinessUnit,
+                [(c) => c.businessUnit]
+            );
 
-            for (const c of items) {
+            for (const c of filteredItems) {
                 c.licenseUsageLoading = false;
                 c.totalLicenseUsage = undefined;
             }
 
-            this.dataSource.data = items;
+            this.dataSource.data = filteredItems;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
-            this.dataCount = items.length;
+            this.dataCount = filteredItems.length;
 
             setTimeout(() => this.loadVisibleLicenseUsages(), 10);
             // this.paginator.page.subscribe(() =>
@@ -208,6 +236,8 @@ export class CustomersComponent implements OnInit, OnDestroy {
                 if (!user || user.role === "None") {
                     this.jwtAuthService.checkTokenIsValid();
                 }
+
+                this.currentBusinessUnit = user.businessUnit;
             })
         );
     }

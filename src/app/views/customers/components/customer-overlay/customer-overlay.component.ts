@@ -27,8 +27,8 @@ export class CustomerOverlayComponent implements OnInit {
 
     public businessUnits = [
         { value: "MT", label: "Maritime" },
-        { value: "OA", label: "Omniacces" },
-        { value: "DI", label: "Diverto" },
+        { value: "OA", label: "Omniaccess" },
+        { value: "MC", label: "Marlink Cyber" },
         { value: "EG", label: "EEG" },
         { value: "TE", label: "Telemar" },
     ];

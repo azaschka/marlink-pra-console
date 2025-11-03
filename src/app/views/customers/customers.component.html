@@ -36,6 +36,12 @@
                     </mat-cell>
                 </ng-container>
 
+                <!-- Business Unit -->
+                <ng-container matColumnDef="businessUnit">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Business Unit</mat-header-cell>
+                    <mat-cell *matCellDef="let row">{{ row.businessUnit }}</mat-cell>
+                </ng-container>
+
                 <!-- Customer ID -->
                 <ng-container matColumnDef="key">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>Customer ID</mat-header-cell>
@@ -45,7 +51,7 @@
                 <!-- Customer Name -->
                 <ng-container matColumnDef="name">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>Customer Name</mat-header-cell>
-                    <mat-cell *matCellDef="let row">{{ row.name }}</mat-cell>
+                    <mat-cell *matCellDef="let row" [matTooltip]="row.name">{{ row.name }}</mat-cell>
                 </ng-container>
 
                 <!-- License Usage -->
@@ -84,12 +90,12 @@
                         </button>
                         <button *ngIf="!row.isDeactivated" mat-icon-button color="warn"
                             (click)="deactivateCustomerHandler(row)" matTooltip="Deactivate Customer">
-                            <mat-icon>domain_disabled</mat-icon>
+                            <mat-icon>block</mat-icon>
                         </button>
-                        <!-- <button *ngIf="row.isDeactivated" mat-icon-button color="primary"
+                        <button *ngIf="row.isDeactivated" mat-icon-button color="primary"
                             (click)="reactivateCustomerHandler(row)" matTooltip="Reactivate Customer">
-                            <mat-icon>domain_verification</mat-icon>
-                        </button> -->
+                            <mat-icon>published_with_changes</mat-icon>
+                        </button>
                     </mat-cell>
                 </ng-container>
 

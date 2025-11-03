@@ -12,12 +12,16 @@
         </div>
         <div fxFlex></div>
         <div class="pl-16">
+            <button mat-stroked-button class="m-16" color="primary" (click)="downloadTemplateHandler()">
+                Download Template
+            </button>
+
             <button mat-raised-button class="m-16" color="primary" translate="views.sites.buttons.import"
                 (click)="importExcelHandler()">
             </button>
-            <button mat-raised-button class="m-16" color="primary" translate="views.sites.buttons.add"
+            <!-- <button mat-raised-button class="m-16" color="primary" translate="views.sites.buttons.add"
                 (click)="addSiteHandler()" disabled>
-            </button>
+            </button> -->
         </div>
     </div>
 
@@ -41,13 +45,34 @@
                 <!-- Name -->
                 <ng-container matColumnDef="name">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>Site Name</mat-header-cell>
-                    <mat-cell *matCellDef="let row">{{ row.name }}</mat-cell>
+                    <mat-cell *matCellDef="let row" [matTooltip]="row.name">{{ row.name }}</mat-cell>
                 </ng-container>
 
                 <!-- Customer Key -->
-                <ng-container matColumnDef="customerKey">
+                <!-- <ng-container matColumnDef="customerKey">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>Customer ID</mat-header-cell>
                     <mat-cell *matCellDef="let row">{{ row.customerKey }}</mat-cell>
+                </ng-container> -->
+
+                <!-- Customer Name -->
+                <ng-container matColumnDef="customerName">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Customer Name</mat-header-cell>
+                    <mat-cell *matCellDef="let row" [matTooltip]="row.customerName">{{ row.customerName }}</mat-cell>
+                </ng-container>
+
+                <!-- Jumpoint Code Names -->
+                <ng-container matColumnDef="jumpointCodeNames">
+                    <mat-header-cell *matHeaderCellDef>Jumpoint Code Name(s)</mat-header-cell>
+                    <mat-cell *matCellDef="let site" [matTooltip]="site.jumpPointCodeName">
+                        <ng-container
+                            *ngIf="site.jumpPointCodeName === undefined || site.jumpPointCodeName.includes('Loading')">
+                            <mat-progress-spinner [diameter]="18" mode="indeterminate" color="primary" class="mr-8"
+                                style="vertical-align: middle;"></mat-progress-spinner>
+                        </ng-container>
+                        <ng-container *ngIf="site.jumpPointCodeName">
+                            {{ site.jumpPointCodeName }}
+                        </ng-container>
+                    </mat-cell>
                 </ng-container>
 
                 <!-- Last Modification Date -->
@@ -69,7 +94,7 @@
                     <mat-header-cell *matHeaderCellDef></mat-header-cell>
                     <mat-cell *matCellDef="let row">
                         <button mat-icon-button color="warn" (click)="deleteSiteHandler(row)">
-                            <mat-icon>exit_to_app</mat-icon>
+                            <mat-icon>delete</mat-icon>
                         </button>
                     </mat-cell>
                 </ng-container>

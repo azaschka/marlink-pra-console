@@ -34,6 +34,8 @@ export class JwtAuthService {
             username: "anonymous",
             displayName: "Anonymous",
             role: "None",
+            businessUnit: undefined,
+            canManagePraUsers: undefined,
         });
         this.praUser = this.userProfile.asObservable();
     }

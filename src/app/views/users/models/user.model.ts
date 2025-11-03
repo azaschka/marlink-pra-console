@@ -1,5 +1,6 @@
 import {
     UserAllowedAccessPermissionType,
+    UserEndpointAutomationPermissionType,
     UserViewSupportReportsPermissionType,
     UserViewVaultReportsPermissionType,
 } from "../enums";
@@ -54,6 +55,6 @@ export interface User {
     hasProtocolTunnelPermission?: boolean;
     hasSdStaticPortForExternalToolsPermission?: boolean;
     hasVaultPermission?: boolean;
-    hasEndpointAutomationPermission?: boolean;
+    endpointAutomationPermissionType?: UserEndpointAutomationPermissionType;
     lastSyncDate: string;
 }

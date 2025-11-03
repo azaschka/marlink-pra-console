@@ -5,7 +5,6 @@ export interface CreateRemoteVncDtoInput {
     jumpointId: number;
     hostname: string;
     jumpGroupId: number;
-
     port?: number;
     jumpGroupType?: JumpGroupType;
     tag?: string;

@@ -20,9 +20,9 @@
                     [filename]="generateCsvExportFileName()">
                     Export CSV
                 </a> -->
-            <a mat-stroked-button color="primary" class="m-16" disabled>
+            <!-- <a mat-stroked-button color="primary" class="m-16" disabled>
                 Export CSV
-            </a>
+            </a> -->
         </div>
     </div>
 
@@ -38,35 +38,43 @@
                     <mat-cell *matCellDef="let row"></mat-cell>
                 </ng-container>
 
-                <!-- Hostname -->
+                <!-- JumpGroup Name -->
+                <ng-container matColumnDef="jumpGroupName">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>JumpGroup Name</mat-header-cell>
+                    <mat-cell *matCellDef="let row"
+                        [matTooltip]="row.jumpGroupName">{{ row.jumpGroupName || '—' }}</mat-cell>
+                </ng-container>
+
+                <!-- Tag -->
+                <ng-container matColumnDef="tag">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Tag</mat-header-cell>
+                    <mat-cell *matCellDef="let row" [matTooltip]="row.tag">{{ row.tag || '—' }}</mat-cell>
+                </ng-container>
+
+                <!-- IP / Host -->
                 <ng-container matColumnDef="hostname">
-                    <mat-header-cell *matHeaderCellDef mat-sort-header>Hostname</mat-header-cell>
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>IP / Host</mat-header-cell>
                     <mat-cell *matCellDef="let row">{{ row.hostname }}</mat-cell>
                 </ng-container>
 
                 <!-- Name -->
                 <ng-container matColumnDef="name">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
-                    <mat-cell *matCellDef="let row">{{ row.name || '—' }}</mat-cell>
+                    <mat-cell *matCellDef="let row" [matTooltip]="row.name">{{ row.name || '—' }}</mat-cell>
                 </ng-container>
 
-                <!-- JumpGroup ID -->
-                <ng-container matColumnDef="jumpGroupId">
-                    <mat-header-cell *matHeaderCellDef>JumpGroup ID</mat-header-cell>
-                    <mat-cell *matCellDef="let row">{{ row.jumpGroupId }}</mat-cell>
-                </ng-container>
-
-                <!-- Comments -->
-                <ng-container matColumnDef="comments">
-                    <mat-header-cell *matHeaderCellDef mat-sort-header>Comments</mat-header-cell>
-                    <mat-cell *matCellDef="let row">{{ row.comments || '—' }}</mat-cell>
+                <!-- Jump Policy Name -->
+                <ng-container matColumnDef="jumpPolicyName">
+                    <mat-header-cell *matHeaderCellDef>Jump Policy Name</mat-header-cell>
+                    <mat-cell *matCellDef="let row"
+                        [matTooltip]="row.jumpPolicyName">{{ row.jumpPolicyName || '—' }}</mat-cell>
                 </ng-container>
 
                 <!-- Last Sync Date -->
-                <ng-container matColumnDef="lastSyncDate">
+                <!-- <ng-container matColumnDef="lastSyncDate">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>Last&nbsp;Sync&nbsp;Date</mat-header-cell>
                     <mat-cell *matCellDef="let row">{{ row.lastSyncDate | date : "dd.MM.yy - HH:mm:ss" }}</mat-cell>
-                </ng-container>
+                </ng-container> -->
 
                 <!-- Actions -->
                 <ng-container matColumnDef="actions">

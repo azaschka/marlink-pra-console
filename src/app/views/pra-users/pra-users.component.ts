@@ -8,18 +8,14 @@ import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
-// import {
-//     UserOverlayComponent,
-//     UserOverlayDialogData,
-// } from "./components/user-overlay/user-overlay.component";
 import { PraUsersService } from "./pra-users.service";
 import { PraUser } from "./models";
-import { BusinessUnitLabels } from "./enums";
+import { BusinessUnit, BusinessUnitLabels, UserRole } from "./enums";
 import {
     PraUserOverlayComponent,
     PraUserOverlayDialogData,
 } from "./components/pra-user-overlay/pra-user-overlay.component";
-import { UserOverlayDialogData } from "../users/components/user-overlay/user-overlay.component";
+import { PraDataFilter } from "../../shared/helpers";
 
 @Component({
     selector: "app-pra-users",
@@ -53,6 +49,9 @@ export class PraUsersComponent implements OnInit, OnDestroy {
     public filterValue = "";
     public dataCount = 0;
 
+    private isAdmin = false;
+    private currentBusinessUnit: BusinessUnit | null | undefined;
+
     private readonly subscriptionsToClear: Subscription;
 
     constructor(
@@ -61,7 +60,7 @@ export class PraUsersComponent implements OnInit, OnDestroy {
         private readonly praUsersService: PraUsersService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
@@ -152,11 +151,20 @@ export class PraUsersComponent implements OnInit, OnDestroy {
     private async loadPage(): Promise<void> {
         this.isLoading = true;
         try {
-            const items = await this.praUsersService.fetchPraUsers();
-            this.dataSource.data = items;
+            const praUsers = await this.praUsersService.fetchPraUsers();
+            let filteredPraUsers = praUsers;
+            if (this.isAdmin) {
+                filteredPraUsers = PraDataFilter.filterByBusinessUnit(
+                    praUsers,
+                    this.currentBusinessUnit,
+                    [(user) => user.businessUnit],
+                );
+            }
+
+            this.dataSource.data = filteredPraUsers;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
-            this.dataCount = items.length;
+            this.dataCount = filteredPraUsers.length;
         } catch (err: any) {
             await this.errorDialog.show({
                 title: "Error",
@@ -173,7 +181,10 @@ export class PraUsersComponent implements OnInit, OnDestroy {
                 if (!user || user.role === "None") {
                     this.jwtAuthService.checkTokenIsValid();
                 }
-            })
+
+                this.isAdmin = user.role === UserRole.Admin;
+                this.currentBusinessUnit = user.businessUnit;
+            }),
         );
     }
 }

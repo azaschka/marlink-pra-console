@@ -114,6 +114,82 @@ export class UsersComponent implements OnInit, OnDestroy {
             });
     }
 
+    public deactivateUserHandler(user: User): void {
+        this.confirmDialog
+            .show({
+                title: "Deactivate User",
+                message: `Are you sure you want to deactivate user:<br><strong>${user.publicDisplayName}</strong>?`,
+            })
+            .then((confirmed) => {
+                if (confirmed) {
+                    this.isLoading = true;
+                    this.usersService
+                        .updateUser(user.id, { isLoginAllowed: false })
+                        .then(() => {
+                            this.notificationDialog.show({
+                                message: `User ${user.publicDisplayName} has been deactivated.`,
+                            });
+                            this.dataSource.data = this.dataSource.data.map(
+                                (u) =>
+                                    u.id === user.id
+                                        ? { ...u, isLoginAllowed: false }
+                                        : u
+                            );
+                            this.loadPage();
+                        })
+                        .catch((err: any) => {
+                            this.errorDialog.show({
+                                title: "Deactivate User Failed",
+                                message:
+                                    err?.message ||
+                                    "The user could not be deactivated. Please try again later.",
+                            });
+                        })
+                        .finally(() => {
+                            this.isLoading = false;
+                        });
+                }
+            });
+    }
+
+    public reactivateUserHandler(user: User): void {
+        this.confirmDialog
+            .show({
+                title: "Reactivate User",
+                message: `Are you sure you want to reactivate user:<br><strong>${user.publicDisplayName}</strong>?`,
+            })
+            .then((confirmed) => {
+                if (confirmed) {
+                    this.isLoading = true;
+                    this.usersService
+                        .updateUser(user.id, { isLoginAllowed: true })
+                        .then(() => {
+                            this.notificationDialog.show({
+                                message: `User ${user.publicDisplayName} has been reactivated.`,
+                            });
+                            this.dataSource.data = this.dataSource.data.map(
+                                (u) =>
+                                    u.id === user.id
+                                        ? { ...u, isLoginAllowed: true }
+                                        : u
+                            );
+                            this.loadPage();
+                        })
+                        .catch((err: any) => {
+                            this.errorDialog.show({
+                                title: "Reactivate User Failed",
+                                message:
+                                    err?.message ||
+                                    "The user could not be reactivated. Please try again later.",
+                            });
+                        })
+                        .finally(() => {
+                            this.isLoading = false;
+                        });
+                }
+            });
+    }
+
     public async deleteUserHandler(user: User): Promise<void> {
         const confirmed = await this.confirmDialog.show({
             title: "Delete User",

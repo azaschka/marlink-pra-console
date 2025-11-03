@@ -10,7 +10,7 @@ import { RoutePartsService } from "./shared/services/route-parts.service";
     templateUrl: "./app.component.html",
 })
 export class AppComponent implements OnInit {
-    public appTitle = "PRA Console";
+    public appTitle = "PRA Admin";
     public pageTitle = "";
 
     constructor(

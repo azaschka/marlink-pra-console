@@ -1,9 +1,13 @@
-import { Component, Inject, Input, OnInit } from "@angular/core";
+import { Component, Inject, OnInit, OnDestroy } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
-import { FormGroup, FormControl, Validators } from "@angular/forms";
-import { map, Observable, of, startWith } from "rxjs";
+import {
+    FormGroup,
+    FormControl,
+    Validators,
+    AbstractControl,
+} from "@angular/forms";
+import { map, Observable, of, startWith, Subject, takeUntil } from "rxjs";
 import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/error-dialog.service";
-import { CustomValidators } from "../../../../shared/helpers";
 import { GroupPoliciesService } from "../../../group-policies/group-policies.service";
 import { UsersService } from "../../users.service";
 import { User, UserCreateRequest, UserUpdateRequest } from "../../models";
@@ -11,281 +15,367 @@ import { GroupPolicy } from "app/views/group-policies/models";
 
 export type UserOverlayMode = "add" | "edit";
 
-interface UserForm {
-    publicDisplayName: FormControl<string>;
-    username: FormControl<string>;
-    email: FormControl<string>;
-    password: FormControl<string>;
-    retypePassword: FormControl<string>;
-    groupPolicyInput: FormControl<string>;
-}
-
 export interface UserOverlayDialogData {
     mode: UserOverlayMode;
     user?: User;
 }
 
+interface UserFormValue {
+    publicDisplayName: string;
+    username: string;
+    email: string;
+    regeneratePassword: boolean;
+}
+
+/**
+ * Component for adding or editing users
+ * Handles form validation, group policy assignment, and user management
+ */
 @Component({
     selector: "app-user-overlay",
     templateUrl: "./user-overlay.component.html",
 })
-export class UserOverlayComponent implements OnInit {
-    public static readonly MIN_PASSWORD_LENGTH = 6;
-
-    public UserOverlayComponent = UserOverlayComponent;
-
+export class UserOverlayComponent implements OnInit, OnDestroy {
     public isLoading = false;
-    public hidePassword = true;
-    public hideRetypePassword = true;
 
-    public mode: UserOverlayMode;
-    public user?: User;
+    public readonly mode: UserOverlayMode;
+    public readonly user?: User;
 
-    // Group policies states
+    // Group policies state
     public allGroupPolicies: GroupPolicy[] = [];
     public selectedGroupPolicies: GroupPolicy[] = [];
-    private initialGroupPolicies: GroupPolicy[] = [];
     public groupPolicyInputCtrl = new FormControl<string>("");
     public filteredGroupPolicies$: Observable<GroupPolicy[]> = of([]);
 
-    public userFormGroup = new FormGroup<UserForm>(
-        {
-            publicDisplayName: new FormControl("", [Validators.required]),
-            username: new FormControl("", [Validators.required]),
-            email: new FormControl("", [Validators.required, Validators.email]),
-            password: new FormControl("", []), // Validators only in "add"
-            retypePassword: new FormControl("", []),
-            groupPolicyInput: this.groupPolicyInputCtrl,
-        },
-        {
-            validators: CustomValidators.passwordsMatch(
-                "password",
-                "retypePassword"
-            ),
-        }
-    );
+    public readonly userFormGroup: FormGroup;
+
+    private initialGroupPolicies: GroupPolicy[] = [];
+    private readonly destroy$ = new Subject<void>();
 
     constructor(
         public dialogRef: MatDialogRef<UserOverlayComponent>,
         @Inject(MAT_DIALOG_DATA) public data: UserOverlayDialogData,
         private readonly usersService: UsersService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly groupPoliciesService: GroupPoliciesService
+        private readonly groupPoliciesService: GroupPoliciesService,
     ) {
         this.mode = data.mode;
         this.user = data.user;
+        this.userFormGroup = this.createForm();
     }
 
     public async ngOnInit(): Promise<void> {
         await this.loadOverlayData();
+        this.setupGroupPolicyAutocomplete();
     }
 
-    public close(): void {
-        this.dialogRef.close(false);
+    public ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
     }
 
-    public addGroupPolicy(policy: GroupPolicy): void {
-        if (!this.selectedGroupPolicies.find((sel) => sel.id === policy.id)) {
-            this.selectedGroupPolicies.push(policy);
-        }
-        this.groupPolicyInputCtrl.setValue("");
+    /**
+     * Creates the reactive form with all controls and validators
+     */
+    private createForm(): FormGroup {
+        return new FormGroup({
+            publicDisplayName: new FormControl<string>("", [
+                Validators.required,
+            ]),
+            username: new FormControl<string>("", [Validators.required]),
+            email: new FormControl<string>("", [
+                Validators.required,
+                Validators.email,
+            ]),
+            regeneratePassword: new FormControl<boolean>(false),
+        });
     }
 
-    public removeGroupPolicy(policy: GroupPolicy): void {
-        this.selectedGroupPolicies = this.selectedGroupPolicies.filter(
-            (sel) => sel.id !== policy.id
-        );
-    }
-
-    public async submitHandler(): Promise<void> {
-        if (this.userFormGroup.invalid) return;
-        this.isLoading = true;
-        this.userFormGroup.disable();
-
-        try {
-            if (this.mode === "add") {
-                await this.createUserAndAssignPolicies();
-            } else {
-                await this.updateUserAndPolicies();
-            }
-            this.dialogRef.close(true);
-        } catch (err: any) {
-            this.errorDialog.show({
-                title: "Error",
-                message: err?.message ?? "An unknown error occurred.",
-            });
-            this.userFormGroup.enable();
-        } finally {
-            this.isLoading = false;
-        }
-    }
-
+    /**
+     * Loads initial data for the overlay (group policies and user data in edit mode)
+     */
     private async loadOverlayData(): Promise<void> {
         this.isLoading = true;
         this.userFormGroup.disable();
 
         try {
-            // Load group policies (needed in both modes)
-            this.allGroupPolicies =
-                await this.groupPoliciesService.fetchGroupPolicies();
+            await this.loadGroupPolicies();
 
             if (this.mode === "edit" && this.user) {
-                // Fetch user group policies and pre-fill form
-                const userGroupPolicies =
-                    await this.usersService.fetchUserGroupPolicies(
-                        this.user.id
-                    );
-                this.selectedGroupPolicies = userGroupPolicies.map(
-                    (ugp) => ugp.groupPolicy
-                );
-                this.initialGroupPolicies = [...this.selectedGroupPolicies];
-
-                // Pre-fill form
-                this.userFormGroup.patchValue({
-                    publicDisplayName: this.user.publicDisplayName,
-                    username: this.user.username,
-                    email: this.user.email,
-                });
+                await this.loadUserData();
             }
-
-            if (this.mode === "add") {
-                // In add mode, ensure validators for password fields
-                this.password?.setValidators([
-                    Validators.required,
-                    Validators.minLength(
-                        UserOverlayComponent.MIN_PASSWORD_LENGTH
-                    ),
-                ]);
-                this.retypePassword?.setValidators([Validators.required]);
-            } else {
-                // In edit mode, password is optional, so only minlength if entered
-                this.password?.setValidators([
-                    Validators.minLength(
-                        UserOverlayComponent.MIN_PASSWORD_LENGTH
-                    ),
-                ]);
-                this.retypePassword?.setValidators([]);
-            }
-
-            this.password?.updateValueAndValidity();
-            this.retypePassword?.updateValueAndValidity();
-
-            // Setup group policy autocomplete
-            this.filteredGroupPolicies$ =
-                this.groupPolicyInputCtrl.valueChanges.pipe(
-                    startWith(""),
-                    map((value) => this.filterGroupPolicies(value || ""))
-                );
         } catch (err) {
-            this.errorDialog.show({
-                title: "Error",
-                message: "Could not load group policies or user data.",
-            });
+            this.handleLoadError(err);
         } finally {
             this.isLoading = false;
             this.userFormGroup.enable();
         }
     }
 
-    /** Handles user creation and initial group policy assignment */
-    private async createUserAndAssignPolicies(): Promise<void> {
-        const form = this.userFormGroup.value;
-        const user: UserCreateRequest = {
-            publicDisplayName: form.publicDisplayName!.trim(),
-            username: form.username!.trim(),
-            password: form.password!.trim(),
-            email: form.email!.trim(),
-            preferredEmailLanguage: "en-us",
-            isTwoFactorAuthRequired: true,
-            failedLoginAttempts: 0,
-            mustResetPasswordOnNextLogin: true,
-        };
-        const createdUser = await this.usersService.createUser(user);
-
-        // Assign policies if selected
-        const groupPolicyIds = this.selectedGroupPolicies.map(
-            (policy) => policy.id
-        );
-        if (groupPolicyIds.length > 0) {
-            await this.usersService.updateUserGroupPolicies(
-                createdUser.id,
-                groupPolicyIds,
-                []
-            );
-        }
+    /**
+     * Loads all available group policies
+     */
+    private async loadGroupPolicies(): Promise<void> {
+        this.allGroupPolicies =
+            await this.groupPoliciesService.fetchGroupPolicies();
     }
 
-    /** Handles user update and assignment/removal of group policies */
-    private async updateUserAndPolicies(): Promise<void> {
-        const form = this.userFormGroup.value;
-        const body: UserUpdateRequest = {
-            publicDisplayName: form.publicDisplayName!.trim(),
-            username: form.username!.trim(),
-            email: form.email!.trim(),
-        };
-
-        // Only send password if set and valid
-        if (
-            form.password &&
-            form.password.length >= UserOverlayComponent.MIN_PASSWORD_LENGTH
-        ) {
-            body.password = form.password;
+    /**
+     * Loads user data and assigned group policies in edit mode
+     */
+    private async loadUserData(): Promise<void> {
+        if (!this.user) {
+            return;
         }
 
-        if (!this.user) throw new Error("User missing for edit.");
-        await this.usersService.updateUser(this.user.id, body);
+        const userGroupPolicies =
+            await this.usersService.fetchUserGroupPolicies(this.user.id);
 
-        // Compare policies
-        const initialIds = new Set(
-            this.initialGroupPolicies.map((gp) => gp.id)
+        this.selectedGroupPolicies = userGroupPolicies.map(
+            (ugp) => ugp.groupPolicy,
         );
-        const currentIds = new Set(
-            this.selectedGroupPolicies.map((gp) => gp.id)
-        );
-        const toAdd = [...currentIds].filter((id) => !initialIds.has(id));
-        const toRemove = [...initialIds].filter((id) => !currentIds.has(id));
+        this.initialGroupPolicies = [...this.selectedGroupPolicies];
 
-        if (toAdd.length > 0 || toRemove.length > 0) {
-            await this.usersService.updateUserGroupPolicies(
-                this.user.id,
-                toAdd,
-                toRemove
-            );
-        }
+        this.userFormGroup.patchValue({
+            publicDisplayName: this.user.publicDisplayName,
+            username: this.user.username,
+            email: this.user.email,
+        });
     }
 
+    /**
+     * Sets up the group policy autocomplete filtering
+     */
+    private setupGroupPolicyAutocomplete(): void {
+        this.filteredGroupPolicies$ =
+            this.groupPolicyInputCtrl.valueChanges.pipe(
+                startWith(""),
+                map((value) => this.filterGroupPolicies(value || "")),
+                takeUntil(this.destroy$),
+            );
+    }
+
+    /**
+     * Filters group policies based on search value and excludes already selected policies
+     */
     private filterGroupPolicies(value: string | GroupPolicy): GroupPolicy[] {
-        let filterValue: string = "";
-        if (typeof value === "string") {
-            filterValue = value.toLowerCase();
-        } else if (value && typeof value === "object" && "name" in value) {
-            filterValue = value.name.toLowerCase();
-        }
+        const filterValue = this.extractFilterValue(value);
 
         return this.allGroupPolicies.filter(
             (policy) =>
                 policy.name.toLowerCase().includes(filterValue) &&
-                !this.selectedGroupPolicies.some((sel) => sel.id === policy.id)
+                !this.isGroupPolicySelected(policy),
         );
     }
 
-    // Getters for template binding
-    get publicDisplayName() {
+    /**
+     * Extracts the filter string from the autocomplete value
+     */
+    private extractFilterValue(value: string | GroupPolicy): string {
+        if (typeof value === "string") {
+            return value.toLowerCase();
+        }
+
+        if (value && typeof value === "object" && "name" in value) {
+            return value.name.toLowerCase();
+        }
+
+        return "";
+    }
+
+    /**
+     * Checks if a group policy is already selected
+     */
+    private isGroupPolicySelected(policy: GroupPolicy): boolean {
+        return this.selectedGroupPolicies.some((sel) => sel.id === policy.id);
+    }
+
+    /**
+     * Adds a group policy to the selected list
+     */
+    public addGroupPolicy(policy: GroupPolicy): void {
+        if (!this.isGroupPolicySelected(policy)) {
+            this.selectedGroupPolicies.push(policy);
+        }
+        this.groupPolicyInputCtrl.setValue("");
+    }
+
+    /**
+     * Removes a group policy from the selected list
+     */
+    public removeGroupPolicy(policy: GroupPolicy): void {
+        this.selectedGroupPolicies = this.selectedGroupPolicies.filter(
+            (sel) => sel.id !== policy.id,
+        );
+    }
+
+    /**
+     * Closes the dialog without saving
+     */
+    public close(): void {
+        this.dialogRef.close(false);
+    }
+
+    /**
+     * Handles form submission
+     */
+    public async submitHandler(): Promise<void> {
+        if (this.userFormGroup.invalid) {
+            return;
+        }
+
+        this.isLoading = true;
+        this.userFormGroup.disable();
+
+        try {
+            if (this.mode === "add") {
+                await this.createUserWithPolicies();
+            } else {
+                await this.updateUserWithPolicies();
+            }
+
+            this.dialogRef.close(true);
+        } catch (err) {
+            this.handleSubmitError(err);
+            this.userFormGroup.enable();
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    /**
+     * Creates a new user and assigns selected group policies
+     */
+    private async createUserWithPolicies(): Promise<void> {
+        const formValue = this.userFormGroup.value as UserFormValue;
+
+        const request: UserCreateRequest = {
+            publicDisplayName: formValue.publicDisplayName.trim(),
+            username: formValue.username.trim(),
+            email: formValue.email.trim(),
+            isTwoFactorAuthRequired: true,
+            mustResetPasswordOnNextLogin: true,
+        };
+
+        const createdUser = await this.usersService.createUser(request);
+
+        await this.assignGroupPolicies(createdUser.id);
+    }
+
+    /**
+     * Updates an existing user and manages group policy changes
+     */
+    private async updateUserWithPolicies(): Promise<void> {
+        if (!this.user) {
+            throw new Error("User data missing for edit operation");
+        }
+
+        const formValue = this.userFormGroup.value as UserFormValue;
+
+        const request: UserUpdateRequest = {
+            publicDisplayName: formValue.publicDisplayName.trim(),
+            username: formValue.username.trim(),
+            email: formValue.email.trim(),
+            regeneratePassword: formValue.regeneratePassword || false,
+        };
+
+        await this.usersService.updateUser(this.user.id, request);
+
+        await this.updateGroupPolicyAssignments(this.user.id);
+    }
+
+    /**
+     * Assigns selected group policies to a newly created user
+     */
+    private async assignGroupPolicies(userId: number): Promise<void> {
+        const groupPolicyIds = this.selectedGroupPolicies.map(
+            (policy) => policy.id,
+        );
+
+        if (groupPolicyIds.length > 0) {
+            await this.usersService.updateUserGroupPolicies(
+                userId,
+                groupPolicyIds,
+                [],
+            );
+        }
+    }
+
+    /**
+     * Updates group policy assignments for an existing user
+     */
+    private async updateGroupPolicyAssignments(userId: number): Promise<void> {
+        const { toAdd, toRemove } = this.calculateGroupPolicyChanges();
+
+        if (toAdd.length > 0 || toRemove.length > 0) {
+            await this.usersService.updateUserGroupPolicies(
+                userId,
+                toAdd,
+                toRemove,
+            );
+        }
+    }
+
+    /**
+     * Calculates which group policies need to be added or removed
+     */
+    private calculateGroupPolicyChanges(): {
+        toAdd: number[];
+        toRemove: number[];
+    } {
+        const initialIds = new Set(
+            this.initialGroupPolicies.map((gp) => gp.id),
+        );
+        const currentIds = new Set(
+            this.selectedGroupPolicies.map((gp) => gp.id),
+        );
+
+        const toAdd = [...currentIds].filter((id) => !initialIds.has(id));
+        const toRemove = [...initialIds].filter((id) => !currentIds.has(id));
+
+        return { toAdd, toRemove };
+    }
+
+    /**
+     * Handles errors during data loading
+     */
+    private handleLoadError(err: unknown): void {
+        const message =
+            err instanceof Error
+                ? err.message
+                : "Could not load group policies or user data.";
+
+        this.errorDialog.show({
+            title: "Error",
+            message,
+        });
+    }
+
+    /**
+     * Handles errors during form submission
+     */
+    private handleSubmitError(err: unknown): void {
+        const message =
+            err instanceof Error
+                ? err.message
+                : "An unknown error occurred while saving the user.";
+
+        this.errorDialog.show({
+            title: "Error",
+            message,
+        });
+    }
+
+    // Template convenience getters
+    get publicDisplayName(): AbstractControl | null {
         return this.userFormGroup.get("publicDisplayName");
     }
-    get username() {
+
+    get username(): AbstractControl | null {
         return this.userFormGroup.get("username");
     }
-    get email() {
+
+    get email(): AbstractControl | null {
         return this.userFormGroup.get("email");
-    }
-    get password() {
-        return this.userFormGroup.get("password");
-    }
-    get retypePassword() {
-        return this.userFormGroup.get("retypePassword");
-    }
-    get passwordsMismatch() {
-        return this.userFormGroup.hasError("passwordsMismatch");
     }
 }

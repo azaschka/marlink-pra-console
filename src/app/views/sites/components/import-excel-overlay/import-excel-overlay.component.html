@@ -7,117 +7,28 @@
         <mat-icon>close</mat-icon>
     </button>
 
-    <h2 matDialogTitle>Import from Excel</h2>
+    <h2 matDialogTitle>{{ headline }}</h2>
 
-    <div mat-dialog-content style="width: 480px;" [style.width]="hasSuccessfullyParsed ? '640px' : '480px'">
-        <div fxLayout="row wrap" fxLayoutGap="24px">
-            <div fxFlex="100" class="m-0" fxLayout="column">
-                <div *ngIf="!hasSuccessfullyParsed " class="drag-drop-area" [class.hover]="isHovering" appDragDrop
-                    (fileDropped)="onFileDropped($event)" (hover)="isHovering = $event" (click)="fileInput.click()"
-                    tabindex="0" role="button" aria-label="Drop Excel file here or click to select">
-                    <input #fileInput type="file" accept=".xlsx,.xls" hidden (change)="onFileInput($event)" />
-                    <ng-container *ngIf="!file">
-                        <mat-icon fontIcon="upload_file" color="primary"></mat-icon>
-                        <p class="text-muted">Drag&amp;Drop your Excel file here<br>or click to select</p>
-                    </ng-container>
-                    <ng-container *ngIf="file">
-                        <mat-icon fontIcon="check_circle" color="primary"></mat-icon>
-                        <p>{{ file.name }}</p>
-                    </ng-container>
-                </div>
+    <div style="width: 640px;">
+        <ng-container [ngSwitch]="importState">
+            <!-- 1. Excel Upload/Parse -->
+            <app-excel-import-dragdrop *ngSwitchCase="'idle'"
+                (parsed)="onExcelParsed($event)"></app-excel-import-dragdrop>
 
-                <!-- Preview -->
-                <div *ngIf="hasSuccessfullyParsed && !hasStartedImport && !hasCompletedImport" class="preview-container"
-                    fxLayout="column">
-                    <div fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between center" style="height:40px">
-                        <div fxFlex="30">
-                            <p class="text-muted">Customer</p>
-                        </div>
-                        <div fxFlex="70">
-                            <ng-container *ngIf="parsedCustomer; else noCustomer">
-                                <p>
-                                    <span>{{ parsedCustomer.name }}</span>&nbsp;
-                                    <span class="ml-8 text-gray">({{ parsedCustomer.key }})</span>
-                                </p>
-                            </ng-container>
-                            <ng-template #noCustomer>
-                                <p class="text-warn">Customer information is missing!</p>
-                            </ng-template>
-                        </div>
-                    </div>
+            <!-- 2. Preview -->
+            <app-excel-import-preview *ngSwitchCase="'preview'" [preview]="previewData"
+                (startImport)="startImport()"></app-excel-import-preview>
 
-                    <div fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between center">
-                        <div fxFlex="30">
-                            <p class="text-muted">Site</p>
-                        </div>
-                        <div fxFlex="70">
-                            <ng-container *ngIf="parsedSite; else noSite">
-                                <p>
-                                    <span>{{ parsedSite.name }}</span>&nbsp;
-                                    <span class="ml-8 text-gray">({{ parsedSite.key }})</span>
-                                </p>
-                            </ng-container>
-                            <ng-template #noSite>
-                                <p class="text-warn">Site information is missing!</p>
-                            </ng-template>
-                        </div>
-                    </div>
+            <!-- 3. Import Progress -->
+            <app-excel-import-progress *ngSwitchCase="'importing'" [steps]="importSteps"></app-excel-import-progress>
 
-                    <div fxFlex="100" class="excel-preview-tree-container">
-                        <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" class="excel-preview-tree">
-                            <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
-                                <button mat-icon-button disabled></button>
-                                <span class="tree-label">{{ node.label }}</span><br>
-                                <span class="tree-value text-gray" *ngIf="node.value">&nbsp;{{ node.value }}</span>
-                            </mat-tree-node>
+            <!-- 4. Import Success -->
+            <app-excel-import-result *ngSwitchCase="'success'" [result]="importResult"
+                (reset)="reset($event)"></app-excel-import-result>
 
-                            <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild">
-                                <div class="tree-node-group" matTreeNodePadding>
-                                    <button mat-icon-button matTreeNodeToggle
-                                        [attr.aria-label]="'Toggle ' + node.label">
-                                        <mat-icon class="tree-toggle-icon">
-                                            {{ treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
-                                        </mat-icon>
-                                    </button>
-                                    <span class="tree-label">{{ node.label }}</span>
-                                    <span class="tree-value text-gray" *ngIf="node.value">&nbsp;{{ node.value }}</span>
-                                </div>
-                                <div [class.tree-child-container]="true" *ngIf="treeControl.isExpanded(node)">
-                                    <ng-container matTreeNodeOutlet></ng-container>
-                                </div>
-                            </mat-nested-tree-node>
-                        </mat-tree>
-                    </div>
-
-                    <div fxFlex="100" class="mt-32" fxLayout="row" fxLayoutAlign="end center">
-                        <span fxFlex></span>
-                        <button mat-raised-button color="primary" [disabled]="!hasSuccessfullyParsed"
-                            (click)="startImport()">Start Import</button>
-                    </div>
-                </div>
-
-                <!-- Importing -->
-                <div *ngIf="hasSuccessfullyParsed && hasStartedImport && !hasCompletedImport"
-                    class="importing-container" fxLayout="column" fxLayoutAlign="center center">
-                    <mat-icon fontIcon="hourglass_top" color="primary"></mat-icon>
-                    <p class="text-muted">Importing data, please wait...</p>
-                    <mat-progress-bar mode="indeterminate" color="primary" class="mt-16"></mat-progress-bar>
-                </div>
-
-                <!-- Finished -->
-                <div *ngIf="hasCompletedImport; else hasImportError" class="import-completed" fxLayout="column"
-                    fxLayoutAlign="center center">
-                    <mat-icon fontIcon="check_circle" color="primary"></mat-icon>
-                    <p class="text-success">Import completed successfully!</p>
-                </div>
-                <ng-template #hasImportError>
-                    <div class="import-error" fxLayout="column" fxLayoutAlign="center center">
-                        <mat-icon fontIcon="error" color="warn"></mat-icon>
-                        <p>Import failed!</p>
-                        <p>Please check your excel file and try again.</p>
-                    </div>
-                </ng-template>
-            </div>
-        </div>
+            <!-- 5. Import Error -->
+            <app-excel-import-result *ngSwitchCase="'error'" [result]="importResult" [error]="hasError"
+                (reset)="reset($event)"></app-excel-import-result>
+        </ng-container>
     </div>
 </div>

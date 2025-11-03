@@ -1,11 +1,14 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
+import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
-import { MatTableDataSource } from "@angular/material/table";
 import { MatDialog } from "@angular/material/dialog";
+import { Subscription } from "rxjs";
+import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { ConfirmDialogService } from "../../../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../../../shared/dialogs/notification-dialog/notification-dialog.service";
+import { PraDataFilter } from "../../../../shared/helpers";
 import { JumpAssetsService } from "../../jump-assets.service";
 import { JumpAssetCopyOverlayComponent } from "../jump-asset-copy-overlay/jump-asset-copy-overlay.component";
 import {
@@ -13,26 +16,41 @@ import {
     JumpAssetUpdateOverlayComponent,
 } from "../jump-asset-update-overlay/jump-asset-update-overlay.component";
 import {
+    CreateRemoteVncDtoInput,
     JumpAssetCopyRequest,
+    JumpAssetCreateRequest,
     JumpAssetUpdateRequest,
     RemoteVnc,
 } from "../../models";
+import { JumpPoliciesService } from "../../../jump-policies/jump-policies.service";
+import { JumpGroupsService } from "../../../jump-groups/jump-groups.service";
+import { JumpointsService } from "../../../jumpoints/jumpoints.service";
+import { JumpGroup } from "../../../jump-groups/models";
+import { JumpPolicy } from "../../../jump-policies/models";
+import { Jumpoint } from "../../../jumpoints/models";
+import { BusinessUnit } from "../../../pra-users/enums";
+import {
+    JumpAssetCreateDialogData,
+    JumpAssetCreateOverlayComponent,
+} from "../jump-asset-create-overlay/jump-asset-create-overlay.component";
+import { JumpGroupType } from "../../enums";
 
 @Component({
     selector: "app-remote-vnc",
     templateUrl: "./remote-vnc.component.html",
     styleUrls: ["./remote-vnc.component.scss"],
 })
-export class RemoteVncComponent implements OnInit {
+export class RemoteVncComponent implements OnInit, OnDestroy {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
+        "jumpGroupName",
+        "tag",
         "hostname",
+        "port",
         "name",
-        "jumpointId",
-        "jumpGroupId",
-        "comments",
-        "lastSyncDate",
+        "jumpointName",
+        "jumpPolicyName",
         "actions",
     ];
 
@@ -48,16 +66,36 @@ export class RemoteVncComponent implements OnInit {
     public filterValue = "";
     public dataCount = 0;
 
+    private jumpGroups: JumpGroup[] = [];
+    private jumpPolicies: JumpPolicy[] = [];
+    private jumpoints: Jumpoint[] = [];
+
+    private currentBusinessUnit: BusinessUnit | null | undefined;
+
+    private readonly subscriptionsToClear: Subscription;
+
     constructor(
         private readonly dialog: MatDialog,
+        private readonly jwtAuthService: JwtAuthService,
         private readonly jumpAssetsService: JumpAssetsService,
+        private readonly jumpGroupsService: JumpGroupsService,
+        private readonly jumpPoliciesService: JumpPoliciesService,
+        private readonly jumpointsService: JumpointsService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService
-    ) {}
+    ) {
+        this.subscriptionsToClear = new Subscription();
+    }
 
     public async ngOnInit(): Promise<void> {
+        this.jwtAuthService.getPraUser();
+        this.addListeners();
         await this.loadPage();
+    }
+
+    public ngOnDestroy(): void {
+        this.subscriptionsToClear.unsubscribe();
     }
 
     public applyFilter(): void {
@@ -105,12 +143,57 @@ export class RemoteVncComponent implements OnInit {
             });
     }
 
+    public async addRemoteVncHandler(): Promise<void> {
+        const dialogRef = this.dialog.open(JumpAssetCreateOverlayComponent, {
+            data: {
+                assetType: "remoteVnc",
+            } as JumpAssetCreateDialogData,
+            disableClose: true,
+        });
+
+        dialogRef
+            .afterClosed()
+            .subscribe(async (result: JumpAssetCreateRequest | null) => {
+                if (result) {
+                    this.isLoading = true;
+                    try {
+                        const body: CreateRemoteVncDtoInput = {
+                            name: result.name,
+                            jumpointId: result.jumpointId,
+                            hostname: result.hostname,
+                            jumpGroupId: result.jumpGroupId,
+                            port: result.port,
+                            jumpGroupType: JumpGroupType.Shared,
+                            tag: result.tag,
+                            comments: "",
+                            jumpPolicyId: result.jumpPolicyId,
+                            sessionPolicyId: null,
+                        } as CreateRemoteVncDtoInput;
+                        await this.jumpAssetsService.createRemoteVnc(body);
+                        this.notificationDialog.show({
+                            message: `Remote VNC "${result.name}" successfully created.`,
+                        });
+                        await this.loadPage();
+                    } catch (error) {
+                        this.isLoading = false;
+                        this.errorDialog.show({
+                            title: "Error",
+                            message: error?.message ?? "Unexpected error",
+                        });
+                    }
+                }
+            });
+    }
+
     public async editRemoteVNCHandler(asset: RemoteVnc): Promise<void> {
         const dialogRef = this.dialog.open(JumpAssetUpdateOverlayComponent, {
             data: {
                 assetType: "remoteVnc",
                 assetId: asset.id,
                 currentName: asset.name,
+                currentTag: asset.tag,
+                currentHostname: asset.hostname,
+                currentPort: asset.port,
                 currentJumpGroupId: asset.jumpGroupId,
                 currentJumpGroupType: asset.jumpGroupType || "shared",
                 currentJumpPolicyId: asset.jumpPolicyId ?? null,
@@ -175,13 +258,72 @@ export class RemoteVncComponent implements OnInit {
         overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
     ): Promise<void> {
         this.isLoading = true;
-        try {
-            const items = await this.jumpAssetsService.fetchRemoteVncs();
 
-            this.dataSource.data = items;
+        try {
+            // Load all necessary data in parallel
+            const [items, jumpGroups, jumpPolicies, jumpoints] =
+                await Promise.all([
+                    this.jumpAssetsService.fetchRemoteVncs(),
+                    this.jumpGroupsService.fetchJumpGroups(),
+                    this.jumpPoliciesService.fetchJumpPolicies(),
+                    this.jumpointsService.fetchJumpoints(),
+                ]);
+
+            // Store lookup tables (if needed later)
+            this.jumpGroups = jumpGroups;
+            this.jumpPolicies = jumpPolicies;
+            this.jumpoints = jumpoints;
+
+            // Enrich items directly
+            const enriched = items.map((item) => ({
+                ...item,
+                jumpGroupName:
+                    jumpGroups.find((g) => g.id === item.jumpGroupId)?.name ??
+                    "—",
+                jumpPolicyName:
+                    jumpPolicies.find((p) => p.id === item.jumpPolicyId)
+                        ?.displayName ?? "—",
+                jumpointName:
+                    jumpoints.find((j) => j.id === item.jumpointId)?.name ??
+                    "—",
+            }));
+
+            // Apply business unit filter
+            const filteredItems = PraDataFilter.filterByBusinessUnit(
+                enriched,
+                this.currentBusinessUnit,
+                [
+                    (j) => j.jumpGroupName,
+                    (j) => j.jumpPolicyName,
+                    (j) => j.jumpointName,
+                ]
+            );
+
+            // Optional pagination overrides (if the calling location wants it)
+            if (overrides.pageNumber !== undefined && this.paginator) {
+                this.paginator.pageIndex = overrides.pageNumber;
+            }
+            if (overrides.pageSize !== undefined && this.paginator) {
+                this.paginator.pageSize = overrides.pageSize;
+            }
+
+            // Provide MatTableDataSource
+            this.dataSource.data = filteredItems;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
-            this.dataCount = items.length;
+            this.dataCount = filteredItems.length;
+
+            // Ensure paginator is on a valid page
+            if (this.paginator) {
+                const maxPageIndex = Math.max(
+                    Math.ceil(filteredItems.length / this.paginator.pageSize) -
+                        1,
+                    0
+                );
+                if (this.paginator.pageIndex > maxPageIndex) {
+                    this.paginator.firstPage();
+                }
+            }
         } catch (err: any) {
             this.errorDialog.show({
                 title: "Error",
@@ -190,5 +332,73 @@ export class RemoteVncComponent implements OnInit {
         } finally {
             this.isLoading = false;
         }
+    }
+
+    // private async loadPage(
+    //     overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
+    // ): Promise<void> {
+    //     this.isLoading = true;
+    //     try {
+    //         const items = await this.jumpAssetsService.fetchRemoteVncs();
+    //         this.jumpGroups = await this.jumpGroupsService.fetchJumpGroups();
+    //         this.jumpPolicies =
+    //             await this.jumpPoliciesService.fetchJumpPolicies();
+    //         this.jumpoints = await this.jumpointsService.fetchJumpoints();
+
+    //         this.dataSource.data = items;
+    //         this.dataSource.sort = this.sort;
+    //         this.dataSource.paginator = this.paginator;
+    //         this.dataCount = items.length;
+
+    //         setTimeout(() => this.loadVisibleData(), 10);
+    //         // this.paginator.page.subscribe(() =>
+    //         //     this.loadVisibleLicenseUsages()
+    //         // );
+    //     } catch (err: any) {
+    //         this.errorDialog.show({
+    //             title: "Error",
+    //             message: err?.message ?? "Unexpected error",
+    //         });
+    //     } finally {
+    //         this.isLoading = false;
+    //     }
+    // }
+
+    // private async loadVisibleData(): Promise<void> {
+    //     const data = this.dataSource.filteredData || this.dataSource.data;
+    //     const pageIndex = this.paginator.pageIndex || 0;
+    //     const pageSize = this.paginator.pageSize || 20;
+    //     const start = pageIndex * pageSize;
+    //     const end = start + pageSize;
+    //     const currentPageItems = data; // data.slice(start, end);
+
+    //     for (const item of currentPageItems) {
+    //         if (item.jumpGroupId) {
+    //             item.jumpGroupName =
+    //                 this.jumpGroups.find((g) => g.id === item.jumpGroupId)
+    //                     ?.name || "—";
+    //         }
+    //         if (item.jumpPolicyId) {
+    //             item.jumpPolicyName =
+    //                 this.jumpPolicies.find((p) => p.id === item.jumpPolicyId)
+    //                     ?.displayName || "—";
+    //         }
+    //         if (item.jumpointId) {
+    //             item.jumpointName =
+    //                 this.jumpoints.find((j) => j.id === item.jumpointId)
+    //                     ?.name || "—";
+    //         }
+    //     }
+    // }
+
+    private addListeners(): void {
+        this.subscriptionsToClear.add(
+            this.jwtAuthService.praUser.subscribe((user) => {
+                if (!user || user.role === "None") {
+                    this.jwtAuthService.checkTokenIsValid();
+                }
+                this.currentBusinessUnit = user.businessUnit;
+            })
+        );
     }
 }

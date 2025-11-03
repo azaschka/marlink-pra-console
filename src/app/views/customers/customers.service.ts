@@ -40,12 +40,18 @@ export class CustomersService {
         );
     }
 
+    public async reactivateCustomer(id: number): Promise<void> {
+        return firstValueFrom(
+            this.http.post<void>(`customers/${id}/reactivate`, {})
+        );
+    }
+
     public async calculateLicenseUsage(
         id: number
     ): Promise<CustomerLicenseUsage> {
         return firstValueFrom(
             this.http.post<CustomerLicenseUsage>(
-                `customers/${id}/calculateLicenseUsage`,
+                `license-usages/customers/${id}`,
                 {}
             )
         );

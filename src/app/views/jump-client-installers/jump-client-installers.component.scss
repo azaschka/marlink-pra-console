@@ -1,0 +1,35 @@
+.mat-row {
+    min-height: 36px;
+}
+
+.progress-row {
+    height: 0;
+    min-height: 0;
+    &.hidden {
+        display: none;
+    }
+    .mat-header-cell {
+        padding: 0;
+        border: none;
+    }
+}
+
+.mat-header-cell,
+.mat-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.mat-column-expirationDate,
+.mat-column-lastSyncDate {
+    flex: 0 0 150px;
+    width: 150px;
+    white-space: nowrap;
+}
+.mat-column-actions {
+    flex: 0 0 64px;
+    min-width: 64px;
+    width: 64px;
+}

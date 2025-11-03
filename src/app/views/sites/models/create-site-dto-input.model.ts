@@ -9,4 +9,5 @@ export interface CreateSiteDtoInput {
     siteManagers: SiteManagerDtoInput[];
     siteAdministrators?: SiteAdministratorDtoInput[];
     siteSupportTeamMembers?: SiteSupportTeamMemberDtoInput[];
+    siteApprovers?: string[];
 }

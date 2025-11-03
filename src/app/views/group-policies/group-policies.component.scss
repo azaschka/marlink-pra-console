@@ -25,13 +25,11 @@
 .mat-column-name {
     flex: 1 1 auto;
 }
-.mat-column-accessPermissionStatusType,
-.mat-column-hasEndpointsAccessPermission,
-.mat-column-hasShareOtherTeamPermission,
-.mat-column-hasInviteExternalUserPermission {
-    flex: 0 0 96px;
-    width: 96px;
-    justify-content: center;
+.mat-column-groupMembersCount {
+    flex: 0 0 120px;
+    width: 120px;
+    white-space: nowrap;
+    text-align: center;
 }
 .mat-column-lastSyncDate {
     flex: 0 0 150px;

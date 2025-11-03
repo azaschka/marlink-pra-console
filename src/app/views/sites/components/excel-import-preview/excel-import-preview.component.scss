@@ -1,0 +1,17 @@
+.preview-container {
+    p,
+    span {
+        font-size: 13px;
+        line-height: 1.3;
+    }
+}
+
+.excel-preview-tree-container {
+    .tree-child-container {
+        padding-left: 16px;
+    }
+
+    .mat-tree-node {
+        padding-left: 8px;
+    }
+}

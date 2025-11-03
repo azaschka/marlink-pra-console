@@ -7,7 +7,7 @@
   },
   "sessions": {
     "signIn": {
-      "headline": "PRA Console",
+      "headline": "PRA Admin",
       "form": {
         "placeholders": {
           "username": "Username"
@@ -59,6 +59,12 @@
         "export": "Export to CSV"
       }
     },
+    "jumpoints": {
+      "headline": "Jumpoints",
+      "buttons": {
+        "export": "Export to CSV"
+      }
+    },
     "jump-groups": {
       "headline": "Jump Groups",
       "buttons": {
@@ -77,6 +83,12 @@
         "webJumps": "Web Jumps",
         "protocolTunnelJumps": "Protocol Tunnel Jumps",
         "jumpClients": "Jump Clients"
+      }
+    },
+    "jump-client-installers": {
+      "headline": "Jump Client Installers",
+      "buttons": {
+        "export": "Export to CSV"
       }
     },
     "pra-users": {

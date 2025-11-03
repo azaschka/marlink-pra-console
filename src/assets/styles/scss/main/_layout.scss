@@ -28,16 +28,25 @@
         0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
     -webkit-transition: all $sidebarTrnTime $transitionTiming;
     transition: all $sidebarTrnTime $transitionTiming;
-    overflow: hidden;
+    // overflow: hidden;
+
+    .scroll-area {
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: none;
+    }
     .sidebar-hold {
         width: $sidebar-width;
     }
     .navigation-hold {
         position: absolute;
-        height: calc(100% - 70px);
+        height: calc(
+            100% - 70px - 46px
+        ); // 70px for top bar, 46px for bottom bar
+        max-height: calc(100% - 70px - 46px);
         width: 100%;
         margin-top: 70px;
-        background: rgba(255, 255, 255, 0.95);
+        margin-bottom: 46px;
         left: 0;
     }
     ul {

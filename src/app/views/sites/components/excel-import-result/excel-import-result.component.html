@@ -1,0 +1,16 @@
+<div fxLayout="column" fxLayoutGap="16px">
+    <div fxLayout="column" fxLayoutAlign="start stretch" fxLayoutGap="16px" class="py-16 scroll-container">
+        <div *ngFor="let step of result.steps" fxLayout="column" fxLayoutGap="8px">
+            <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="24px" fxFlex="100" class="mr-8">
+                <mat-icon *ngIf="step.status === 'success'" color="primary">check_circle</mat-icon>
+                <mat-icon *ngIf="step.status === 'error'" color="warn">error</mat-icon>
+                <span *ngIf="step.status === 'success'" fxFlex>{{ step.result }}</span>
+                <span *ngIf="step.status === 'error'" fxFlex>{{ step.label }}</span>
+            </div>
+
+            <p *ngIf="step.status === 'error'" class="m-0 ml-48 text-13 text-warn">{{ step.result }}</p>
+        </div>
+    </div>
+
+    <button mat-button color="primary" class="mt-16" (click)="reset.emit(!error)">Close</button>
+</div>

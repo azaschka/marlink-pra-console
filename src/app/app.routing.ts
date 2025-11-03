@@ -96,6 +96,32 @@ export const AppRoutes: Routes = [
                 canActivate: [UserRoleGuard],
             },
             {
+                path: "jumpoints",
+                loadChildren: () =>
+                    import("./views/jumpoints/jumpoints.module").then(
+                        (m) => m.JumpointsModule
+                    ),
+                data: {
+                    title: "Jumpoints",
+                    breadcrumb: "views.jumpoints.headline",
+                    roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+                },
+                canActivate: [UserRoleGuard],
+            },
+            {
+                path: "jump-groups",
+                loadChildren: () =>
+                    import("./views/jump-groups/jump-groups.module").then(
+                        (m) => m.JumpGroupsModule
+                    ),
+                data: {
+                    title: "Jump Groups",
+                    breadcrumb: "views.jump-groups.headline",
+                    roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+                },
+                canActivate: [UserRoleGuard],
+            },
+            {
                 path: "jump-assets",
                 loadChildren: () =>
                     import("./views/jump-assets/jump-assets.module").then(
@@ -104,6 +130,32 @@ export const AppRoutes: Routes = [
                 data: {
                     title: "Jump Assets",
                     breadcrumb: "views.jump-assets.headline",
+                    roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+                },
+                canActivate: [UserRoleGuard],
+            },
+            {
+                path: "jump-assets",
+                loadChildren: () =>
+                    import("./views/jump-assets/jump-assets.module").then(
+                        (m) => m.JumpAssetsModule
+                    ),
+                data: {
+                    title: "Jump Assets",
+                    breadcrumb: "views.jump-assets.headline",
+                    roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+                },
+                canActivate: [UserRoleGuard],
+            },
+            {
+                path: "jump-client-installers",
+                loadChildren: () =>
+                    import(
+                        "./views/jump-client-installers/jump-client-installers.module"
+                    ).then((m) => m.JumpClientInstallersModule),
+                data: {
+                    title: "Jump Client Installers",
+                    breadcrumb: "views.jump-client-installers.headline",
                     roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
                 },
                 canActivate: [UserRoleGuard],

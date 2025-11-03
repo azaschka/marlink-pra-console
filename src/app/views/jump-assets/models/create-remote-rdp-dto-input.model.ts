@@ -5,7 +5,6 @@ export interface CreateRemoteRdpDtoInput {
     jumpointId: number;
     hostname: string;
     jumpGroupId: number;
-
     jumpGroupType?: JumpGroupType;
     qualityMode?: RdpQualityMode;
     mustStartNewConsoleSession?: boolean;

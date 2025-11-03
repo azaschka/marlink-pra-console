@@ -1,0 +1,106 @@
+<div>
+    <div class="m-8 mt-16">
+        <!-- filter -->
+        <div class="pr-16" fxFlex="33">
+            <mat-form-field class="full-width m-16">
+                <input matInput placeholder="Type to filter all columns" [disabled]="!dataSource?.data?.length"
+                    [(ngModel)]="filterValue" (ngModelChange)="applyFilter()" />
+                <button *ngIf="filterValue" matSuffix mat-icon-button aria-label="Clear" (click)="removeFilter()">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </mat-form-field>
+        </div>
+        <div fxFlex></div>
+        <div class="pl-16">
+            <!-- <a mat-stroked-button color="primary" class="m-16" csvLink [data]="dataSource.data"
+                                [filename]="generateCsvExportFileName()">
+                                Export CSV
+                            </a> -->
+            <!-- <a mat-stroked-button color="primary" class="m-16" translate="views.jump-groups.buttons.export"
+                disabled></a> -->
+        </div>
+    </div>
+
+    <mat-card class="p-0">
+        <mat-card-content class="p-0">
+            <mat-table [dataSource]="dataSource" matSort>
+                <!-- Loader -->
+                <ng-container matColumnDef="loader">
+                    <mat-header-cell *matHeaderCellDef [attr.colspan]="displayedColumns.length">
+                        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+                    </mat-header-cell>
+                    <mat-cell *matCellDef="let row"></mat-cell>
+                </ng-container>
+
+                <!-- Is Connected -->
+                <ng-container matColumnDef="isConnected">
+                    <mat-header-cell *matHeaderCellDef></mat-header-cell>
+                    <mat-cell *matCellDef="let row">
+                        <div class="status-light" matTooltip="{{ row.isConnected ? 'Connected' : 'Disconnected' }}"
+                            [ngClass]="row.isConnected ? 'ok' : 'error'"></div>
+                    </mat-cell>
+                </ng-container>
+
+                <!-- Name -->
+                <ng-container matColumnDef="name">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
+                    <mat-cell *matCellDef="let row">{{ row.name }}</mat-cell>
+                </ng-container>
+
+                <!-- Code name -->
+                <ng-container matColumnDef="codeName">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Code Name</mat-header-cell>
+                    <mat-cell *matCellDef="let row">{{ row.codeName }}</mat-cell>
+                </ng-container>
+
+                <!-- Platform Type -->
+                <ng-container matColumnDef="platformType">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Platform Type</mat-header-cell>
+                    <mat-cell
+                        *matCellDef="let row">{{ row.platformType === 'linux-x86' ? 'Linux' : 'Windows' }}</mat-cell>
+                </ng-container>
+
+                <!-- Last Sync Date -->
+                <ng-container matColumnDef="lastSyncDate">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Last&nbsp;Sync&nbsp;Date</mat-header-cell>
+                    <mat-cell *matCellDef="let row">{{ row.lastSyncDate | date : "dd.MM.yy - HH:mm:ss" }}</mat-cell>
+                </ng-container>
+
+                <!-- Actions -->
+                <ng-container matColumnDef="actions">
+                    <mat-header-cell *matHeaderCellDef></mat-header-cell>
+                    <mat-cell *matCellDef="let row">
+                        <!-- Download-Button -->
+                        <button mat-icon-button class="ml-8" color="primary" matTooltip="Download Installer"
+                            [class.disabled]="isDownloadDisabled(row)" (click)="downloadJumpointInstallerHandler(row)">
+                            <mat-icon>download</mat-icon>
+                        </button>
+
+                        <!-- Delete -->
+                        <button mat-icon-button color="warn" (click)="deleteJumpointHandler(row)">
+                            <mat-icon>delete</mat-icon>
+                        </button>
+                    </mat-cell>
+                </ng-container>
+
+                <!-- Header / Rows -->
+                <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+                <mat-header-row *matHeaderRowDef="['loader']; sticky: true" class="progress-row"
+                    [class.hidden]="!isLoading"></mat-header-row>
+                <mat-row class="selectable" *matRowDef="let row; columns: displayedColumns"
+                    [matRowDefTrackBy]="trackById">
+                </mat-row>
+
+                <!-- No-data -->
+                <tr class="mat-row" *matNoDataRow style="display: flex">
+                    <td class="mat-cell full-width pt-12" [attr.colspan]="displayedColumns.length">
+                        No group policies found.
+                    </td>
+                </tr>
+            </mat-table>
+
+            <mat-paginator #tablePaginator [length]="dataCount" [pageSize]="defaultPageSize"
+                [pageSizeOptions]="pageSizeOptions" showFirstLastButtons></mat-paginator>
+        </mat-card-content>
+    </mat-card>
+</div>

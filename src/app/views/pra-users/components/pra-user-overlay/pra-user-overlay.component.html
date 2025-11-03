@@ -2,6 +2,7 @@
     <div *ngIf="isLoading" class="absolute overlay-loader">
         <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
     </div>
+
     <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="close()">
         <mat-icon>close</mat-icon>
     </button>
@@ -10,14 +11,13 @@
         {{ mode === 'add' ? 'Add PRA User' : 'Edit PRA User' }}
     </h2>
 
-    <form [formGroup]="form" (ngSubmit)="submitHandler()" style="width: 640px;">
+    <form [formGroup]="form" (ngSubmit)="submitHandler()">
         <div fxLayout="row wrap">
-
             <!-- Display Name -->
-            <div fxFlex="100" class="mb-16">
+            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
                 <mat-form-field class="full-width">
                     <mat-label>Display Name</mat-label>
-                    <input matInput formControlName="displayName" placeholder="Display Name" />
+                    <input matInput formControlName="displayName" placeholder="Display Name" appAutoFocus autoFocusDelay="350" />
                     <mat-error *ngIf="displayName?.hasError('required')">
                         Display name is <strong>required</strong>
                     </mat-error>
@@ -25,7 +25,7 @@
             </div>
 
             <!-- Username & Email -->
-            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px">
+            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
                 <div fxFlex="50">
                     <mat-form-field class="full-width">
                         <mat-label>Username</mat-label>
@@ -35,6 +35,7 @@
                         </mat-error>
                     </mat-form-field>
                 </div>
+
                 <div fxFlex="50">
                     <mat-form-field class="full-width">
                         <mat-label>Email Address</mat-label>
@@ -50,7 +51,7 @@
             </div>
 
             <!-- Role & Business Unit -->
-            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" class="mt-16">
+            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
                 <div fxFlex="50">
                     <mat-form-field class="full-width">
                         <mat-label>User Role</mat-label>
@@ -62,57 +63,35 @@
                         </mat-error>
                     </mat-form-field>
                 </div>
+
                 <div fxFlex="50">
                     <mat-form-field class="full-width">
                         <mat-label>Business Unit</mat-label>
-                        <mat-select formControlName="businessUnit"
-                            [disabled]="role?.value === 'Super Admin' || role?.value === 'Data Center Engineer'">
+                        <mat-select formControlName="businessUnit">
                             <mat-option [value]="null">— None —</mat-option>
-                            <mat-option *ngFor="let bu of businessUnits"
-                                [value]="bu">{{ businessUnitLabels[bu] }}</mat-option>
+                            <mat-option *ngFor="let bu of businessUnits" [value]="bu">
+                                {{ businessUnitLabels[bu] }}
+                            </mat-option>
                         </mat-select>
+                        <mat-error *ngIf="businessUnit?.hasError('required')">
+                            Business unit is <strong>required</strong>
+                        </mat-error>
                     </mat-form-field>
                 </div>
             </div>
 
-            <!-- Password & Retype -->
-            <div fxFlex="100" fxLayout="row" fxLayoutGap="32px" class="mt-16">
-                <div fxFlex="50">
-                    <mat-form-field class="full-width">
-                        <mat-label>Password</mat-label>
-                        <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password"
-                            placeholder="Password" autocomplete="new-password" />
-                        <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword"
-                            [attr.aria-label]="'Toggle password visibility'" type="button">
-                            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                        </button>
-                        <mat-error *ngIf="password?.hasError('required') && mode === 'add'">
-                            Password is <strong>required</strong>
-                        </mat-error>
-                        <mat-error *ngIf="password?.hasError('minlength')">
-                            Password must be at least {{ PraUserOverlayComponent.MIN_PASSWORD_LENGTH }} characters long.
-                        </mat-error>
-                    </mat-form-field>
-                </div>
+            <!-- Can Manage PRA Users -->
+            <div fxFlex="100" class="mt-8">
+                <mat-checkbox formControlName="canManagePraUsers">
+                    Can manage PRA users
+                </mat-checkbox>
+            </div>
 
-                <div fxFlex="50">
-                    <mat-form-field class="full-width">
-                        <mat-label>Retype Password</mat-label>
-                        <input matInput [type]="hideRetypePassword ? 'password' : 'text'"
-                            formControlName="retypePassword" placeholder="Retype Password"
-                            autocomplete="new-password" />
-                        <button mat-icon-button matSuffix (click)="hideRetypePassword = !hideRetypePassword"
-                            [attr.aria-label]="'Toggle retype password visibility'" type="button">
-                            <mat-icon>{{ hideRetypePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                        </button>
-                        <mat-error *ngIf="retypePassword?.hasError('required') && mode === 'add'">
-                            Retype password is <strong>required</strong>
-                        </mat-error>
-                        <mat-error *ngIf="mustMatchError && retypePassword?.dirty">
-                            Passwords do not match.
-                        </mat-error>
-                    </mat-form-field>
-                </div>
+            <!-- Regenerate password -->
+            <div *ngIf="mode === 'edit'" fxFlex="100" class="mt-8">
+                <mat-checkbox formControlName="regeneratePassword">
+                    Regenerate password and email user
+                </mat-checkbox>
             </div>
 
             <!-- Submit -->

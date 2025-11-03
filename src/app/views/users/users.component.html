@@ -75,6 +75,14 @@
                         <button mat-icon-button color="primary" (click)="editUserHandler(row)">
                             <mat-icon>edit</mat-icon>
                         </button>
+                        <button *ngIf="row.isLoginAllowed" mat-icon-button color="warn"
+                            (click)="deactivateUserHandler(row)">
+                            <mat-icon>person_off</mat-icon>
+                        </button>
+                        <button *ngIf="!row.isLoginAllowed" mat-icon-button color="primary"
+                            (click)="reactivateUserHandler(row)">
+                            <mat-icon>person_add</mat-icon>
+                        </button>
                         <button mat-icon-button color="warn" (click)="deleteUserHandler(row)">
                             <mat-icon>delete</mat-icon>
                         </button>

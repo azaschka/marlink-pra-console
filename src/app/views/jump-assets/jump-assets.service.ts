@@ -15,7 +15,14 @@ import {
     RemoteVnc,
     ShellJump,
     WebJump,
+    JumpClientInstaller,
+    CreateJumpClientInstallerDtoInput,
 } from "./models";
+import {
+    JumpClientConnectionType,
+    JumpClientGroupType,
+    JumpClientInstallerPlatformType,
+} from "./enums";
 
 @Injectable()
 export class JumpAssetsService {
@@ -70,9 +77,7 @@ export class JumpAssetsService {
         id: number,
         body: JumpAssetCopyRequest
     ): Promise<RemoteVnc> {
-        return firstValueFrom(
-            this.http.post<RemoteVnc>(`jump-items/remote-vncs/${id}/copy`, body)
-        );
+        return this.post<RemoteVnc>(`jump-items/remote-vncs/${id}/copy`, body);
     }
 
     /* --- Shell Jump ---------------------------------------------------- */
@@ -97,9 +102,7 @@ export class JumpAssetsService {
         id: number,
         body: JumpAssetCopyRequest
     ): Promise<ShellJump> {
-        return firstValueFrom(
-            this.http.post<ShellJump>(`jump-items/shell-jumps/${id}/copy`, body)
-        );
+        return this.post<ShellJump>(`jump-items/shell-jumps/${id}/copy`, body);
     }
 
     /* --- Web Jump ------------------------------------------------------ */
@@ -122,9 +125,7 @@ export class JumpAssetsService {
         id: number,
         body: JumpAssetCopyRequest
     ): Promise<WebJump> {
-        return firstValueFrom(
-            this.http.post<WebJump>(`jump-items/web-jumps/${id}/copy`, body)
-        );
+        return this.post<WebJump>(`jump-items/web-jumps/${id}/copy`, body);
     }
 
     /* --- Protocol Tunnel Jump ----------------------------------------- */
@@ -157,11 +158,9 @@ export class JumpAssetsService {
         id: number,
         body: JumpAssetCopyRequest
     ): Promise<ProtocolTunnelJump> {
-        return firstValueFrom(
-            this.http.post<ProtocolTunnelJump>(
-                `jump-items/protocol-tunnel-jumps/${id}/copy`,
-                body
-            )
+        return this.post<ProtocolTunnelJump>(
+            `jump-items/protocol-tunnel-jumps/${id}/copy`,
+            body
         );
     }
 
@@ -169,7 +168,6 @@ export class JumpAssetsService {
     public async fetchJumpClients(): Promise<JumpClient[]> {
         return this.get<JumpClient[]>("jump-clients");
     }
-    // TODO: Implement createJumpClient creation logic.
     public async updateJumpClient(
         id: number,
         body: JumpAssetUpdateRequest
@@ -183,8 +181,30 @@ export class JumpAssetsService {
         id: number,
         body: JumpAssetCopyRequest
     ): Promise<JumpClient> {
+        return this.post<JumpClient>(`jump-clients/${id}/copy`, body);
+    }
+
+    /* --- Jump Client Installers --------------------------------------- */
+    public async fetchJumpClientInstallers(): Promise<JumpClientInstaller[]> {
+        return this.get<JumpClientInstaller[]>("jump-clients/installers");
+    }
+    public async createJumpClientInstaller(
+        body: CreateJumpClientInstallerDtoInput
+    ): Promise<JumpClientInstaller> {
+        return this.post<JumpClientInstaller>("jump-clients/installers", body);
+    }
+    public async deleteJumpClientInstaller(id: number): Promise<void> {
+        this.delete(`jump-clients/installers/${id}`);
+    }
+    public async downloadJumpClientInstallerPlatform(
+        installerId: string,
+        platformType: JumpClientInstallerPlatformType
+    ): Promise<Blob> {
         return firstValueFrom(
-            this.http.post<JumpClient>(`jump-clients/${id}/copy`, body)
+            this.http.get(
+                `jump-clients/installers/${installerId}/platforms/${platformType}`,
+                { responseType: "blob" }
+            )
         );
     }
 

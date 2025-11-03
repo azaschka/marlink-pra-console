@@ -10,7 +10,9 @@ export interface Site {
     siteManagers: SiteManager[];
     siteAdministrators: SiteAdministrator[];
     siteSupportTeamMembers: SiteSupportTeamMember[];
+    siteApprovers: string[];
     creationDate: string;
     lastModificationDate?: string;
     jumpPointCodeName?: string;
+    customerName?: string;
 }

@@ -62,36 +62,6 @@
                 <div *ngIf="item.type === 'dropDown'">
                     <ng-container *ngTemplateOutlet="menuTemplate; context: {menuItems: item.sub}"></ng-container>
                 </div>
-
-                <!-- <ul class="submenu lvl2" appDropdown *ngIf="item.type === 'dropDown'">
-          <li *ngFor="let itemLvL2 of item.sub" appDropdownLink routerLinkActive="open">
-
-
-            <a routerLink="{{item.state ? '/'+item.state : ''}}/{{itemLvL2.state}}" appDropdownToggle
-              *ngIf="itemLvL2.type !== 'dropDown'" matRipple>
-              <span class="item-name lvl2">{{itemLvL2.name | translate}}</span>
-              <span fxFlex></span>
-            </a>
-
-            <a *ngIf="itemLvL2.type === 'dropDown'" appDropdownToggle matRipple>
-              <span class="item-name lvl2">{{itemLvL2.name | translate}}</span>
-              <span fxFlex></span>
-              <mat-icon class="menu-caret">keyboard_arrow_right</mat-icon>
-            </a>
-
-            <ul class="submenu lvl3" appDropdown *ngIf="itemLvL2.type === 'dropDown'">
-              <li *ngFor="let itemLvL3 of itemLvL2.sub" appDropdownLink routerLinkActive="open">
-                <a routerLink="{{item.state ? '/'+item.state : ''}}{{itemLvL2.state ? '/'+itemLvL2.state : ''}}/{{itemLvL3.state}}"
-                  appDropdownToggle matRipple>
-                  <span class="item-name lvl3">{{itemLvL3.name | translate}}</span>
-                </a>
-              </li>
-            </ul>
-
-          </li>
-        </ul> -->
-
-
             </div>
         </li>
     </ul>

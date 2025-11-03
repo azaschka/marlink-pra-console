@@ -5,7 +5,6 @@ export interface CreateWebJumpDtoInput {
     jumpointId: number;
     url: string;
     jumpGroupId: number;
-
     jumpGroupType?: JumpGroupType;
     usernameFormatType?: WebJumpUsernameFormatType;
     mustVerifyCertificate?: boolean;

@@ -16,4 +16,9 @@ export interface RemoteVnc {
     comments?: string;
     jumpPolicyId?: number | null;
     sessionPolicyId?: number | null;
+
+    /* temporary */
+    jumpGroupName?: string;
+    jumpointName?: string;
+    jumpPolicyName?: string;
 }

@@ -12,10 +12,12 @@ import { JumpAssetsRoutes } from "./jump-assets.routing";
 import { JumpAssetsService } from "./jump-assets.service";
 import { JumpGroupsService } from "../jump-groups/jump-groups.service";
 import { JumpPoliciesService } from "../jump-policies/jump-policies.service";
+import { JumpointsService } from "../jumpoints/jumpoints.service";
 
 // Components
 import { JumpAssetsComponent } from "./jump-assets.component";
 import { JumpAssetCopyOverlayComponent } from "./components/jump-asset-copy-overlay/jump-asset-copy-overlay.component";
+import { JumpAssetCreateOverlayComponent } from "./components/jump-asset-create-overlay/jump-asset-create-overlay.component";
 import { JumpAssetUpdateOverlayComponent } from "./components/jump-asset-update-overlay/jump-asset-update-overlay.component";
 import { RemoteRdpComponent } from "./components/remote-rdp/remote-rdp.component";
 import { RemoteVncComponent } from "./components/remote-vnc/remote-vnc.component";
@@ -26,6 +28,7 @@ import { JumpClientsComponent } from "./components/jump-clients/jump-clients.com
 
 const COMPONENTS = [
     JumpAssetCopyOverlayComponent,
+    JumpAssetCreateOverlayComponent,
     JumpAssetUpdateOverlayComponent,
     JumpAssetsComponent,
     RemoteRdpComponent,
@@ -36,7 +39,12 @@ const COMPONENTS = [
     JumpClientsComponent,
 ];
 
-const SERVICES = [JumpAssetsService, JumpGroupsService, JumpPoliciesService];
+const SERVICES = [
+    JumpAssetsService,
+    JumpGroupsService,
+    JumpPoliciesService,
+    JumpointsService,
+];
 
 @NgModule({
     imports: [

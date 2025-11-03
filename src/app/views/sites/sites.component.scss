@@ -22,19 +22,26 @@
     max-width: 100%;
 }
 
-.mat-column-name {
-    flex: 1 1 auto;
+.mat-column-name,
+.mat-column-customerName {
+    flex: 0 0 15%;
+    width: 15%;
 }
 
 .mat-column-key,
 .mat-column-customerKey {
-    flex: 0 0 170px;
-    width: 170px;
+    flex: 0 0 100px;
+    width: 100px;
 }
+
+.mat-column-jumpointCodeNames {
+    flex: 1 1 auto;
+}
+
 .mat-column-creationDate,
 .mat-column-lastModificationDate {
-    flex: 0 0 170px;
-    width: 170px;
+    flex: 0 0 150px;
+    width: 150px;
 }
 .mat-column-actions {
     flex: 0 0 32px;

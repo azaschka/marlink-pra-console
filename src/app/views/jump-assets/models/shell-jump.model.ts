@@ -24,4 +24,9 @@ export interface ShellJump {
     jumpPolicyId?: number | null;
     username?: string;
     sessionPolicyId?: number | null;
+
+    /* temporary */
+    jumpGroupName?: string;
+    jumpointName?: string;
+    jumpPolicyName?: string;
 }

@@ -1,0 +1,14 @@
+<div fxLayout="column" fxLayoutAlign="start stretch" class="py-16 scroll-container">
+    <div *ngFor="let step of steps" fxLayout="column" fxLayoutGap="8px">
+        <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="16px" fxFlex="100">
+            <mat-icon *ngIf="step.status === 'pending'" color="primary">radio_button_unchecked</mat-icon>
+            <mat-progress-spinner *ngIf="step.status === 'in-progress'" mode="indeterminate"
+                diameter="24"></mat-progress-spinner>
+            <mat-icon *ngIf="step.status === 'success'" color="primary">check_circle</mat-icon>
+            <mat-icon *ngIf="step.status === 'error'" color="warn">error</mat-icon>
+            <span fxFlex>{{ step.label }}</span>
+        </div>
+
+        <p fxFlex *ngIf="step.result" class="ml-40" [class.text-warn]="step.status === 'error'">{{ step.result }}</p>
+    </div>
+</div>

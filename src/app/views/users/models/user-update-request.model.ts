@@ -1,7 +1,6 @@
 export interface UserUpdateRequest {
     publicDisplayName?: string;
     username?: string;
-    password?: string;
     passwordExpirationDate?: string | null;
     email?: string;
     preferredEmailLanguage?: string;
@@ -9,4 +8,5 @@ export interface UserUpdateRequest {
     isLoginAllowed?: boolean;
     failedLoginAttempts?: number;
     mustResetPasswordOnNextLogin?: boolean;
+    regeneratePassword?: boolean;
 }

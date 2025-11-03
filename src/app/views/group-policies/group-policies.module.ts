@@ -12,8 +12,11 @@ import { GroupPoliciesService } from "./group-policies.service";
 import { UsersService } from "../users/users.service";
 import { GroupPoliciesComponent } from "./group-policies.component";
 import { GroupPolicyOverlayComponent } from "./components/group-policy-overlay/group-policy-overlay.component";
+import { CustomersService } from "../customers/customers.service";
 
 const COMPONENTS = [GroupPoliciesComponent, GroupPolicyOverlayComponent];
+
+const SERVICES = [GroupPoliciesService, UsersService, CustomersService];
 
 @NgModule({
     imports: [
@@ -28,6 +31,6 @@ const COMPONENTS = [GroupPoliciesComponent, GroupPolicyOverlayComponent];
         RouterModule.forChild(GroupPoliciesRoutes),
     ],
     declarations: COMPONENTS,
-    providers: [GroupPoliciesService, UsersService],
+    providers: SERVICES,
 })
 export class GroupPoliciesModule {}

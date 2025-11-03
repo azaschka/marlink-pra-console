@@ -1,10 +1,17 @@
 import { Injectable } from "@angular/core";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 import { config } from "config";
 import { AuthRole } from "../enums";
 
+export type MenuItemType =
+    | "link"
+    | "dropDown"
+    | "icon"
+    | "separator"
+    | "extLink";
+
 export interface IMenuItem {
-    type: "link" | "dropDown" | "icon" | "separator" | "extLink";
+    type: MenuItemType;
     name?: string; // Used as display text for item and title for separator type
     state?: string; // Router state
     icon?: string; // Material icon name
@@ -13,9 +20,10 @@ export interface IMenuItem {
     disabled?: boolean; // If true, item will not be appeared in sidenav.
     sub?: IChildItem[]; // Dropdown items
     badges?: IBadge[];
-    roles: string[];
+    roles: Array<AuthRole | string>; // AuthRole enum values or special permission strings
 }
-interface IChildItem {
+
+export interface IChildItem {
     type?: string;
     name: string; // Display text
     state?: string; // Router state
@@ -24,14 +32,31 @@ interface IChildItem {
     sub?: IChildItem[];
 }
 
-interface IBadge {
+export interface IBadge {
     color: string; // primary/accent/warn/hex color codes(#fff000)
     value: string; // Display text
 }
 
+/**
+ * Service for managing application navigation menu items.
+ * Provides menu configuration with role-based access control.
+ */
 @Injectable()
 export class NavigationService {
-    defaultMenu: IMenuItem[] = [
+    /**
+     * Special permission identifier for users who can manage PRA users
+     * This is not an AuthRole but a user-level permission flag
+     */
+    public static readonly CAN_MANAGE_PRA_USERS_PERMISSION =
+        "canManagePraUsers";
+
+    /**
+     * Icon menu title displayed at the top of navigation
+     * when icon type items are present in the menu
+     */
+    public readonly iconTypeMenuTitle = "Frequently Accessed";
+
+    private readonly defaultMenu: IMenuItem[] = [
         {
             name: "Dashboard",
             type: "link",
@@ -39,7 +64,10 @@ export class NavigationService {
             state: "dashboard",
             roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
         },
-        { type: "separator", roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN] },
+        {
+            type: "separator",
+            roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+        },
         {
             name: "Sites",
             type: "link",
@@ -69,6 +97,20 @@ export class NavigationService {
             roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
         },
         {
+            name: "views.jumpoints.headline",
+            type: "link",
+            icon: "lan",
+            state: "jumpoints",
+            roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+        },
+        {
+            name: "views.jump-groups.headline",
+            type: "link",
+            icon: "account_tree",
+            state: "jump-groups",
+            roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+        },
+        {
             name: "views.jump-assets.headline",
             type: "link",
             icon: "device_hub",
@@ -76,15 +118,28 @@ export class NavigationService {
             roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
         },
         {
+            name: "views.jump-client-installers.headline",
+            type: "link",
+            icon: "device_hub",
+            state: "jump-client-installers",
+            roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+        },
+        {
             type: "separator",
-            roles: [AuthRole.SUPER_ADMIN],
+            roles: [
+                AuthRole.SUPER_ADMIN,
+                NavigationService.CAN_MANAGE_PRA_USERS_PERMISSION,
+            ],
         },
         {
             name: "views.pra-users.headline",
             type: "link",
             icon: "manage_accounts",
             state: "pra-users",
-            roles: [AuthRole.SUPER_ADMIN],
+            roles: [
+                AuthRole.SUPER_ADMIN,
+                NavigationService.CAN_MANAGE_PRA_USERS_PERMISSION,
+            ],
         },
         {
             name: "views.bt-backups.headline",
@@ -114,15 +169,36 @@ export class NavigationService {
         },
     ];
 
-    // Icon menu TITLE at the very top of navigation.
-    // This title will appear if any icon type item is present in menu.
-    iconTypeMenuTitle = "Frequently Accessed";
+    private readonly menuItems = new BehaviorSubject<IMenuItem[]>(
+        this.defaultMenu
+    );
 
-    // sets iconMenu as default;
-    menuItems = new BehaviorSubject<IMenuItem[]>(this.defaultMenu);
+    /**
+     * Observable stream of menu items
+     * Components should subscribe to this to receive menu updates
+     */
+    public readonly menuItems$: Observable<IMenuItem[]> =
+        this.menuItems.asObservable();
 
-    // navigation component has subscribed to this Observable
-    menuItems$ = this.menuItems.asObservable();
+    /**
+     * Get the current menu items value
+     */
+    public getMenuItems(): IMenuItem[] {
+        return this.menuItems.value;
+    }
 
-    constructor() {}
+    /**
+     * Update the menu items
+     * @param items New menu items to set
+     */
+    public setMenuItems(items: IMenuItem[]): void {
+        this.menuItems.next(items);
+    }
+
+    /**
+     * Reset menu items to default
+     */
+    public resetToDefault(): void {
+        this.menuItems.next(this.defaultMenu);
+    }
 }

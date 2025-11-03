@@ -8,14 +8,16 @@ import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confir
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
+import { PraDataFilter } from "../../shared/helpers";
+import { BusinessUnit, UserRole } from "../pra-users/enums";
 import { GroupPoliciesService } from "./group-policies.service";
+import { CustomersService } from "../customers/customers.service";
 import { GroupPolicy } from "./models";
 import { AccessPermissionStatusType } from "./enums";
 import {
     GroupPolicyOverlayComponent,
     GroupPolicyOverlayDialogData,
 } from "./components/group-policy-overlay/group-policy-overlay.component";
-import { UserRole } from "../pra-users/enums";
 
 @Component({
     selector: "app-group-policies",
@@ -27,10 +29,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
         "name",
-        "accessPermissionStatusType",
-        "hasEndpointsAccessPermission",
-        "hasShareOtherTeamPermission",
-        "hasInviteExternalUserPermission",
+        "groupMembersCount",
         "lastSyncDate",
         "actions",
     ];
@@ -46,7 +45,9 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
     public isLoading = true;
     public filterValue = "";
     public dataCount = 0;
-    public canDelete = false;
+    public isSuperAdmin = false;
+
+    private currentBusinessUnit: BusinessUnit | null | undefined;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -54,6 +55,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
         private readonly dialog: MatDialog,
         private readonly jwtAuthService: JwtAuthService,
         private readonly groupPoliciesService: GroupPoliciesService,
+        private readonly customersService: CustomersService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService
@@ -160,11 +162,38 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
     private async loadPage(): Promise<void> {
         this.isLoading = true;
         try {
-            const items = await this.groupPoliciesService.fetchGroupPolicies();
-            this.dataSource.data = items;
+            const [groupPolicies, customers] = await Promise.all([
+                this.groupPoliciesService.fetchGroupPolicies(),
+                this.customersService.fetchCustomers(),
+            ]);
+            const customerBUByKey = new Map(
+                customers.map((c) => [c.name.toLowerCase(), c.businessUnit])
+            );
+            const filteredGroupPolicies = PraDataFilter.filterByBusinessUnit(
+                groupPolicies,
+                this.currentBusinessUnit,
+                [
+                    (groupPolicy) => {
+                        const parts = groupPolicy.name.split("_");
+                        const customerKey = parts[0].toLowerCase();
+                        const customerKey2 = parts[1]?.toLowerCase();
+
+                        return (
+                            customerBUByKey.get(customerKey) ||
+                            customerBUByKey.get(customerKey2)
+                        );
+                    },
+                ]
+            );
+            this.dataSource.data = filteredGroupPolicies;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
-            this.dataCount = items.length;
+            this.dataCount = filteredGroupPolicies.length;
+
+            setTimeout(() => this.loadVisibleGroupMemberCount(), 10);
+            // this.paginator.page.subscribe(() =>
+            //     this.loadVisibleLicenseUsages()
+            // );
         } catch (err: any) {
             await this.errorDialog.show({
                 title: "Error",
@@ -175,14 +204,35 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
         }
     }
 
+    private async loadVisibleGroupMemberCount() {
+        const data = this.dataSource.filteredData || this.dataSource.data;
+        const pageIndex = this.paginator.pageIndex || 0;
+        const pageSize = this.paginator.pageSize || 20;
+        const start = pageIndex * pageSize;
+        const end = start + pageSize;
+        const currentPageItems = data; // data.slice(start, end);
+
+        for (const groupPolicy of currentPageItems) {
+            this.groupPoliciesService
+                .fetchGroupPolicyMembers(groupPolicy.id)
+                .then((members) => {
+                    groupPolicy.groupMembersCount = members.length;
+                })
+                .catch(() => {
+                    groupPolicy.groupMembersCount = 0;
+                });
+        }
+    }
+
     private addListeners(): void {
         this.subscriptionsToClear.add(
             this.jwtAuthService.praUser.subscribe((user) => {
                 if (!user || user.role === "None") {
                     this.jwtAuthService.checkTokenIsValid();
                 }
-                // Check if the user has the SuperAdmin role to allow deletion of group policies
-                this.canDelete = user.role === UserRole.SuperAdmin;
+                // Check if the user has the SuperAdmin role
+                this.isSuperAdmin = user.role === UserRole.SuperAdmin;
+                this.currentBusinessUnit = user.businessUnit;
             })
         );
     }

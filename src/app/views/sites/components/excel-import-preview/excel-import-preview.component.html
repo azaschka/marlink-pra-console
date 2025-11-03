@@ -1,0 +1,67 @@
+<div class="py-16" *ngIf="preview">
+    <div class="preview-container scroll-container" fxLayout="column">
+        <div fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between center" class="ml-40">
+            <div fxFlex="30">
+                <p class="text-muted">Customer</p>
+            </div>
+            <div fxFlex="70">
+                <ng-container *ngIf="preview.customer; else noCustomer">
+                    <p>
+                        <span>{{ preview.customer.name }}</span>&nbsp;
+                        <span class="ml-8 text-gray">({{ preview.customer.key }})</span>
+                    </p>
+                </ng-container>
+                <ng-template #noCustomer>
+                    <p class="text-warn">Customer information is missing!</p>
+                </ng-template>
+            </div>
+        </div>
+
+        <div fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between center" class="ml-40">
+            <div fxFlex="30">
+                <p class="text-muted">Site</p>
+            </div>
+            <div fxFlex="70">
+                <ng-container *ngIf="preview.site; else noSite">
+                    <p>
+                        <span>{{ preview.site.name }}</span>&nbsp;
+                        <span class="ml-8 text-gray">({{ preview.site.key }})</span>
+                    </p>
+                </ng-container>
+                <ng-template #noSite>
+                    <p class="text-warn">Site information is missing!</p>
+                </ng-template>
+            </div>
+        </div>
+
+        <div fxFlex="100" class="excel-preview-tree-container">
+            <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" class="excel-preview-tree">
+                <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
+                    <button mat-icon-button disabled></button>
+                    <span class="tree-label">{{ node.label }}</span><br>
+                    <span class="tree-value text-gray" *ngIf="node.value">&nbsp;{{ node.value }}</span>
+                </mat-tree-node>
+                <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild">
+                    <div class="tree-node-group" matTreeNodePadding>
+                        <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' + node.label">
+                            <mat-icon class="tree-toggle-icon">
+                                {{ treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+                            </mat-icon>
+                        </button>
+                        <span class="tree-label">{{ node.label }}</span>
+                        <span class="tree-value text-gray" *ngIf="node.value">&nbsp;{{ node.value }}</span>
+                    </div>
+                    <div [class.tree-child-container]="true" *ngIf="treeControl.isExpanded(node)">
+                        <ng-container matTreeNodeOutlet></ng-container>
+                    </div>
+                </mat-nested-tree-node>
+            </mat-tree>
+        </div>
+    </div>
+
+    <div class="mt-32" fxLayout="row" fxLayoutAlign="end center">
+        <button mat-raised-button color="primary" (click)="startImport.emit()" [disabled]="!preview">
+            Start Import
+        </button>
+    </div>
+</div>

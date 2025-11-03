@@ -22,4 +22,9 @@ export interface ProtocolTunnelJump {
     database?: string;
     url?: string;
     caCertificates?: string;
+
+    /* temporary */
+    jumpGroupName?: string;
+    jumpointName?: string;
+    jumpPolicyName?: string;
 }
