@@ -20,12 +20,34 @@ export interface JumpClientInstallerDownloadDialogData {
     keyInfos: JumpClientInstallerKeyInfo[];
 }
 
-const MAP: Partial<Record<JumpClientInstallerPlatformType, string>> = {
+// MAP for the actual download functionality (used in startDownload method)
+const DOWNLOAD_MAP: Partial<Record<JumpClientInstallerPlatformType, string>> = {
     [JumpClientInstallerPlatformType.Linux32Armv7]: "linux-64",
     // [JumpClientInstallerPlatformType.Linux32Armv7Headless]: "linux-64-headless",
     [JumpClientInstallerPlatformType.Linux64X86]: "linux-64",
     // [JumpClientInstallerPlatformType.Linux64X86Headless]: "linux-64-headless",
     [JumpClientInstallerPlatformType.Linux64]: "linux-64",
+    // [JumpClientInstallerPlatformType.Linux64Headless]: "linux-64-headless",
+    // [JumpClientInstallerPlatformType.MacOsxX86]: "mac-dmg",
+    // [JumpClientInstallerPlatformType.MacDmg]: "mac-dmg",
+    // [JumpClientInstallerPlatformType.MacZip]: "mac-zip",
+    [JumpClientInstallerPlatformType.WinNT64Msi]: "windows-64-msi",
+    [JumpClientInstallerPlatformType.Windows64Msi]: "windows-64-msi",
+    // [JumpClientInstallerPlatformType.Windows64]: "windows-64",
+    [JumpClientInstallerPlatformType.WinNT32Msi]: "windows-32-msi",
+    [JumpClientInstallerPlatformType.Windows32Msi]: "windows-32-msi",
+    // [JumpClientInstallerPlatformType.Windows32]: "windows-32",
+};
+
+// MAP for the platform type used in download link URL (used in generateDownloadUrl method)
+const LINK_PLATFORM_MAP: Partial<
+    Record<JumpClientInstallerPlatformType, string>
+> = {
+    [JumpClientInstallerPlatformType.Linux32Armv7]: "linux64-x86",
+    // [JumpClientInstallerPlatformType.Linux32Armv7Headless]: "linux-64-headless",
+    [JumpClientInstallerPlatformType.Linux64X86]: "linux64-x86",
+    // [JumpClientInstallerPlatformType.Linux64X86Headless]: "linux-64-headless",
+    [JumpClientInstallerPlatformType.Linux64]: "linux64-x86",
     // [JumpClientInstallerPlatformType.Linux64Headless]: "linux-64-headless",
     // [JumpClientInstallerPlatformType.MacOsxX86]: "mac-dmg",
     // [JumpClientInstallerPlatformType.MacDmg]: "mac-dmg",
@@ -38,9 +60,13 @@ const MAP: Partial<Record<JumpClientInstallerPlatformType, string>> = {
     // [JumpClientInstallerPlatformType.Windows32]: "windows-32",
 };
 
+// Display labels that can map multiple platform strings to the same label
 const DISPLAY_LABEL_MAP: Record<string, string> = {
     "linux-64": "Linux (x64)",
+    "linux64-x86": "Linux (x64)",
+    "windows-64-msi": "Windows (x64) MSI",
     "winNT-64-msi": "Windows (x64) MSI",
+    "windows-32-msi": "Windows (x86) MSI",
     "winNT-32-msi": "Windows (x86) MSI",
 };
 
@@ -69,17 +95,17 @@ export class JumpClientInstallerDownloadOverlayComponent
     public downloadUrl = "";
 
     public readonly platformOptions: PlatformOption[] = (() => {
-        // Get all valid platform types
+        // Get all valid platform types (using LINK_PLATFORM_MAP for validation)
         const validPlatforms = Object.values(
             JumpClientInstallerPlatformType
         ).filter(
-            (ui) => MAP[ui] !== undefined
+            (ui) => LINK_PLATFORM_MAP[ui] !== undefined
         ) as JumpClientInstallerPlatformType[];
 
         // Group by mapped value to avoid duplicates
         const grouped = new Map<string, JumpClientInstallerPlatformType>();
         validPlatforms.forEach((platform) => {
-            const mappedValue = MAP[platform];
+            const mappedValue = LINK_PLATFORM_MAP[platform];
             if (mappedValue && !grouped.has(mappedValue)) {
                 grouped.set(mappedValue, platform);
             }
@@ -138,7 +164,7 @@ export class JumpClientInstallerDownloadOverlayComponent
         try {
             const baseUrl =
                 await this.appService.fetchDefaultBeyondTrustInstanceApiBaseUrl();
-            const mappedPlatform = MAP[this.platformCtrl.value];
+            const mappedPlatform = LINK_PLATFORM_MAP[this.platformCtrl.value];
             this.downloadUrl = `${baseUrl}/download_client_connector?jc=${this.data.installerId}&p=${mappedPlatform}`;
         } catch (error) {
             console.error("Failed to generate download URL:", error);
@@ -148,7 +174,7 @@ export class JumpClientInstallerDownloadOverlayComponent
 
     public startDownload(): void {
         const uiPlatform = this.platformCtrl.value;
-        const btPlatform = uiPlatform ? MAP[uiPlatform] : undefined;
+        const btPlatform = uiPlatform ? DOWNLOAD_MAP[uiPlatform] : undefined;
         if (!btPlatform) return;
 
         this.isDownloading = true;
