@@ -167,6 +167,14 @@ export class NavigationService {
             state: `${config.praApiBaseUrl}/open-api`,
             roles: [AuthRole.SUPER_ADMIN, AuthRole.DATA_CENTER_ENGINEER],
         },
+        {
+            name: "Postman Collection",
+            type: "extLink",
+            tooltip: "Postman Collection",
+            icon: "library_books",
+            state: `${config.praApiBaseUrl}/assets/docs/postman-collection.json`,
+            roles: [AuthRole.SUPER_ADMIN, AuthRole.DATA_CENTER_ENGINEER],
+        },
     ];
 
     private readonly menuItems = new BehaviorSubject<IMenuItem[]>(
