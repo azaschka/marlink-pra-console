@@ -20,8 +20,7 @@ import { SharedModule } from "./shared/shared.module";
 import { ErrorHandlerService } from "./shared/services/error-handler.service";
 
 // Interceptors
-import { TokenInterceptor } from "./shared/interceptors/token.interceptor";
-import { ApiKeyInterceptor } from "./shared/interceptors/api-key.interceptor";
+import { ApiInterceptor } from "./shared/interceptors/api.interceptor";
 
 import { AppRoutes } from "./app.routing";
 import { AppComponent } from "./app.component";
@@ -57,12 +56,7 @@ export function HttpLoaderFactory(httpClient: HttpClient) {
         { provide: ErrorHandler, useClass: ErrorHandlerService },
         {
             provide: HTTP_INTERCEPTORS,
-            useClass: TokenInterceptor,
-            multi: true,
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: ApiKeyInterceptor,
+            useClass: ApiInterceptor,
             multi: true,
         },
     ],

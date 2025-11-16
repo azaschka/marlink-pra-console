@@ -4,4 +4,5 @@ export const environment = {
     // PRA_API_BASE_URL: "https://pra-api-pp.cdn-vas.net",
     // PRA_API_BASE_URL: "https://pra-api.cdn-vas.net",
     PRA_API_KEY: "***REMOVED-PRA-API-KEY***",
+    PRA_ACCESS_KEY: "***REMOVED-PRA-ACCESS-KEY***",
 };
