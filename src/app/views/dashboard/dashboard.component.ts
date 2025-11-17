@@ -4,7 +4,7 @@ import { egretAnimations } from "../../shared/animations/egret-animations";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 
 @Component({
-    selector: "app-views-dashboard",
+    selector: "app-dashboard",
     templateUrl: "./dashboard.component.html",
     styleUrls: ["./dashboard.component.scss"],
     animations: egretAnimations,

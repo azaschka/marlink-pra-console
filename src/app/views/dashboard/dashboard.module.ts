@@ -9,7 +9,10 @@ import { SharedMaterialModule } from "../../shared/shared-material.module";
 import { DashboardRoutes } from "./dashboard.routing";
 import { DashboardComponent } from "./dashboard.component";
 
-const COMPONENTS = [DashboardComponent];
+// Components
+import { BeyondtrustInstancesComponent } from "./components/beyondtrust-instaces/beyondtrust-instances.component";
+
+const COMPONENTS = [DashboardComponent, BeyondtrustInstancesComponent];
 
 const SERVICES = [];
 

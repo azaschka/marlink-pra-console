@@ -1,0 +1,63 @@
+<mat-card class="p-0" fxFlex="50" fxFlex.gt-sm="50" fxFlex.sm="100">
+    <mat-card-title class="mb-0">
+        <div class="card-title-text">
+            <span class="text-13 pt-4" translate="views.dashboard.btInstances.headline"></span>
+
+            <span fxFlex></span>
+            <button class="card-control" mat-icon-button [matMenuTriggerFor]="hxConfigsMenu">
+                <mat-icon class="text-muted text-18">more_vert</mat-icon>
+            </button>
+            <mat-menu #hxConfigsMenu="matMenu">
+                <button mat-menu-item (click)="openAddBeyondtrustInstanceModalHandler()">
+                    <mat-icon>add</mat-icon>
+                    <span translate="views.dashboard.btInstances.buttons.add"></span>
+                </button>
+                <!-- <button mat-menu-item (click)="refreshBeyondtrustInstancesHealthStatus()">
+                    <mat-icon>sync</mat-icon>
+                    <span translate="views.dashboard.btInstances.buttons.refresh"></span>
+                </button> -->
+            </mat-menu>
+        </div>
+        <mat-divider></mat-divider>
+        <mat-progress-bar *ngIf="isLoading" mode="indeterminate" color="primary"></mat-progress-bar>
+    </mat-card-title>
+    <mat-card-content class="p-0">
+        <mat-table [dataSource]="dataSource">
+            <ng-container matColumnDef="status">
+                <mat-cell *matCellDef="let row" data-label="status">
+                    <div class="status-light online cursor-pointer" [ngClass]="row.status"></div>
+                </mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="name">
+                <mat-header-cell *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
+                <mat-cell *matCellDef="let row" data-label="name">{{ row.name }}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="apiBaseUrl">
+                <mat-header-cell *matHeaderCellDef mat-sort-header>API Base URL</mat-header-cell>
+                <mat-cell *matCellDef="let row" data-label="apiBaseUrl">{{ row.apiBaseUrl }}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+                <mat-cell *matCellDef="let row">
+                    <div class="full-width text-right">
+                        <button mat-icon-button mat-sm-button color="primary" class="mr-16"
+                            (click)="openUpdateBeyondtrustInstanceModalHandler(row)">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button mat-sm-button color="warn"
+                            (click)="deleteBeyondtrustInstanceHandler(row)">
+                            <mat-icon>close</mat-icon>
+                        </button>
+                    </div>
+                </mat-cell>
+            </ng-container>
+
+            <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+        </mat-table>
+
+        <mat-paginator #tablePaginator [style.display]="dataCount < 5 ? 'none' : 'block'" [length]="dataCount"
+            pageSize="4"></mat-paginator>
+    </mat-card-content>
+</mat-card>

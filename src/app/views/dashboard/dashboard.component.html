@@ -1,15 +1,14 @@
-<div class="m-333" [@animate]="{ value: '*', params: { y: '50px', delay: '300ms' } }" fxLayout="row"
-    fxLayoutAlign="start center">
-    <div fxFlex="33">
-    </div>
+<div class="m-333" [@animate]="{ value: '*', params: { y: '50px', delay: '100ms' } }">
+    <!-- filter -->
+    <div class="pr-16" fxFlex="33"></div>
 
+    <!-- spacer -->
     <div fxFlex></div>
 
-    <div class="pl-16" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="16px">
-    </div>
+    <!-- actions -->
+    <div class="pl-16"></div>
 </div>
 
-<!-- <mat-card class="p-0" [@animate]="{ value: '*', params: { y: '50px', delay: '300ms' } }">
-    <mat-card-content class="p-0"></mat-card-content>
-</mat-card> -->
-<h3 class="m-16">Coming soon in v2.0.0</h3>
+<div [@animate]="{ value: '*', params: { y: '50px', delay: '150ms' } }">
+    <app-dashboard-beyondtrust-instances></app-dashboard-beyondtrust-instances>
+</div>

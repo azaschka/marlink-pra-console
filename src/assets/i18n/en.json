@@ -30,7 +30,14 @@
   },
   "views": {
     "dashboard": {
-      "headline": "Dashboard"
+      "headline": "Dashboard",
+      "btInstances": {
+        "headline": "BeyondTrust Instances",
+        "buttons": {
+          "add": "Add BeyondTrust Instance",
+          "refresh": "Instances Health Check"
+        }
+      }
     },
     "sites": {
       "headline": "Sites",
