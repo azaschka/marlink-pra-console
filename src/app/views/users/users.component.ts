@@ -14,6 +14,7 @@ import {
 } from "./components/user-overlay/user-overlay.component";
 import { UsersService } from "./users.service";
 import { User } from "./models";
+import { AppService } from "app/app.service";
 
 @Component({
     selector: "app-users",
@@ -46,11 +47,13 @@ export class UsersComponent implements OnInit, OnDestroy {
     public dataCount = 0;
 
     private readonly subscriptionsToClear: Subscription;
+    private currentTenantId: number | null = null;
 
     constructor(
         private readonly dialog: MatDialog,
         private readonly jwtAuthService: JwtAuthService,
         private readonly usersService: UsersService,
+        private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService
@@ -79,9 +82,20 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
 
     public addUserHandler(): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         this.dialog
             .open(UserOverlayComponent, {
-                data: { mode: "add" } as UserOverlayDialogData,
+                data: {
+                    mode: "add",
+                    tenantId: this.currentTenantId,
+                } as UserOverlayDialogData,
                 disableClose: true,
                 width: "720px",
             })
@@ -97,9 +111,21 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
 
     public editUserHandler(user: User): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         this.dialog
             .open(UserOverlayComponent, {
-                data: { mode: "edit", user } as UserOverlayDialogData,
+                data: {
+                    mode: "edit",
+                    user,
+                    tenantId: this.currentTenantId,
+                } as UserOverlayDialogData,
                 disableClose: true,
                 width: "720px",
             })
@@ -115,6 +141,14 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
 
     public deactivateUserHandler(user: User): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         this.confirmDialog
             .show({
                 title: "Deactivate User",
@@ -124,7 +158,9 @@ export class UsersComponent implements OnInit, OnDestroy {
                 if (confirmed) {
                     this.isLoading = true;
                     this.usersService
-                        .updateUser(user.id, { isLoginAllowed: false })
+                        .updateUser(this.currentTenantId!, user.id, {
+                            isLoginAllowed: false,
+                        })
                         .then(() => {
                             this.notificationDialog.show({
                                 message: `User ${user.publicDisplayName} has been deactivated.`,
@@ -153,6 +189,14 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
 
     public reactivateUserHandler(user: User): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         this.confirmDialog
             .show({
                 title: "Reactivate User",
@@ -162,7 +206,9 @@ export class UsersComponent implements OnInit, OnDestroy {
                 if (confirmed) {
                     this.isLoading = true;
                     this.usersService
-                        .updateUser(user.id, { isLoginAllowed: true })
+                        .updateUser(this.currentTenantId!, user.id, {
+                            isLoginAllowed: true,
+                        })
                         .then(() => {
                             this.notificationDialog.show({
                                 message: `User ${user.publicDisplayName} has been reactivated.`,
@@ -191,6 +237,14 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
 
     public async deleteUserHandler(user: User): Promise<void> {
+        if (!this.currentTenantId) {
+            await this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         const confirmed = await this.confirmDialog.show({
             title: "Delete User",
             message: `Are you sure you want to delete user:<br><strong>${user.publicDisplayName}</strong>?`,
@@ -199,7 +253,10 @@ export class UsersComponent implements OnInit, OnDestroy {
         if (confirmed) {
             this.isLoading = true;
             try {
-                await this.usersService.deleteUser(user.id);
+                await this.usersService.deleteUser(
+                    this.currentTenantId,
+                    user.id
+                );
                 this.notificationDialog.show({
                     message: `User ${user.publicDisplayName} has been deleted.`,
                 });
@@ -218,9 +275,18 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
 
     private async loadPage(): Promise<void> {
+        const tenantId = this.currentTenantId;
+        if (!tenantId) {
+            console.warn(
+                "No BeyondTrust instance selected, skipping user load"
+            );
+            this.isLoading = false;
+            return;
+        }
+
         this.isLoading = true;
         try {
-            const items = await this.usersService.fetchUsers();
+            const items = await this.usersService.fetchUsers(tenantId);
             this.dataSource.data = items;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
@@ -240,6 +306,22 @@ export class UsersComponent implements OnInit, OnDestroy {
             this.jwtAuthService.praUser.subscribe((user) => {
                 if (!user || user.role === "None") {
                     this.jwtAuthService.checkTokenIsValid();
+                }
+            })
+        );
+
+        // Listen for BeyondTrust instance changes and reload data
+        this.subscriptionsToClear.add(
+            this.appService.selectedInstanceId$.subscribe((instanceId) => {
+                const previousTenantId = this.currentTenantId;
+                this.currentTenantId = instanceId;
+
+                // Reload data if tenant changed (and not initial load)
+                if (
+                    previousTenantId !== null &&
+                    previousTenantId !== instanceId
+                ) {
+                    this.loadPage();
                 }
             })
         );

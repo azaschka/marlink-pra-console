@@ -15,6 +15,7 @@ import { Customer } from "../customers/models";
 import { CustomersService } from "../customers/customers.service";
 import { BusinessUnit } from "../pra-users/enums";
 import { PraDataFilter } from "app/shared/helpers";
+import { AppService } from "app/app.service";
 
 @Component({
     selector: "app-sites",
@@ -50,6 +51,7 @@ export class SitesComponent implements OnInit, OnDestroy {
     private customers: Customer[] = [];
 
     private currentBusinessUnit: BusinessUnit | null | undefined;
+    private currentTenantId: number | null = null;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -60,7 +62,8 @@ export class SitesComponent implements OnInit, OnDestroy {
         private readonly customersService: CustomersService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
+        private readonly appService: AppService
     ) {
         this.subscriptionsToClear = new Subscription();
     }
@@ -68,6 +71,11 @@ export class SitesComponent implements OnInit, OnDestroy {
     public async ngOnInit(): Promise<void> {
         this.jwtAuthService.getPraUser();
         this.addListeners();
+
+        // Initialize AppService and get tenant ID
+        await this.appService.initialize();
+        this.currentTenantId = this.appService.getSelectedInstanceId();
+
         await this.loadPage();
     }
 
@@ -93,8 +101,17 @@ export class SitesComponent implements OnInit, OnDestroy {
     }
 
     public importExcelHandler(): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before importing data.",
+            });
+            return;
+        }
+
         this.dialog
             .open(ImportExcelOverlayComponent, {
+                data: { tenantId: this.currentTenantId },
                 disableClose: true,
             })
             .afterClosed()

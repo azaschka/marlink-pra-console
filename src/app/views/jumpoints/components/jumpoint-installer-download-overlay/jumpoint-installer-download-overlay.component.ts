@@ -8,6 +8,7 @@ import { JumpointsService } from "../../jumpoints.service";
 export interface JumpointInstallerDownloadDialogData {
     jumpointId: number;
     jumpointName: string;
+    tenantId: number;
 }
 
 @Component({
@@ -39,7 +40,7 @@ export class JumpointInstallerDownloadOverlayComponent {
         this.progressMode = "determinate";
 
         this.jumpointsService
-            .downloadJumpointInstaller(this.data.jumpointId)
+            .downloadJumpointInstaller(this.data.tenantId, this.data.jumpointId)
             .subscribe({
                 next: (ev: HttpEvent<Blob>) => {
                     switch (ev.type) {

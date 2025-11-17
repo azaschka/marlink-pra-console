@@ -11,6 +11,7 @@ import { GroupPolicyMember } from "../../models/group-policy-member.model";
 
 export interface GroupPolicyOverlayDialogData {
     groupPolicy: GroupPolicy;
+    tenantId: number;
 }
 
 @Component({
@@ -54,6 +55,7 @@ export class GroupPolicyOverlayComponent implements OnInit {
         this.userFormGroup.disable();
         try {
             await this.groupPoliciesService.addMemberToGroupPolicy(
+                this.data.tenantId,
                 this.groupPolicy.id,
                 {
                     userId: user.id,
@@ -64,6 +66,7 @@ export class GroupPolicyOverlayComponent implements OnInit {
             );
             this.groupPolicyMembers =
                 await this.groupPoliciesService.fetchGroupPolicyMembers(
+                    this.data.tenantId,
                     this.groupPolicy.id
                 );
         } catch (err) {
@@ -85,11 +88,13 @@ export class GroupPolicyOverlayComponent implements OnInit {
         this.userFormGroup.disable();
         try {
             await this.groupPoliciesService.removeMemberFromGroupPolicy(
+                this.data.tenantId,
                 this.groupPolicy.id,
                 member.memberId
             );
             this.groupPolicyMembers =
                 await this.groupPoliciesService.fetchGroupPolicyMembers(
+                    this.data.tenantId,
                     this.groupPolicy.id
                 );
         } catch (err: any) {
@@ -110,11 +115,14 @@ export class GroupPolicyOverlayComponent implements OnInit {
 
         try {
             // Lade alle User für die autocomplete-Suche
-            this.allUsers = await this.usersService.fetchUsers();
+            this.allUsers = await this.usersService.fetchUsers(
+                this.data.tenantId
+            );
 
             // Lade alle Mitglieder der aktuellen Group Policy
             this.groupPolicyMembers =
                 await this.groupPoliciesService.fetchGroupPolicyMembers(
+                    this.data.tenantId,
                     this.groupPolicy.id
                 );
 

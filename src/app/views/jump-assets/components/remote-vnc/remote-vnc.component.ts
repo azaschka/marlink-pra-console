@@ -10,6 +10,7 @@ import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/erro
 import { NotificationDialogService } from "../../../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { PraDataFilter } from "../../../../shared/helpers";
 import { JumpAssetsService } from "../../jump-assets.service";
+import { AppService } from "app/app.service";
 import { JumpAssetCopyOverlayComponent } from "../jump-asset-copy-overlay/jump-asset-copy-overlay.component";
 import {
     JumpAssetUpdateDialogData,
@@ -71,6 +72,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
     private jumpoints: Jumpoint[] = [];
 
     private currentBusinessUnit: BusinessUnit | null | undefined;
+    private currentTenantId: number | null = null;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -83,7 +85,8 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
         private readonly jumpointsService: JumpointsService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
+        private readonly appService: AppService
     ) {
         this.subscriptionsToClear = new Subscription();
     }
@@ -91,6 +94,11 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
     public async ngOnInit(): Promise<void> {
         this.jwtAuthService.getPraUser();
         this.addListeners();
+
+        // Initialize AppService and get tenant ID
+        await this.appService.initialize();
+        this.currentTenantId = this.appService.getSelectedInstanceId();
+
         await this.loadPage();
     }
 
@@ -109,8 +117,17 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
     }
 
     public async copyRemoteVNCHandler(asset: RemoteVnc): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before copying assets.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetCopyOverlayComponent, {
             data: {
+                tenantId: this.currentTenantId,
                 assetType: "remoteVnc",
                 assetId: asset.id,
                 defaultName: asset.name,
@@ -125,6 +142,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                     this.isLoading = true;
                     try {
                         await this.jumpAssetsService.copyRemoteVnc(
+                            this.currentTenantId!,
                             asset.id,
                             result
                         );
@@ -144,8 +162,17 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
     }
 
     public async addRemoteVncHandler(): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before creating assets.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetCreateOverlayComponent, {
             data: {
+                tenantId: this.currentTenantId,
                 assetType: "remoteVnc",
             } as JumpAssetCreateDialogData,
             disableClose: true,
@@ -169,7 +196,10 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                             jumpPolicyId: result.jumpPolicyId,
                             sessionPolicyId: null,
                         } as CreateRemoteVncDtoInput;
-                        await this.jumpAssetsService.createRemoteVnc(body);
+                        await this.jumpAssetsService.createRemoteVnc(
+                            this.currentTenantId!,
+                            body
+                        );
                         this.notificationDialog.show({
                             message: `Remote VNC "${result.name}" successfully created.`,
                         });
@@ -186,8 +216,17 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
     }
 
     public async editRemoteVNCHandler(asset: RemoteVnc): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before editing assets.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetUpdateOverlayComponent, {
             data: {
+                tenantId: this.currentTenantId,
                 assetType: "remoteVnc",
                 assetId: asset.id,
                 currentName: asset.name,
@@ -208,6 +247,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                     this.isLoading = true;
                     try {
                         await this.jumpAssetsService.updateRemoteVnc(
+                            this.currentTenantId!,
                             asset.id,
                             result
                         );
@@ -228,6 +268,14 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
     }
 
     public deleteRemoteVNCHandler(asset: RemoteVnc): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before deleting assets.",
+            });
+            return;
+        }
+
         this.confirmDialog
             .show({
                 title: "Delete Remote VNC",
@@ -237,7 +285,10 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                 if (confirmed) {
                     this.isLoading = true;
                     try {
-                        await this.jumpAssetsService.deleteRemoteVnc(asset.id);
+                        await this.jumpAssetsService.deleteRemoteVnc(
+                            this.currentTenantId!,
+                            asset.id
+                        );
                         this.notificationDialog.show({
                             message: `Remote VNC "${asset.name}" successfully deleted.`,
                         });
@@ -257,16 +308,27 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
     private async loadPage(
         overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
     ): Promise<void> {
+        if (!this.currentTenantId) {
+            this.isLoading = false;
+            return;
+        }
+
         this.isLoading = true;
 
         try {
             // Load all necessary data in parallel
             const [items, jumpGroups, jumpPolicies, jumpoints] =
                 await Promise.all([
-                    this.jumpAssetsService.fetchRemoteVncs(),
-                    this.jumpGroupsService.fetchJumpGroups(),
-                    this.jumpPoliciesService.fetchJumpPolicies(),
-                    this.jumpointsService.fetchJumpoints(),
+                    this.jumpAssetsService.fetchRemoteVncs(
+                        this.currentTenantId
+                    ),
+                    this.jumpGroupsService.fetchJumpGroups(
+                        this.currentTenantId
+                    ),
+                    this.jumpPoliciesService.fetchJumpPolicies(
+                        this.currentTenantId
+                    ),
+                    this.jumpointsService.fetchJumpoints(this.currentTenantId),
                 ]);
 
             // Store lookup tables (if needed later)
@@ -398,6 +460,15 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                     this.jwtAuthService.checkTokenIsValid();
                 }
                 this.currentBusinessUnit = user.businessUnit;
+            })
+        );
+
+        this.subscriptionsToClear.add(
+            this.appService.selectedInstanceId$.subscribe((instanceId) => {
+                this.currentTenantId = instanceId;
+                if (instanceId) {
+                    this.loadPage();
+                }
             })
         );
     }

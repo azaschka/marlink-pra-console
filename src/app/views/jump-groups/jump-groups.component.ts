@@ -18,6 +18,7 @@ import {
     JumpGroupUpdateOverlayComponent,
 } from "./components/jump-group-update-overlay/jump-group-update-overlay.component";
 import { JumpAssetUpdateRequest } from "../jump-assets/models";
+import { AppService } from "app/app.service";
 
 @Component({
     selector: "app-jump-groups",
@@ -48,6 +49,7 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
     public canDelete = false;
 
     private currentBusinessUnit: BusinessUnit | null | undefined;
+    private currentTenantId: number | null = null;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -56,6 +58,7 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
         private readonly jwtAuthService: JwtAuthService,
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly customersService: CustomersService,
+        private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService
@@ -84,6 +87,14 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
     }
 
     public editJumpGroupHandler(jumpGroup: JumpGroup): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpGroupUpdateOverlayComponent, {
             data: {
                 currentName: jumpGroup.name,
@@ -98,6 +109,7 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
                     this.isLoading = true;
                     try {
                         await this.jumpGroupsService.updateJumpGroup(
+                            this.currentTenantId!,
                             jumpGroup.id,
                             result
                         );
@@ -118,6 +130,14 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
     }
 
     public async deleteJumpGroupHandler(jumpGroup: JumpGroup): Promise<void> {
+        if (!this.currentTenantId) {
+            await this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         const confirmed = await this.confirmDialog.show({
             title: "Delete Jump Group",
             message: `Are you sure you want to delete:<br><strong>${jumpGroup.name}</strong>?`,
@@ -126,7 +146,10 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
         if (confirmed) {
             this.isLoading = true;
             try {
-                await this.jumpGroupsService.deleteJumpGroup(jumpGroup.id);
+                await this.jumpGroupsService.deleteJumpGroup(
+                    this.currentTenantId,
+                    jumpGroup.id
+                );
                 this.notificationDialog.show({
                     message: `Jump Group "${jumpGroup.name}" has been deleted.`,
                 });
@@ -144,10 +167,19 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
     }
 
     private async loadPage(): Promise<void> {
+        const tenantId = this.currentTenantId;
+        if (!tenantId) {
+            console.warn(
+                "No BeyondTrust instance selected, skipping jump groups load"
+            );
+            this.isLoading = false;
+            return;
+        }
+
         this.isLoading = true;
         try {
             const [jumpGroups, customers] = await Promise.all([
-                this.jumpGroupsService.fetchJumpGroups(),
+                this.jumpGroupsService.fetchJumpGroups(tenantId),
                 this.customersService.fetchCustomers(),
             ]);
             const customerBUByKey = new Map(
@@ -193,6 +225,22 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
                 // Check if the user has the SuperAdmin role to allow deletion of jump groups
                 this.canDelete = user.role === UserRole.SuperAdmin;
                 this.currentBusinessUnit = user.businessUnit;
+            })
+        );
+
+        // Listen for BeyondTrust instance changes and reload data
+        this.subscriptionsToClear.add(
+            this.appService.selectedInstanceId$.subscribe((instanceId) => {
+                const previousTenantId = this.currentTenantId;
+                this.currentTenantId = instanceId;
+
+                // Reload data if tenant changed (and not initial load)
+                if (
+                    previousTenantId !== null &&
+                    previousTenantId !== instanceId
+                ) {
+                    this.loadPage();
+                }
             })
         );
     }

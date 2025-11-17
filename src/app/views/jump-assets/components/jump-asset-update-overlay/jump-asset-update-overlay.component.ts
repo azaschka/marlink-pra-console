@@ -26,6 +26,8 @@ export interface JumpAssetUpdateDialogData {
     currentJumpGroupType: string;
     currentJumpPolicyId: number | null;
     currentMustVerifyCertificate?: boolean;
+    /** The tenant ID of the selected BeyondTrust instance. */
+    tenantId: number;
 }
 
 @Component({
@@ -76,9 +78,12 @@ export class JumpAssetUpdateOverlayComponent implements OnInit {
     public async ngOnInit() {
         this.isLoading = true;
         try {
-            this.jumpGroups = await this.jumpGroupsService.fetchJumpGroups();
+            const tenantId = this.data.tenantId;
+            this.jumpGroups = await this.jumpGroupsService.fetchJumpGroups(
+                tenantId
+            );
             this.jumpPolicies =
-                await this.jumpPoliciesService.fetchJumpPolicies();
+                await this.jumpPoliciesService.fetchJumpPolicies(tenantId);
 
             const currentJumpGroup =
                 this.jumpGroups.find(

@@ -10,26 +10,44 @@ import {
 export class JumpClientInstallersService {
     constructor(private readonly http: HttpClient) {}
 
-    public async fetchJumpClientInstallers(): Promise<JumpClientInstaller[]> {
+    private createHeaders(tenantId: number) {
+        return { headers: { "X-Tenant-Id": tenantId.toString() } };
+    }
+
+    public async fetchJumpClientInstallers(
+        tenantId: number
+    ): Promise<JumpClientInstaller[]> {
         const params = new HttpParams().set("pageSize", "9999");
         return firstValueFrom(
             this.http.get<JumpClientInstaller[]>("jump-clients/installers", {
                 params,
+                ...this.createHeaders(tenantId),
             })
         );
     }
 
     public async createJumpClientInstaller(
+        tenantId: number,
         body: CreateJumpClientInstallerDtoInput
     ): Promise<JumpClientInstaller> {
         return firstValueFrom(
-            this.http.post<JumpClientInstaller>("jump-clients/installers", body)
+            this.http.post<JumpClientInstaller>(
+                "jump-clients/installers",
+                body,
+                this.createHeaders(tenantId)
+            )
         );
     }
 
-    public async deleteJumpClientInstaller(id: number): Promise<void> {
+    public async deleteJumpClientInstaller(
+        tenantId: number,
+        id: number
+    ): Promise<void> {
         return firstValueFrom(
-            this.http.delete<void>(`jump-clients/installers/${id}`)
+            this.http.delete<void>(
+                `jump-clients/installers/${id}`,
+                this.createHeaders(tenantId)
+            )
         );
     }
 

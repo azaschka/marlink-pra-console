@@ -17,6 +17,7 @@ export type UserOverlayMode = "add" | "edit";
 
 export interface UserOverlayDialogData {
     mode: UserOverlayMode;
+    tenantId: number;
     user?: User;
 }
 
@@ -57,7 +58,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         @Inject(MAT_DIALOG_DATA) public data: UserOverlayDialogData,
         private readonly usersService: UsersService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly groupPoliciesService: GroupPoliciesService,
+        private readonly groupPoliciesService: GroupPoliciesService
     ) {
         this.mode = data.mode;
         this.user = data.user;
@@ -117,7 +118,9 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      */
     private async loadGroupPolicies(): Promise<void> {
         this.allGroupPolicies =
-            await this.groupPoliciesService.fetchGroupPolicies();
+            await this.groupPoliciesService.fetchGroupPolicies(
+                this.data.tenantId
+            );
     }
 
     /**
@@ -129,10 +132,13 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         }
 
         const userGroupPolicies =
-            await this.usersService.fetchUserGroupPolicies(this.user.id);
+            await this.usersService.fetchUserGroupPolicies(
+                this.data.tenantId,
+                this.user.id
+            );
 
         this.selectedGroupPolicies = userGroupPolicies.map(
-            (ugp) => ugp.groupPolicy,
+            (ugp) => ugp.groupPolicy
         );
         this.initialGroupPolicies = [...this.selectedGroupPolicies];
 
@@ -151,7 +157,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
             this.groupPolicyInputCtrl.valueChanges.pipe(
                 startWith(""),
                 map((value) => this.filterGroupPolicies(value || "")),
-                takeUntil(this.destroy$),
+                takeUntil(this.destroy$)
             );
     }
 
@@ -164,7 +170,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         return this.allGroupPolicies.filter(
             (policy) =>
                 policy.name.toLowerCase().includes(filterValue) &&
-                !this.isGroupPolicySelected(policy),
+                !this.isGroupPolicySelected(policy)
         );
     }
 
@@ -205,7 +211,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      */
     public removeGroupPolicy(policy: GroupPolicy): void {
         this.selectedGroupPolicies = this.selectedGroupPolicies.filter(
-            (sel) => sel.id !== policy.id,
+            (sel) => sel.id !== policy.id
         );
     }
 
@@ -257,7 +263,10 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
             mustResetPasswordOnNextLogin: true,
         };
 
-        const createdUser = await this.usersService.createUser(request);
+        const createdUser = await this.usersService.createUser(
+            this.data.tenantId,
+            request
+        );
 
         await this.assignGroupPolicies(createdUser.id);
     }
@@ -279,7 +288,11 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
             regeneratePassword: formValue.regeneratePassword || false,
         };
 
-        await this.usersService.updateUser(this.user.id, request);
+        await this.usersService.updateUser(
+            this.data.tenantId,
+            this.user.id,
+            request
+        );
 
         await this.updateGroupPolicyAssignments(this.user.id);
     }
@@ -289,14 +302,15 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      */
     private async assignGroupPolicies(userId: number): Promise<void> {
         const groupPolicyIds = this.selectedGroupPolicies.map(
-            (policy) => policy.id,
+            (policy) => policy.id
         );
 
         if (groupPolicyIds.length > 0) {
             await this.usersService.updateUserGroupPolicies(
+                this.data.tenantId,
                 userId,
                 groupPolicyIds,
-                [],
+                []
             );
         }
     }
@@ -309,9 +323,10 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
 
         if (toAdd.length > 0 || toRemove.length > 0) {
             await this.usersService.updateUserGroupPolicies(
+                this.data.tenantId,
                 userId,
                 toAdd,
-                toRemove,
+                toRemove
             );
         }
     }
@@ -324,10 +339,10 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         toRemove: number[];
     } {
         const initialIds = new Set(
-            this.initialGroupPolicies.map((gp) => gp.id),
+            this.initialGroupPolicies.map((gp) => gp.id)
         );
         const currentIds = new Set(
-            this.selectedGroupPolicies.map((gp) => gp.id),
+            this.selectedGroupPolicies.map((gp) => gp.id)
         );
 
         const toAdd = [...currentIds].filter((id) => !initialIds.has(id));

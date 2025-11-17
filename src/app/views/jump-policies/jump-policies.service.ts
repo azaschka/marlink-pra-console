@@ -7,10 +7,21 @@ import { JumpPolicy } from "./models";
 export class JumpPoliciesService {
     constructor(private readonly http: HttpClient) {}
 
-    public async fetchJumpPolicies(): Promise<JumpPolicy[]> {
+    private createHeaders(tenantId: number) {
+        return {
+            headers: {
+                "X-Tenant-Id": tenantId.toString(),
+            },
+        };
+    }
+
+    public async fetchJumpPolicies(tenantId: number): Promise<JumpPolicy[]> {
         const params = new HttpParams().set("pageSize", "9999");
         return firstValueFrom(
-            this.http.get<JumpPolicy[]>("jump-policies", { params })
+            this.http.get<JumpPolicy[]>("jump-policies", {
+                params,
+                ...this.createHeaders(tenantId),
+            })
         );
     }
 }

@@ -10,6 +10,7 @@ import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/erro
 import { NotificationDialogService } from "../../../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { PraDataFilter } from "../../../../shared/helpers";
 import { JumpAssetsService } from "../../jump-assets.service";
+import { AppService } from "app/app.service";
 import { JumpAssetCopyOverlayComponent } from "../jump-asset-copy-overlay/jump-asset-copy-overlay.component";
 import {
     JumpAssetUpdateDialogData,
@@ -71,6 +72,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
     private jumpoints: Jumpoint[] = [];
 
     private currentBusinessUnit: BusinessUnit | null | undefined;
+    private currentTenantId: number | null = null;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -83,7 +85,8 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
         private readonly jumpointsService: JumpointsService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
+        private readonly appService: AppService
     ) {
         this.subscriptionsToClear = new Subscription();
     }
@@ -91,6 +94,11 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
     public async ngOnInit(): Promise<void> {
         this.jwtAuthService.getPraUser();
         this.addListeners();
+
+        // Initialize AppService and get tenant ID
+        await this.appService.initialize();
+        this.currentTenantId = this.appService.getSelectedInstanceId();
+
         await this.loadPage();
     }
 
@@ -111,8 +119,17 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
     public async copyProtocolTunnelHandler(
         asset: ProtocolTunnelJump
     ): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before copying assets.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetCopyOverlayComponent, {
             data: {
+                tenantId: this.currentTenantId,
                 assetType: "protocolTunnel",
                 assetId: asset.id,
                 defaultName: asset.name,
@@ -127,6 +144,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                     this.isLoading = true;
                     try {
                         await this.jumpAssetsService.copyProtocolTunnelJump(
+                            this.currentTenantId!,
                             asset.id,
                             result
                         );
@@ -146,8 +164,17 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
     }
 
     public async addProtocolTunnelHandler(): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before creating assets.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetCreateOverlayComponent, {
             data: {
+                tenantId: this.currentTenantId,
                 assetType: "protocolTunnel",
             } as JumpAssetCreateDialogData,
             disableClose: true,
@@ -176,6 +203,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                             sessionPolicyId: null,
                         } as CreateProtocolTunnelJumpDtoInput;
                         await this.jumpAssetsService.createProtocolTunnelJump(
+                            this.currentTenantId!,
                             body
                         );
                         this.notificationDialog.show({
@@ -196,8 +224,17 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
     public async editProtocolTunnelHandler(
         asset: ProtocolTunnelJump
     ): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before editing assets.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetUpdateOverlayComponent, {
             data: {
+                tenantId: this.currentTenantId,
                 assetType: "protocolTunnel",
                 assetId: asset.id,
                 currentName: asset.name,
@@ -217,6 +254,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                     this.isLoading = true;
                     try {
                         await this.jumpAssetsService.updateProtocolTunnelJump(
+                            this.currentTenantId!,
                             asset.id,
                             result
                         );
@@ -237,6 +275,14 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
     }
 
     public deleteProtocolTunnelHandler(asset: ProtocolTunnelJump): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before deleting assets.",
+            });
+            return;
+        }
+
         this.confirmDialog
             .show({
                 title: "Delete Protocol Tunnel",
@@ -247,6 +293,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                     this.isLoading = true;
                     try {
                         await this.jumpAssetsService.deleteProtocolTunnelJump(
+                            this.currentTenantId!,
                             asset.id
                         );
                         this.notificationDialog.show({
@@ -268,16 +315,27 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
     private async loadPage(
         overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
     ): Promise<void> {
+        if (!this.currentTenantId) {
+            this.isLoading = false;
+            return;
+        }
+
         this.isLoading = true;
 
         try {
             // Load all necessary data in parallel
             const [items, jumpGroups, jumpPolicies, jumpoints] =
                 await Promise.all([
-                    this.jumpAssetsService.fetchProtocolTunnelJumps(),
-                    this.jumpGroupsService.fetchJumpGroups(),
-                    this.jumpPoliciesService.fetchJumpPolicies(),
-                    this.jumpointsService.fetchJumpoints(),
+                    this.jumpAssetsService.fetchProtocolTunnelJumps(
+                        this.currentTenantId
+                    ),
+                    this.jumpGroupsService.fetchJumpGroups(
+                        this.currentTenantId
+                    ),
+                    this.jumpPoliciesService.fetchJumpPolicies(
+                        this.currentTenantId
+                    ),
+                    this.jumpointsService.fetchJumpoints(this.currentTenantId),
                 ]);
 
             // Store lookup tables (if needed later)
@@ -410,6 +468,15 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                     this.jwtAuthService.checkTokenIsValid();
                 }
                 this.currentBusinessUnit = user.businessUnit;
+            })
+        );
+
+        this.subscriptionsToClear.add(
+            this.appService.selectedInstanceId$.subscribe((instanceId) => {
+                this.currentTenantId = instanceId;
+                if (instanceId) {
+                    this.loadPage();
+                }
             })
         );
     }

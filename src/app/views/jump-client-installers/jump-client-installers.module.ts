@@ -7,7 +7,6 @@ import { TranslateModule } from "@ngx-translate/core";
 import { CsvModule } from "@ctrl/ngx-csv";
 import { SharedMaterialModule } from "../../shared/shared-material.module";
 import { SharedModule } from "../../shared/shared.module";
-import { AppService } from "../../app.service";
 import { JumpClientInstallersService } from "./jump-client-installers.service";
 import { JumpClientInstallersComponent } from "./jump-client-installers.component";
 import { JumpClientInstallersRoutes } from "./jump-client-installers.routes";
@@ -21,7 +20,6 @@ const COMPONENTS = [
 ];
 
 const SERVICES = [
-    AppService,
     JumpClientInstallersService,
     JumpGroupsService,
     JumpPoliciesService,

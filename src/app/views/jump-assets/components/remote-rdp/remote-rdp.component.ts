@@ -34,6 +34,7 @@ import {
     JumpAssetCreateOverlayComponent,
 } from "../jump-asset-create-overlay/jump-asset-create-overlay.component";
 import { JumpGroupType } from "../../enums";
+import { AppService } from "../../../../app.service";
 
 @Component({
     selector: "app-remote-rdp",
@@ -70,6 +71,7 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
     private jumpoints: Jumpoint[] = [];
 
     private currentBusinessUnit: BusinessUnit | null | undefined;
+    private currentTenantId: number | null = null;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -80,6 +82,7 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
         private readonly jumpointsService: JumpointsService,
+        private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService
@@ -108,11 +111,20 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
     }
 
     public async copyRemoteRdpHandler(asset: RemoteRdp): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No BeyondTrust Instance Selected",
+                message: "Please select a BeyondTrust instance before copying.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetCopyOverlayComponent, {
             data: {
                 assetType: "remoteRdp",
                 assetId: asset.id,
                 defaultName: asset.name,
+                tenantId: this.currentTenantId,
             },
             disableClose: true,
         });
@@ -120,10 +132,11 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
         dialogRef
             .afterClosed()
             .subscribe(async (result: JumpAssetCopyRequest | null) => {
-                if (result) {
+                if (result && this.currentTenantId) {
                     this.isLoading = true;
                     try {
                         await this.jumpAssetsService.copyRemoteRdp(
+                            this.currentTenantId,
                             asset.id,
                             result
                         );
@@ -143,9 +156,19 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
     }
 
     public async addRemoteRdpHandler(): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No BeyondTrust Instance Selected",
+                message:
+                    "Please select a BeyondTrust instance before creating.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetCreateOverlayComponent, {
             data: {
                 assetType: "remoteRdp",
+                tenantId: this.currentTenantId,
             } as JumpAssetCreateDialogData,
             disableClose: true,
         });
@@ -153,22 +176,22 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
         dialogRef
             .afterClosed()
             .subscribe(async (result: JumpAssetCreateRequest | null) => {
-                if (result) {
+                if (result && this.currentTenantId) {
                     this.isLoading = true;
                     try {
                         const body: CreateRemoteRdpDtoInput = {
                             name: result.name,
-                            jumpointId: result.jumpointId,
-                            hostname: result.hostname,
-                            jumpGroupId: result.jumpGroupId,
-                            jumpGroupType: JumpGroupType.Shared,
-                            mustStartNewConsoleSession: false,
-                            mustIgnoreUntrustedServerCert: false,
                             tag: result.tag,
-                            comments: "",
-                            jumpPolicyId: result.jumpPolicyId,
-                        } as CreateRemoteRdpDtoInput;
-                        await this.jumpAssetsService.createRemoteRdp(body);
+                            hostname: result.hostname,
+                            jumpGroupId: result.jumpGroupId!,
+                            jumpointId: result.jumpointId!,
+                            jumpPolicyId: result.jumpPolicyId ?? 0,
+                        };
+
+                        await this.jumpAssetsService.createRemoteRdp(
+                            this.currentTenantId,
+                            body
+                        );
                         this.notificationDialog.show({
                             message: `Remote RDP "${result.name}" successfully created.`,
                         });
@@ -185,6 +208,14 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
     }
 
     public async editRemoteRdpHandler(asset: RemoteRdp): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No BeyondTrust Instance Selected",
+                message: "Please select a BeyondTrust instance before editing.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetUpdateOverlayComponent, {
             data: {
                 assetType: "remoteRdp",
@@ -193,8 +224,9 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
                 currentTag: asset.tag,
                 currentHostname: asset.hostname,
                 currentJumpGroupId: asset.jumpGroupId,
-                currentJumpGroupType: asset.jumpGroupType || "shared",
-                currentJumpPolicyId: asset.jumpPolicyId ?? null,
+                currentJumpGroupType: asset.jumpGroupType,
+                currentJumpPolicyId: asset.jumpPolicyId,
+                tenantId: this.currentTenantId,
             } as JumpAssetUpdateDialogData,
             disableClose: true,
         });
@@ -202,15 +234,16 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
         dialogRef
             .afterClosed()
             .subscribe(async (result: JumpAssetUpdateRequest | null) => {
-                if (result) {
+                if (result && this.currentTenantId) {
                     this.isLoading = true;
                     try {
                         await this.jumpAssetsService.updateRemoteRdp(
+                            this.currentTenantId,
                             asset.id,
                             result
                         );
                         this.notificationDialog.show({
-                            message: "Remote RDP successfully updated.",
+                            message: `Remote RDP "${result.name}" successfully updated.`,
                         });
                         await this.loadPage();
                     } catch (err: any) {
@@ -226,16 +259,28 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
     }
 
     public deleteRemoteRdpHandler(asset: RemoteRdp): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No BeyondTrust Instance Selected",
+                message:
+                    "Please select a BeyondTrust instance before deleting.",
+            });
+            return;
+        }
+
         this.confirmDialog
             .show({
                 title: "Delete Remote RDP",
                 message: `Are you sure you want to delete Remote RDP<br><strong>"${asset.name}"</strong>?`,
             })
             .then(async (confirmed) => {
-                if (confirmed) {
+                if (confirmed && this.currentTenantId) {
                     this.isLoading = true;
                     try {
-                        await this.jumpAssetsService.deleteRemoteRdp(asset.id);
+                        await this.jumpAssetsService.deleteRemoteRdp(
+                            this.currentTenantId,
+                            asset.id
+                        );
                         this.notificationDialog.show({
                             message: `Remote RDP "${asset.name}" successfully deleted.`,
                         });
@@ -255,16 +300,26 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
     private async loadPage(
         overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
     ): Promise<void> {
+        if (!this.currentTenantId) {
+            return;
+        }
+
         this.isLoading = true;
 
         try {
             // Load all necessary data in parallel
             const [items, jumpGroups, jumpPolicies, jumpoints] =
                 await Promise.all([
-                    this.jumpAssetsService.fetchRemoteRdps(),
-                    this.jumpGroupsService.fetchJumpGroups(),
-                    this.jumpPoliciesService.fetchJumpPolicies(),
-                    this.jumpointsService.fetchJumpoints(),
+                    this.jumpAssetsService.fetchRemoteRdps(
+                        this.currentTenantId
+                    ),
+                    this.jumpGroupsService.fetchJumpGroups(
+                        this.currentTenantId
+                    ),
+                    this.jumpPoliciesService.fetchJumpPolicies(
+                        this.currentTenantId
+                    ),
+                    this.jumpointsService.fetchJumpoints(this.currentTenantId),
                 ]);
 
             // Store lookup tables (if needed later)
@@ -397,6 +452,17 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
                 }
                 this.currentBusinessUnit = user.businessUnit;
             })
+        );
+
+        this.subscriptionsToClear.add(
+            this.appService.selectedInstanceId$.subscribe(
+                async (instanceId) => {
+                    this.currentTenantId = instanceId;
+                    if (instanceId) {
+                        await this.loadPage();
+                    }
+                }
+            )
         );
     }
 }

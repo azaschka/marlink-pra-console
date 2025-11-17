@@ -88,6 +88,7 @@ export class SiteImportWorkflowService {
     ) {}
 
     public startWorkflow(
+        tenantId: number,
         parsed: {
             customer: ParsedCustomer;
             site: ParsedSite;
@@ -177,7 +178,7 @@ export class SiteImportWorkflowService {
                 sub.next([...steps]);
                 try {
                     this.jumpGroups =
-                        await this.jumpGroupsService.fetchJumpGroups();
+                        await this.jumpGroupsService.fetchJumpGroups(tenantId);
                     steps[2].result = "Site administrators created.";
                     steps[2].status = ImportStatus.Success;
                 } catch (err: any) {
@@ -198,7 +199,9 @@ export class SiteImportWorkflowService {
                 sub.next([...steps]);
                 try {
                     this.jumpPolicies =
-                        await this.jumpPoliciesService.fetchJumpPolicies();
+                        await this.jumpPoliciesService.fetchJumpPolicies(
+                            tenantId
+                        );
                     steps[3].result = "Site managers created.";
                     steps[3].status = ImportStatus.Success;
                 } catch (err: any) {
@@ -271,32 +274,38 @@ export class SiteImportWorkflowService {
                                 ParsedJumpItemType.JumpClient
                             ) {
                                 await this.jumpAssetsService.createJumpClientInstaller(
+                                    tenantId,
                                     jumpAssetRequest as CreateJumpClientInstallerDtoInput
                                 );
                             } else {
                                 switch (asset.jumpType) {
                                     case ParsedJumpType.RemoteRdp:
                                         await this.jumpAssetsService.createRemoteRdp(
+                                            tenantId,
                                             jumpAssetRequest as CreateRemoteRdpDtoInput
                                         );
                                         break;
                                     case ParsedJumpType.RemoteVnc:
                                         await this.jumpAssetsService.createRemoteVnc(
+                                            tenantId,
                                             jumpAssetRequest as CreateRemoteVncDtoInput
                                         );
                                         break;
                                     case ParsedJumpType.ShellJump:
                                         await this.jumpAssetsService.createShellJump(
+                                            tenantId,
                                             jumpAssetRequest as CreateShellJumpDtoInput
                                         );
                                         break;
                                     case ParsedJumpType.WebJump:
                                         await this.jumpAssetsService.createWebJump(
+                                            tenantId,
                                             jumpAssetRequest as CreateWebJumpDtoInput
                                         );
                                         break;
                                     case ParsedJumpType.ProtocolTunnelJump:
                                         await this.jumpAssetsService.createProtocolTunnelJump(
+                                            tenantId,
                                             jumpAssetRequest as CreateProtocolTunnelJumpDtoInput
                                         );
                                         break;

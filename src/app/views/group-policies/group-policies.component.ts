@@ -18,6 +18,7 @@ import {
     GroupPolicyOverlayComponent,
     GroupPolicyOverlayDialogData,
 } from "./components/group-policy-overlay/group-policy-overlay.component";
+import { AppService } from "app/app.service";
 
 @Component({
     selector: "app-group-policies",
@@ -48,6 +49,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
     public isSuperAdmin = false;
 
     private currentBusinessUnit: BusinessUnit | null | undefined;
+    private currentTenantId: number | null = null;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -56,6 +58,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
         private readonly jwtAuthService: JwtAuthService,
         private readonly groupPoliciesService: GroupPoliciesService,
         private readonly customersService: CustomersService,
+        private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService
@@ -112,9 +115,20 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
     }
 
     public editGroupPolicyHandler(groupPolicy: GroupPolicy): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         this.dialog
             .open(GroupPolicyOverlayComponent, {
-                data: { groupPolicy } as GroupPolicyOverlayDialogData,
+                data: {
+                    groupPolicy,
+                    tenantId: this.currentTenantId,
+                } as GroupPolicyOverlayDialogData,
                 disableClose: true,
                 width: "720px",
             })
@@ -132,6 +146,14 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
     public async deleteGroupPolicyHandler(
         groupPolicy: GroupPolicy
     ): Promise<void> {
+        if (!this.currentTenantId) {
+            await this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         const confirmed = await this.confirmDialog.show({
             title: "Delete Group Policy",
             message: `Are you sure you want to delete:<br><strong>${groupPolicy.name}</strong>?`,
@@ -141,6 +163,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
             this.isLoading = true;
             try {
                 await this.groupPoliciesService.deleteGroupPolicy(
+                    this.currentTenantId,
                     groupPolicy.id
                 );
                 this.notificationDialog.show({
@@ -160,10 +183,19 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
     }
 
     private async loadPage(): Promise<void> {
+        const tenantId = this.currentTenantId;
+        if (!tenantId) {
+            console.warn(
+                "No BeyondTrust instance selected, skipping group policies load"
+            );
+            this.isLoading = false;
+            return;
+        }
+
         this.isLoading = true;
         try {
             const [groupPolicies, customers] = await Promise.all([
-                this.groupPoliciesService.fetchGroupPolicies(),
+                this.groupPoliciesService.fetchGroupPolicies(tenantId),
                 this.customersService.fetchCustomers(),
             ]);
             const customerBUByKey = new Map(
@@ -205,6 +237,9 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
     }
 
     private async loadVisibleGroupMemberCount() {
+        const tenantId = this.currentTenantId;
+        if (!tenantId) return;
+
         const data = this.dataSource.filteredData || this.dataSource.data;
         const pageIndex = this.paginator.pageIndex || 0;
         const pageSize = this.paginator.pageSize || 20;
@@ -214,7 +249,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
 
         for (const groupPolicy of currentPageItems) {
             this.groupPoliciesService
-                .fetchGroupPolicyMembers(groupPolicy.id)
+                .fetchGroupPolicyMembers(tenantId, groupPolicy.id)
                 .then((members) => {
                     groupPolicy.groupMembersCount = members.length;
                 })
@@ -233,6 +268,22 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
                 // Check if the user has the SuperAdmin role
                 this.isSuperAdmin = user.role === UserRole.SuperAdmin;
                 this.currentBusinessUnit = user.businessUnit;
+            })
+        );
+
+        // Listen for BeyondTrust instance changes and reload data
+        this.subscriptionsToClear.add(
+            this.appService.selectedInstanceId$.subscribe((instanceId) => {
+                const previousTenantId = this.currentTenantId;
+                this.currentTenantId = instanceId;
+
+                // Reload data if tenant changed (and not initial load)
+                if (
+                    previousTenantId !== null &&
+                    previousTenantId !== instanceId
+                ) {
+                    this.loadPage();
+                }
             })
         );
     }

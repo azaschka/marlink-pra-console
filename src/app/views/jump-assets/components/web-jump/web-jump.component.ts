@@ -10,6 +10,7 @@ import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/erro
 import { NotificationDialogService } from "../../../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { PraDataFilter } from "../../../../shared/helpers";
 import { JumpAssetsService } from "../../jump-assets.service";
+import { AppService } from "app/app.service";
 import { JumpAssetCopyOverlayComponent } from "../jump-asset-copy-overlay/jump-asset-copy-overlay.component";
 import {
     JumpAssetUpdateDialogData,
@@ -70,6 +71,7 @@ export class WebJumpComponent implements OnInit, OnDestroy {
     private jumpoints: Jumpoint[] = [];
 
     private currentBusinessUnit: BusinessUnit | null | undefined;
+    private currentTenantId: number | null = null;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -82,7 +84,8 @@ export class WebJumpComponent implements OnInit, OnDestroy {
         private readonly jumpointsService: JumpointsService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
+        private readonly appService: AppService
     ) {
         this.subscriptionsToClear = new Subscription();
     }
@@ -90,6 +93,11 @@ export class WebJumpComponent implements OnInit, OnDestroy {
     public async ngOnInit(): Promise<void> {
         this.jwtAuthService.getPraUser();
         this.addListeners();
+
+        // Initialize AppService and get tenant ID
+        await this.appService.initialize();
+        this.currentTenantId = this.appService.getSelectedInstanceId();
+
         await this.loadPage();
     }
 
@@ -108,8 +116,17 @@ export class WebJumpComponent implements OnInit, OnDestroy {
     }
 
     public async copyWebJumpHandler(asset: WebJump): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before copying assets.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetCopyOverlayComponent, {
             data: {
+                tenantId: this.currentTenantId,
                 assetType: "webJump",
                 assetId: asset.id,
                 defaultName: asset.name,
@@ -124,6 +141,7 @@ export class WebJumpComponent implements OnInit, OnDestroy {
                     this.isLoading = true;
                     try {
                         await this.jumpAssetsService.copyWebJump(
+                            this.currentTenantId!,
                             asset.id,
                             result
                         );
@@ -143,8 +161,17 @@ export class WebJumpComponent implements OnInit, OnDestroy {
     }
 
     public async addWebJumpHandler(): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before creating assets.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetCreateOverlayComponent, {
             data: {
+                tenantId: this.currentTenantId,
                 assetType: "webJump",
             } as JumpAssetCreateDialogData,
             disableClose: true,
@@ -173,7 +200,10 @@ export class WebJumpComponent implements OnInit, OnDestroy {
                             submitField: "",
                             sessionPolicyId: null,
                         } as CreateWebJumpDtoInput;
-                        await this.jumpAssetsService.createWebJump(body);
+                        await this.jumpAssetsService.createWebJump(
+                            this.currentTenantId!,
+                            body
+                        );
                         this.notificationDialog.show({
                             message: `Web Jump "${result.name}" successfully created.`,
                         });
@@ -190,8 +220,17 @@ export class WebJumpComponent implements OnInit, OnDestroy {
     }
 
     public async editWebJumpHandler(asset: WebJump): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before editing assets.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetUpdateOverlayComponent, {
             data: {
+                tenantId: this.currentTenantId,
                 assetType: "webJump",
                 assetId: asset.id,
                 currentName: asset.name,
@@ -212,6 +251,7 @@ export class WebJumpComponent implements OnInit, OnDestroy {
                     this.isLoading = true;
                     try {
                         await this.jumpAssetsService.updateWebJump(
+                            this.currentTenantId!,
                             asset.id,
                             result
                         );
@@ -232,6 +272,14 @@ export class WebJumpComponent implements OnInit, OnDestroy {
     }
 
     public deleteWebJumpHandler(asset: WebJump): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select an instance before deleting assets.",
+            });
+            return;
+        }
+
         this.confirmDialog
             .show({
                 title: "Delete Web Jump",
@@ -241,7 +289,10 @@ export class WebJumpComponent implements OnInit, OnDestroy {
                 if (confirmed) {
                     this.isLoading = true;
                     try {
-                        await this.jumpAssetsService.deleteWebJump(asset.id);
+                        await this.jumpAssetsService.deleteWebJump(
+                            this.currentTenantId!,
+                            asset.id
+                        );
                         this.notificationDialog.show({
                             message: `Web Jump "${asset.name}" successfully deleted.`,
                         });
@@ -261,16 +312,25 @@ export class WebJumpComponent implements OnInit, OnDestroy {
     private async loadPage(
         overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
     ): Promise<void> {
+        if (!this.currentTenantId) {
+            this.isLoading = false;
+            return;
+        }
+
         this.isLoading = true;
 
         try {
             // Load all necessary data in parallel
             const [items, jumpGroups, jumpPolicies, jumpoints] =
                 await Promise.all([
-                    this.jumpAssetsService.fetchWebJumps(),
-                    this.jumpGroupsService.fetchJumpGroups(),
-                    this.jumpPoliciesService.fetchJumpPolicies(),
-                    this.jumpointsService.fetchJumpoints(),
+                    this.jumpAssetsService.fetchWebJumps(this.currentTenantId),
+                    this.jumpGroupsService.fetchJumpGroups(
+                        this.currentTenantId
+                    ),
+                    this.jumpPoliciesService.fetchJumpPolicies(
+                        this.currentTenantId
+                    ),
+                    this.jumpointsService.fetchJumpoints(this.currentTenantId),
                 ]);
 
             // Store lookup tables (if needed later)
@@ -402,6 +462,15 @@ export class WebJumpComponent implements OnInit, OnDestroy {
                     this.jwtAuthService.checkTokenIsValid();
                 }
                 this.currentBusinessUnit = user.businessUnit;
+            })
+        );
+
+        this.subscriptionsToClear.add(
+            this.appService.selectedInstanceId$.subscribe((instanceId) => {
+                this.currentTenantId = instanceId;
+                if (instanceId) {
+                    this.loadPage();
+                }
             })
         );
     }

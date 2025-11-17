@@ -27,6 +27,7 @@ import { JumpGroup } from "../../../jump-groups/models";
 import { JumpPolicy } from "../../../jump-policies/models";
 import { Jumpoint } from "../../../jumpoints/models";
 import { BusinessUnit } from "../../../pra-users/enums";
+import { AppService } from "../../../../app.service";
 
 @Component({
     selector: "app-jump-clients",
@@ -61,6 +62,7 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
     private jumpPolicies: JumpPolicy[] = [];
 
     private currentBusinessUnit: BusinessUnit | null | undefined;
+    private currentTenantId: number | null = null;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -70,6 +72,7 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
         private readonly jumpAssetsService: JumpAssetsService,
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
+        private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService
@@ -98,11 +101,20 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
     }
 
     public async copyJumpClientHandler(asset: JumpClient): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No BeyondTrust Instance Selected",
+                message: "Please select a BeyondTrust instance before copying.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetCopyOverlayComponent, {
             data: {
                 assetType: "jumpClient",
                 assetId: asset.id,
                 defaultName: asset.name,
+                tenantId: this.currentTenantId,
             },
             disableClose: true,
         });
@@ -110,10 +122,11 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
         dialogRef
             .afterClosed()
             .subscribe(async (result: JumpAssetCopyRequest | null) => {
-                if (result) {
+                if (result && this.currentTenantId) {
                     this.isLoading = true;
                     try {
                         await this.jumpAssetsService.copyJumpClient(
+                            this.currentTenantId,
                             asset.id,
                             result
                         );
@@ -133,6 +146,14 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
     }
 
     public async editJumpClientHandler(asset: JumpClient): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No BeyondTrust Instance Selected",
+                message: "Please select a BeyondTrust instance before editing.",
+            });
+            return;
+        }
+
         const dialogRef = this.dialog.open(JumpAssetUpdateOverlayComponent, {
             data: {
                 assetType: "jumpClient",
@@ -143,6 +164,7 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
                 currentJumpGroupId: asset.jumpGroupId,
                 currentJumpGroupType: asset.jumpGroupType || "shared",
                 currentJumpPolicyId: asset.jumpPolicyId ?? null,
+                tenantId: this.currentTenantId,
             } as JumpAssetUpdateDialogData,
             disableClose: true,
         });
@@ -150,10 +172,11 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
         dialogRef
             .afterClosed()
             .subscribe(async (result: JumpAssetUpdateRequest | null) => {
-                if (result) {
+                if (result && this.currentTenantId) {
                     this.isLoading = true;
                     try {
                         await this.jumpAssetsService.updateJumpClient(
+                            this.currentTenantId,
                             asset.id,
                             result
                         );
@@ -174,16 +197,28 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
     }
 
     public deleteJumpClientHandler(asset: JumpClient): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No BeyondTrust Instance Selected",
+                message:
+                    "Please select a BeyondTrust instance before deleting.",
+            });
+            return;
+        }
+
         this.confirmDialog
             .show({
                 title: "Delete Jump Client",
                 message: `Are you sure you want to delete Jump Client<br><strong>"${asset.name}"</strong>?`,
             })
             .then(async (confirmed) => {
-                if (confirmed) {
+                if (confirmed && this.currentTenantId) {
                     this.isLoading = true;
                     try {
-                        await this.jumpAssetsService.deleteJumpClient(asset.id);
+                        await this.jumpAssetsService.deleteJumpClient(
+                            this.currentTenantId,
+                            asset.id
+                        );
                         this.notificationDialog.show({
                             message: `Jump Client "${asset.name}" successfully deleted.`,
                         });
@@ -203,14 +238,20 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
     private async loadPage(
         overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
     ): Promise<void> {
+        if (!this.currentTenantId) {
+            return;
+        }
+
         this.isLoading = true;
 
         try {
             // Load all necessary data in parallel
             const [items, jumpGroups, jumpPolicies] = await Promise.all([
-                this.jumpAssetsService.fetchJumpClients(),
-                this.jumpGroupsService.fetchJumpGroups(),
-                this.jumpPoliciesService.fetchJumpPolicies(),
+                this.jumpAssetsService.fetchJumpClients(this.currentTenantId),
+                this.jumpGroupsService.fetchJumpGroups(this.currentTenantId),
+                this.jumpPoliciesService.fetchJumpPolicies(
+                    this.currentTenantId
+                ),
             ]);
 
             // Store lookup tables (if needed later)
@@ -329,6 +370,17 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
                 }
                 this.currentBusinessUnit = user.businessUnit;
             })
+        );
+
+        this.subscriptionsToClear.add(
+            this.appService.selectedInstanceId$.subscribe(
+                async (instanceId) => {
+                    this.currentTenantId = instanceId;
+                    if (instanceId) {
+                        await this.loadPage();
+                    }
+                }
+            )
         );
     }
 }

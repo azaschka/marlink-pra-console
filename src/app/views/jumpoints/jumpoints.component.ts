@@ -13,6 +13,7 @@ import { JumpointsService } from "./jumpoints.service";
 import { BusinessUnit, UserRole } from "../pra-users/enums";
 import { Jumpoint } from "./models";
 import { JumpointInstallerDownloadOverlayComponent } from "./components/jumpoint-installer-download-overlay/jumpoint-installer-download-overlay.component";
+import { AppService } from "app/app.service";
 
 @Component({
     selector: "app-jumpoints",
@@ -46,6 +47,7 @@ export class JumpointsComponent implements OnInit, OnDestroy {
     public dataCount = 0;
 
     private currentBusinessUnit: BusinessUnit | null | undefined;
+    private currentTenantId: number | null = null;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -53,6 +55,7 @@ export class JumpointsComponent implements OnInit, OnDestroy {
         private readonly dialog: MatDialog,
         private readonly jwtAuthService: JwtAuthService,
         private readonly jumpointsService: JumpointsService,
+        private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService
@@ -87,16 +90,33 @@ export class JumpointsComponent implements OnInit, OnDestroy {
     public async downloadJumpointInstallerHandler(
         jumpoint: Jumpoint
     ): Promise<void> {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         this.dialog.open(JumpointInstallerDownloadOverlayComponent, {
             data: {
                 jumpointId: jumpoint.id,
                 jumpointName: jumpoint.name,
+                tenantId: this.currentTenantId,
             },
             disableClose: true,
         });
     }
 
     public async deleteJumpointHandler(jumpoint: Jumpoint): Promise<void> {
+        if (!this.currentTenantId) {
+            await this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         const confirmed = await this.confirmDialog.show({
             title: "Delete Jumpoint",
             message: `Are you sure you want to delete:<br><strong>${jumpoint.name}</strong>?`,
@@ -105,7 +125,10 @@ export class JumpointsComponent implements OnInit, OnDestroy {
         if (confirmed) {
             this.isLoading = true;
             try {
-                await this.jumpointsService.deleteJumpoint(jumpoint.id);
+                await this.jumpointsService.deleteJumpoint(
+                    this.currentTenantId,
+                    jumpoint.id
+                );
                 this.notificationDialog.show({
                     message: `Jumpoint "${jumpoint.name}" has been deleted.`,
                 });
@@ -123,9 +146,18 @@ export class JumpointsComponent implements OnInit, OnDestroy {
     }
 
     private async loadPage(): Promise<void> {
+        const tenantId = this.currentTenantId;
+        if (!tenantId) {
+            console.warn(
+                "No BeyondTrust instance selected, skipping jumpoints load"
+            );
+            this.isLoading = false;
+            return;
+        }
+
         this.isLoading = true;
         try {
-            const items = await this.jumpointsService.fetchJumpoints();
+            const items = await this.jumpointsService.fetchJumpoints(tenantId);
             const filteredItems = PraDataFilter.filterByBusinessUnit(
                 items,
                 this.currentBusinessUnit,
@@ -153,6 +185,22 @@ export class JumpointsComponent implements OnInit, OnDestroy {
                 }
 
                 this.currentBusinessUnit = user.businessUnit;
+            })
+        );
+
+        // Listen for BeyondTrust instance changes and reload data
+        this.subscriptionsToClear.add(
+            this.appService.selectedInstanceId$.subscribe((instanceId) => {
+                const previousTenantId = this.currentTenantId;
+                this.currentTenantId = instanceId;
+
+                // Reload data if tenant changed (and not initial load)
+                if (
+                    previousTenantId !== null &&
+                    previousTenantId !== instanceId
+                ) {
+                    this.loadPage();
+                }
             })
         );
     }

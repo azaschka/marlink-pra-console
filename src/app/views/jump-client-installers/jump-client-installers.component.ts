@@ -18,6 +18,7 @@ import {
 import { MatDialog } from "@angular/material/dialog";
 import { JumpGroupsService } from "../jump-groups/jump-groups.service";
 import { JumpPoliciesService } from "../jump-policies/jump-policies.service";
+import { AppService } from "../../app.service";
 
 @Component({
     selector: "app-jump-client-installers",
@@ -49,6 +50,7 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
     public dataCount = 0;
 
     private currentBusinessUnit: BusinessUnit | null | undefined;
+    private currentTenantId: number | null = null;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -58,6 +60,7 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
         private readonly jumpClientInstallerService: JumpClientInstallersService,
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
+        private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService
@@ -114,9 +117,19 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
         });
 
         if (confirmed) {
+            if (!this.currentTenantId) {
+                this.errorDialog.show({
+                    title: "Delete Jump Client Installer Failed",
+                    message:
+                        "No tenant selected. Please select a tenant first.",
+                });
+                return;
+            }
+
             this.isLoading = true;
             try {
                 await this.jumpClientInstallerService.deleteJumpClientInstaller(
+                    this.currentTenantId,
                     jumpClientInstaller.id
                 );
                 this.notificationDialog.show({
@@ -136,12 +149,20 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
     }
 
     private async loadPage(): Promise<void> {
+        if (!this.currentTenantId) {
+            return;
+        }
+
         this.isLoading = true;
         try {
             const [items, jumpGroups, jumpPolicies] = await Promise.all([
-                this.jumpClientInstallerService.fetchJumpClientInstallers(),
-                this.jumpGroupsService.fetchJumpGroups(),
-                this.jumpPoliciesService.fetchJumpPolicies(),
+                this.jumpClientInstallerService.fetchJumpClientInstallers(
+                    this.currentTenantId
+                ),
+                this.jumpGroupsService.fetchJumpGroups(this.currentTenantId),
+                this.jumpPoliciesService.fetchJumpPolicies(
+                    this.currentTenantId
+                ),
             ]);
             const enriched = items.map((item) => ({
                 ...item,
@@ -152,7 +173,6 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
                     jumpPolicies.find((p) => p.id === item.jumpPolicyId)
                         ?.displayName ?? "–",
             }));
-            console.log("Enriched Jump Client Installers:", enriched);
             const filteredItems = PraDataFilter.filterByBusinessUnit(
                 enriched,
                 this.currentBusinessUnit,
@@ -181,6 +201,17 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
 
                 this.currentBusinessUnit = user.businessUnit;
             })
+        );
+
+        this.subscriptionsToClear.add(
+            this.appService.selectedInstanceId$.subscribe(
+                async (instanceId) => {
+                    this.currentTenantId = instanceId;
+                    if (instanceId) {
+                        await this.loadPage();
+                    }
+                }
+            )
         );
     }
 }

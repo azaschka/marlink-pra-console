@@ -16,6 +16,8 @@ export interface CopyJumpAssetDialogData {
         | "jumpClient";
     assetId: number;
     defaultName: string;
+    /** The tenant ID of the selected BeyondTrust instance. */
+    tenantId: number;
 }
 
 @Component({
@@ -46,7 +48,10 @@ export class JumpAssetCopyOverlayComponent implements OnInit {
     public async ngOnInit() {
         this.isLoading = true;
         try {
-            this.jumpGroups = await this.jumpGroupsService.fetchJumpGroups();
+            const tenantId = this.data.tenantId;
+            this.jumpGroups = await this.jumpGroupsService.fetchJumpGroups(
+                tenantId
+            );
             this.filteredJumpGroups$ = this.form
                 .get("jumpGroup")!
                 .valueChanges.pipe(

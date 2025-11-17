@@ -23,6 +23,8 @@ export type JumpAssetType =
 export interface JumpAssetCreateDialogData {
     /** Determines which form fields / validators to show. */
     assetType: JumpAssetType;
+    /** The tenant ID of the selected BeyondTrust instance. */
+    tenantId: number;
 }
 
 interface JumpAssetForm {
@@ -73,7 +75,7 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
         @Inject(MAT_DIALOG_DATA) public data: JumpAssetCreateDialogData,
         private readonly jumpointsService: JumpointsService,
         private readonly jumpGroupsService: JumpGroupsService,
-        private readonly jumpPoliciesService: JumpPoliciesService,
+        private readonly jumpPoliciesService: JumpPoliciesService
     ) {}
 
     ngOnInit(): void {
@@ -119,10 +121,12 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.loadError = null;
 
+        const tenantId = this.data.tenantId;
+
         combineLatest([
-            this.jumpointsService.fetchJumpoints(),
-            this.jumpGroupsService.fetchJumpGroups(),
-            this.jumpPoliciesService.fetchJumpPolicies(),
+            this.jumpointsService.fetchJumpoints(tenantId),
+            this.jumpGroupsService.fetchJumpGroups(tenantId),
+            this.jumpPoliciesService.fetchJumpPolicies(tenantId),
         ])
             .pipe(
                 takeUntil(this.destroy$),
@@ -134,9 +138,9 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
                     return of([[], [], []] as [
                         Jumpoint[],
                         JumpGroup[],
-                        JumpPolicy[],
+                        JumpPolicy[]
                     ]);
-                }),
+                })
             )
             .subscribe({
                 next: ([jumpoints, jumpGroups, jumpPolicies]) => {
@@ -158,21 +162,21 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
         this.filteredJumpoints$ = jumpointControl.valueChanges.pipe(
             startWith(jumpointControl.value),
             map((value) => this.filterItems(value, this.jumpoints, "name")),
-            takeUntil(this.destroy$),
+            takeUntil(this.destroy$)
         );
 
         this.filteredJumpGroups$ = jumpGroupControl.valueChanges.pipe(
             startWith(jumpGroupControl.value),
             map((value) => this.filterItems(value, this.jumpGroups, "name")),
-            takeUntil(this.destroy$),
+            takeUntil(this.destroy$)
         );
 
         this.filteredJumpPolicies$ = jumpPolicyControl.valueChanges.pipe(
             startWith(jumpPolicyControl.value),
             map((value) =>
-                this.filterItems(value, this.jumpPolicies, "displayName"),
+                this.filterItems(value, this.jumpPolicies, "displayName")
             ),
-            takeUntil(this.destroy$),
+            takeUntil(this.destroy$)
         );
     }
 
@@ -180,17 +184,17 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
     private filterItems<T>(
         value: string | T | null,
         items: T[],
-        propertyName: keyof T,
+        propertyName: keyof T
     ): T[] {
         const filterValue =
             typeof value === "string"
                 ? value.toLowerCase()
                 : value
-                  ? String(value[propertyName]).toLowerCase()
-                  : "";
+                ? String(value[propertyName]).toLowerCase()
+                : "";
 
         return items.filter((item) =>
-            String(item[propertyName]).toLowerCase().includes(filterValue),
+            String(item[propertyName]).toLowerCase().includes(filterValue)
         );
     }
 
