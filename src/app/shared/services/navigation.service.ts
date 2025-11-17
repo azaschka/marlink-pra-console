@@ -8,7 +8,8 @@ export type MenuItemType =
     | "dropDown"
     | "icon"
     | "separator"
-    | "extLink";
+    | "extLink"
+    | "download";
 
 export interface IMenuItem {
     type: MenuItemType;
@@ -62,11 +63,11 @@ export class NavigationService {
             type: "link",
             icon: "dashboard",
             state: "dashboard",
-            roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+            roles: [AuthRole.SUPER_ADMIN],
         },
         {
             type: "separator",
-            roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+            roles: [AuthRole.SUPER_ADMIN],
         },
         {
             name: "Sites",
@@ -169,10 +170,10 @@ export class NavigationService {
         },
         {
             name: "Postman Collection",
-            type: "extLink",
-            tooltip: "Postman Collection",
-            icon: "library_books",
-            state: `${config.praApiBaseUrl}/assets/docs/postman-collection.json`,
+            type: "download",
+            tooltip: "Download Postman Collection",
+            icon: "download",
+            state: `/assets/docs/postman-collection.json`,
             roles: [AuthRole.SUPER_ADMIN, AuthRole.DATA_CENTER_ENGINEER],
         },
     ];

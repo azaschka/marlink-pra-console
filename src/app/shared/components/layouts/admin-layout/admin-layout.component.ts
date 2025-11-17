@@ -21,6 +21,7 @@ import { ThemeService } from "../../../services/theme.service";
 import { LayoutService } from "../../../services/layout.service";
 import { filter } from "rxjs/operators";
 import { JwtAuthService } from "../../../services/auth/jwt-auth.service";
+import { AppService } from "../../../../app.service";
 
 @Component({
     selector: "app-admin-layout",
@@ -42,11 +43,9 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit {
         public themeService: ThemeService,
         private layout: LayoutService,
         private cdr: ChangeDetectorRef,
-        private jwtAuth: JwtAuthService
+        private jwtAuth: JwtAuthService,
+        private appService: AppService
     ) {
-        // Check Auth Token is valid
-        // void this.jwtAuth.checkTokenIsValid();
-
         // Close sidenav after route change in mobile
         this.routerEventSub = router.events
             .pipe(filter((event) => event instanceof NavigationEnd))
@@ -60,7 +59,7 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit {
         translate.use(browserLang.match(/en|fr/) ? browserLang : "en");
     }
 
-    ngOnInit() {
+    async ngOnInit() {
         // this.layoutConf = this.layout.layoutConf;
         this.layoutConfSub = this.layout.layoutConf$.subscribe((layoutConf) => {
             this.layoutConf = layoutConf;
@@ -87,6 +86,11 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit {
                 this.isModuleLoading = false;
             }
         });
+
+        // Check Auth Token is valid
+        await this.jwtAuth.checkTokenIsValid();
+
+        // Note: AppService will auto-initialize on first access by components
     }
     @HostListener("window:resize", ["$event"])
     onResize(event) {

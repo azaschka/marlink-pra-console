@@ -1,0 +1,25 @@
+// Compact instance selector for header
+::ng-deep .instance-selector {
+    .mat-form-field-wrapper {
+        padding-bottom: 0;
+        margin-bottom: -1.25em;
+    }
+
+    .mat-form-field-infix {
+        padding: 0.5em 0;
+        border-top: 0.5em solid transparent;
+    }
+
+    .mat-form-field-label {
+        top: 1.3em;
+    }
+
+    // Make it more compact
+    .mat-select {
+        font-size: 14px;
+    }
+
+    // Reduce overall height
+    min-width: 250px;
+    margin-top: 8px;
+}

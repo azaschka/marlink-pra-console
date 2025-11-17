@@ -32,7 +32,8 @@
             <!-- Item -->
             <div *ngIf="!item.disabled && item.type !== 'separator' && item.type !== 'icon'" class="lvl1">
                 <a routerLink="/{{item.state}}" appDropdownToggle matRipple
-                    *ngIf="item.type !== 'extLink' && item.type !== 'dropDown'" routerLinkActive="open">
+                    *ngIf="item.type !== 'extLink' && item.type !== 'dropDown' && item.type !== 'download'"
+                    routerLinkActive="open">
                     <mat-icon *ngIf="item.icon" class="sidenav-mat-icon">{{item.icon}}</mat-icon>
                     <mat-icon *ngIf="item.svgIcon" [svgIcon]="item.svgIcon" class="svgIcon"></mat-icon>
                     <span class="item-name lvl1 fw-500">{{item.name | translate}}</span>
@@ -41,6 +42,14 @@
                         *ngFor="let badge of item.badges">{{ badge.value }}</span>
                 </a>
                 <a [href]="item.state" appDropdownToggle matRipple *ngIf="item.type === 'extLink'" target="_blank">
+                    <mat-icon *ngIf="item.icon" class="sidenav-mat-icon">{{item.icon}}</mat-icon>
+                    <span class="item-name lvl1 fw-500">{{item.name | translate}}</span>
+                    <span fxFlex></span>
+                    <span class="menuitem-badge mat-bg-{{ badge.color }}" [ngStyle]="{background: badge.color}"
+                        *ngFor="let badge of item.badges">{{ badge.value }}</span>
+                </a>
+                <a (click)="handleDownload(item.state, 'postman-collection.json')" appDropdownToggle matRipple
+                    *ngIf="item.type === 'download'" style="cursor: pointer;">
                     <mat-icon *ngIf="item.icon" class="sidenav-mat-icon">{{item.icon}}</mat-icon>
                     <span class="item-name lvl1 fw-500">{{item.name | translate}}</span>
                     <span fxFlex></span>

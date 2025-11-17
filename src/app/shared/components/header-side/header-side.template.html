@@ -5,8 +5,21 @@
         <mat-icon>menu</mat-icon>
     </button>
 
-    <div class="ml-24">
+    <div class="ml-24" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="32px">
         <app-breadcrumb></app-breadcrumb>
+        <!-- <ng-container *ngIf="showInstanceSelector && instances.length > 0">
+            <span>on</span>
+        </ng-container> -->
+        <ng-container *ngIf="showInstanceSelector && instances.length > 0">
+            <mat-form-field style="width: 320px;">
+                <mat-select [value]="selectedInstanceId" (selectionChange)="onInstanceChange($event.value)"
+                    [disabled]="instances.length === 0">
+                    <mat-option *ngFor="let instance of instances" [value]="instance.id">
+                        {{ instance.name }} (ID: {{ instance.id }})
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </ng-container>
     </div>
 
     <span fxFlex></span>
