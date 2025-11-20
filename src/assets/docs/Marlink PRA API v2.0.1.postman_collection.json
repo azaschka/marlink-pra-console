@@ -54,12 +54,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "health"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
             }
           },
           "response": [
@@ -71,12 +67,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/health",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "health"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
                 }
               },
               "status": "OK",
@@ -120,9 +112,7 @@
                             "header": [],
                             "url": {
                               "raw": "{{baseUrl}}/beyondtrust-instances/{{instanceId}}/backups/{{backupId}}/content",
-                              "host": [
-                                "{{baseUrl}}"
-                              ],
+                              "host": ["{{baseUrl}}"],
                               "path": [
                                 "beyondtrust-instances",
                                 "{{instanceId}}",
@@ -145,9 +135,7 @@
                         "header": [],
                         "url": {
                           "raw": "{{baseUrl}}/beyondtrust-instances/{{instanceId}}/backups/{{backupId}}",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
+                          "host": ["{{baseUrl}}"],
                           "path": [
                             "beyondtrust-instances",
                             "{{instanceId}}",
@@ -169,9 +157,7 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/beyondtrust-instances/{{instanceId}}/backups",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
+                      "host": ["{{baseUrl}}"],
                       "path": [
                         "beyondtrust-instances",
                         "{{instanceId}}",
@@ -189,9 +175,7 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/beyondtrust-instances/{{instanceId}}/backups",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
+                      "host": ["{{baseUrl}}"],
                       "path": [
                         "beyondtrust-instances",
                         "{{instanceId}}",
@@ -212,13 +196,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/beyondtrust-instances/{{instanceId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "beyondtrust-instances",
-                    "{{instanceId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["beyondtrust-instances", "{{instanceId}}"]
                 }
               },
               "response": []
@@ -240,13 +219,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/beyondtrust-instances/{{instanceId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "beyondtrust-instances",
-                    "{{instanceId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["beyondtrust-instances", "{{instanceId}}"]
                 }
               },
               "response": []
@@ -259,13 +233,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/beyondtrust-instances/{{instanceId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "beyondtrust-instances",
-                    "{{instanceId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["beyondtrust-instances", "{{instanceId}}"]
                 }
               },
               "response": []
@@ -281,12 +250,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/beyondtrust-instances",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "beyondtrust-instances"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["beyondtrust-instances"]
             }
           },
           "response": []
@@ -308,12 +273,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/beyondtrust-instances",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "beyondtrust-instances"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["beyondtrust-instances"]
             }
           },
           "response": []
@@ -383,14 +344,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/license-usages/sites/{{siteId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "license-usages",
-                        "sites",
-                        "{{siteId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["license-usages", "sites", "{{siteId}}"]
                     }
                   },
                   "response": []
@@ -458,14 +413,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/license-usages/customers/{{customerId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "license-usages",
-                        "customers",
-                        "{{customerId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["license-usages", "customers", "{{customerId}}"]
                     }
                   },
                   "response": []
@@ -503,14 +452,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/customers/{{customerId}}/deactivate",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "{{customerId}}",
-                        "deactivate"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "{{customerId}}", "deactivate"]
                     }
                   },
                   "response": [
@@ -527,14 +470,8 @@
                         ],
                         "url": {
                           "raw": "{{baseUrl}}/customers/1/deactivate",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "customers",
-                            "1",
-                            "deactivate"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["customers", "1", "deactivate"]
                         }
                       },
                       "status": "OK",
@@ -562,14 +499,8 @@
                         ],
                         "url": {
                           "raw": "{{baseUrl}}/customers/invalid/deactivate",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "customers",
-                            "invalid",
-                            "deactivate"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["customers", "invalid", "deactivate"]
                         }
                       },
                       "status": "Bad Request",
@@ -592,14 +523,8 @@
                         "header": [],
                         "url": {
                           "raw": "{{baseUrl}}/customers/1/deactivate",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "customers",
-                            "1",
-                            "deactivate"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["customers", "1", "deactivate"]
                         }
                       },
                       "status": "Unauthorized",
@@ -627,14 +552,8 @@
                         ],
                         "url": {
                           "raw": "{{baseUrl}}/customers/1/deactivate",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "customers",
-                            "1",
-                            "deactivate"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["customers", "1", "deactivate"]
                         }
                       },
                       "status": "Forbidden",
@@ -662,14 +581,8 @@
                         ],
                         "url": {
                           "raw": "{{baseUrl}}/customers/999/deactivate",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "customers",
-                            "999",
-                            "deactivate"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["customers", "999", "deactivate"]
                         }
                       },
                       "status": "Not Found",
@@ -697,14 +610,8 @@
                         ],
                         "url": {
                           "raw": "{{baseUrl}}/customers/1/deactivate",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "customers",
-                            "1",
-                            "deactivate"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["customers", "1", "deactivate"]
                         }
                       },
                       "status": "Internal Server Error",
@@ -741,14 +648,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/customers/{{customerId}}/reactivate",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "{{customerId}}",
-                        "reactivate"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "{{customerId}}", "reactivate"]
                     }
                   },
                   "response": [
@@ -765,14 +666,8 @@
                         ],
                         "url": {
                           "raw": "{{baseUrl}}/customers/1/reactivate",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "customers",
-                            "1",
-                            "reactivate"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["customers", "1", "reactivate"]
                         }
                       },
                       "status": "OK",
@@ -800,14 +695,8 @@
                         ],
                         "url": {
                           "raw": "{{baseUrl}}/customers/999/reactivate",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "customers",
-                            "999",
-                            "reactivate"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["customers", "999", "reactivate"]
                         }
                       },
                       "status": "Not Found",
@@ -854,13 +743,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/customers/{{customerId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers",
-                    "{{customerId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers", "{{customerId}}"]
                 }
               },
               "response": [
@@ -890,13 +774,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/customers/1",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "1"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "1"]
                     }
                   },
                   "status": "OK",
@@ -937,13 +816,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/customers/invalid",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "invalid"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "invalid"]
                     }
                   },
                   "status": "Bad Request",
@@ -980,13 +854,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/customers/1",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "1"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "1"]
                     }
                   },
                   "status": "Unauthorized",
@@ -1027,13 +896,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/customers/1",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "1"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "1"]
                     }
                   },
                   "status": "Forbidden",
@@ -1074,13 +938,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/customers/999",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "999"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "999"]
                     }
                   },
                   "status": "Not Found",
@@ -1121,13 +980,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/customers/1",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "1"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "1"]
                     }
                   },
                   "status": "Internal Server Error",
@@ -1158,13 +1012,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/customers/{{customerId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers",
-                    "{{customerId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers", "{{customerId}}"]
                 }
               },
               "response": [
@@ -1181,13 +1030,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/customers/1",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "1"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "1"]
                     }
                   },
                   "status": "No Content",
@@ -1215,13 +1059,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/customers/invalid",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "invalid"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "invalid"]
                     }
                   },
                   "status": "Bad Request",
@@ -1249,13 +1088,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/customers/999",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "999"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "999"]
                     }
                   },
                   "status": "Not Found",
@@ -1283,13 +1117,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/customers/1",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "customers",
-                        "1"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["customers", "1"]
                     }
                   },
                   "status": "Conflict",
@@ -1369,12 +1198,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/customers?pageSize=100&pageNumber=1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "customers"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["customers"],
               "query": [
                 {
                   "key": "pageSize",
@@ -1427,12 +1252,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/customers?pageSize=10&pageNumber=1",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers"
-                  ],
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers"],
                   "query": [
                     {
                       "key": "pageSize",
@@ -1470,12 +1291,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/customers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers"]
                 }
               },
               "status": "Bad Request",
@@ -1498,12 +1315,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/customers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers"]
                 }
               },
               "status": "Unauthorized",
@@ -1531,12 +1344,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/customers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers"]
                 }
               },
               "status": "Forbidden",
@@ -1576,12 +1385,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/customers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "customers"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["customers"]
             }
           },
           "response": [
@@ -1611,12 +1416,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/customers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers"]
                 }
               },
               "status": "Created",
@@ -1657,12 +1458,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/customers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers"]
                 }
               },
               "status": "Bad Request",
@@ -1699,12 +1496,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/customers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers"]
                 }
               },
               "status": "Unauthorized",
@@ -1745,12 +1538,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/customers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers"]
                 }
               },
               "status": "Conflict",
@@ -1791,12 +1580,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/customers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers"]
                 }
               },
               "status": "Unprocessable Entity",
@@ -1837,12 +1622,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/customers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "customers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["customers"]
                 }
               },
               "status": "Internal Server Error",
@@ -1889,9 +1670,7 @@
                         ],
                         "url": {
                           "raw": "{{baseUrl}}/sites/{{siteId}}/administrators/{{administratorId}}",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
+                          "host": ["{{baseUrl}}"],
                           "path": [
                             "sites",
                             "{{siteId}}",
@@ -1915,15 +1694,8 @@
                             ],
                             "url": {
                               "raw": "{{baseUrl}}/sites/1/administrators/2",
-                              "host": [
-                                "{{baseUrl}}"
-                              ],
-                              "path": [
-                                "sites",
-                                "1",
-                                "administrators",
-                                "2"
-                              ]
+                              "host": ["{{baseUrl}}"],
+                              "path": ["sites", "1", "administrators", "2"]
                             }
                           },
                           "status": "No Content",
@@ -1957,14 +1729,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/sites/{{siteId}}/administrators",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "sites",
-                        "{{siteId}}",
-                        "administrators"
-                      ],
+                      "host": ["{{baseUrl}}"],
+                      "path": ["sites", "{{siteId}}", "administrators"],
                       "query": [
                         {
                           "key": "pageSize",
@@ -1996,14 +1762,8 @@
                         ],
                         "url": {
                           "raw": "{{baseUrl}}/sites/1/administrators",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "sites",
-                            "1",
-                            "administrators"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["sites", "1", "administrators"]
                         }
                       },
                       "status": "OK",
@@ -2031,14 +1791,8 @@
                         ],
                         "url": {
                           "raw": "{{baseUrl}}/sites/999/administrators",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "sites",
-                            "999",
-                            "administrators"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["sites", "999", "administrators"]
                         }
                       },
                       "status": "Not Found",
@@ -2082,14 +1836,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/sites/{{siteId}}/administrators",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "sites",
-                        "{{siteId}}",
-                        "administrators"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["sites", "{{siteId}}", "administrators"]
                     },
                     "description": "Assigns a user as a site administrator for the specified site. The user must exist and have appropriate permissions."
                   },
@@ -2120,14 +1868,8 @@
                         },
                         "url": {
                           "raw": "{{baseUrl}}/sites/1/administrators",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "sites",
-                            "1",
-                            "administrators"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["sites", "1", "administrators"]
                         }
                       },
                       "status": "Created",
@@ -2168,14 +1910,8 @@
                         },
                         "url": {
                           "raw": "{{baseUrl}}/sites/1/administrators",
-                          "host": [
-                            "{{baseUrl}}"
-                          ],
-                          "path": [
-                            "sites",
-                            "1",
-                            "administrators"
-                          ]
+                          "host": ["{{baseUrl}}"],
+                          "path": ["sites", "1", "administrators"]
                         }
                       },
                       "status": "Conflict",
@@ -2220,13 +1956,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/sites/{{siteId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites",
-                    "{{siteId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites", "{{siteId}}"]
                 },
                 "description": "Permanently deletes a site from the system. The site must not have any active jumpoints or other dependencies, otherwise the operation may fail."
               },
@@ -2244,13 +1975,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/sites/1",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "sites",
-                        "1"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["sites", "1"]
                     }
                   },
                   "status": "No Content",
@@ -2278,13 +2004,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/sites/999",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "sites",
-                        "999"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["sites", "999"]
                     }
                   },
                   "status": "Not Found",
@@ -2323,12 +2044,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/sites?pageSize=100&pageNumber=1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sites"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["sites"],
               "query": [
                 {
                   "key": "pageSize",
@@ -2382,12 +2099,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/sites?pageSize=10&pageNumber=1",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ],
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"],
                   "query": [
                     {
                       "key": "pageSize",
@@ -2425,12 +2138,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/sites",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"]
                 }
               },
               "status": "Bad Request",
@@ -2453,12 +2162,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/sites",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"]
                 }
               },
               "status": "Unauthorized",
@@ -2486,12 +2191,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/sites",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"]
                 }
               },
               "status": "Forbidden",
@@ -2519,12 +2220,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/sites",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"]
                 }
               },
               "status": "Internal Server Error",
@@ -2568,12 +2265,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/sites",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sites"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["sites"]
             },
             "description": "Creates a new site and assigns initial management roles. The site key must be unique and the customer must exist. Site managers, administrators, and support team members can be assigned during creation."
           },
@@ -2604,12 +2297,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/sites",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"]
                 }
               },
               "status": "Created",
@@ -2650,12 +2339,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/sites",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"]
                 }
               },
               "status": "Bad Request",
@@ -2692,12 +2377,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/sites",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"]
                 }
               },
               "status": "Unauthorized",
@@ -2738,12 +2419,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/sites",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"]
                 }
               },
               "status": "Forbidden",
@@ -2784,12 +2461,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/sites",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"]
                 }
               },
               "status": "Not Found",
@@ -2830,12 +2503,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/sites",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"]
                 }
               },
               "status": "Conflict",
@@ -2876,12 +2545,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/sites",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites"]
                 }
               },
               "status": "Internal Server Error",
@@ -2911,14 +2576,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/sites/{{siteId}}/managers?pageSize=10&pageNumber=1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sites",
-                "{{siteId}}",
-                "managers"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["sites", "{{siteId}}", "managers"],
               "query": [
                 {
                   "key": "pageSize",
@@ -2948,14 +2607,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/sites/1/managers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites",
-                    "1",
-                    "managers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites", "1", "managers"]
                 }
               },
               "status": "OK",
@@ -2998,14 +2651,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/sites/{{siteId}}/managers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sites",
-                "{{siteId}}",
-                "managers"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["sites", "{{siteId}}", "managers"]
             },
             "description": "Assigns a user as a site manager for the specified site. The user must exist and have appropriate permissions."
           },
@@ -3036,14 +2683,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/sites/1/managers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites",
-                    "1",
-                    "managers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites", "1", "managers"]
                 }
               },
               "status": "Created",
@@ -3084,14 +2725,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/sites/1/managers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites",
-                    "1",
-                    "managers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites", "1", "managers"]
                 }
               },
               "status": "Conflict",
@@ -3121,15 +2756,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/sites/{{siteId}}/managers/{{managerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sites",
-                "{{siteId}}",
-                "managers",
-                "{{managerId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["sites", "{{siteId}}", "managers", "{{managerId}}"]
             },
             "description": "Removes a user from the site manager role for the specified site. The user will no longer have site management privileges."
           },
@@ -3147,15 +2775,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/sites/1/managers/1",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites",
-                    "1",
-                    "managers",
-                    "1"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites", "1", "managers", "1"]
                 }
               },
               "status": "No Content",
@@ -3185,14 +2806,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/sites/{{siteId}}/support-team-members",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sites",
-                "{{siteId}}",
-                "support-team-members"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["sites", "{{siteId}}", "support-team-members"]
             },
             "description": "Retrieves support team members for the specified site. Support team members provide technical assistance and maintenance for site operations."
           },
@@ -3210,14 +2825,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/sites/1/support-team-members",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites",
-                    "1",
-                    "support-team-members"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites", "1", "support-team-members"]
                 }
               },
               "status": "OK",
@@ -3260,14 +2869,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/sites/{{siteId}}/support-team-members",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sites",
-                "{{siteId}}",
-                "support-team-members"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["sites", "{{siteId}}", "support-team-members"]
             },
             "description": "Assigns a user as a support team member for the specified site. The user must exist and have appropriate technical permissions."
           },
@@ -3298,14 +2901,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/sites/1/support-team-members",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites",
-                    "1",
-                    "support-team-members"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites", "1", "support-team-members"]
                 }
               },
               "status": "Created",
@@ -3335,9 +2932,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/sites/{{siteId}}/support-team-members/{{supportTeamMemberId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "sites",
                 "{{siteId}}",
@@ -3361,15 +2956,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/sites/1/support-team-members/3",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites",
-                    "1",
-                    "support-team-members",
-                    "3"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites", "1", "support-team-members", "3"]
                 }
               },
               "status": "No Content",
@@ -3399,14 +2987,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/sites/{{siteId}}/jumpoints",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sites",
-                "{{siteId}}",
-                "jumpoints"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["sites", "{{siteId}}", "jumpoints"]
             },
             "description": "Retrieves all jumpoints associated with the specified site. Jumpoints are secure remote access endpoints deployed at the site location."
           },
@@ -3424,14 +3006,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/sites/1/jumpoints",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites",
-                    "1",
-                    "jumpoints"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites", "1", "jumpoints"]
                 }
               },
               "status": "OK",
@@ -3459,14 +3035,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/sites/999/jumpoints",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "sites",
-                    "999",
-                    "jumpoints"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sites", "999", "jumpoints"]
                 }
               },
               "status": "Not Found",
@@ -3508,12 +3078,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jumpoints",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jumpoints"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["jumpoints"],
               "query": [
                 {
                   "key": "pageSize",
@@ -3544,13 +3110,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jumpoints/{{jumpointId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jumpoints",
-                "{{jumpointId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jumpoints", "{{jumpointId}}"]
             },
             "description": "Retrieves detailed information about a specific jumpoint by its unique identifier."
           },
@@ -3582,12 +3143,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/jumpoints",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jumpoints"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jumpoints"]
             },
             "description": "Creates a new jumpoint with the specified configuration. The jumpoint must be associated with an existing site."
           },
@@ -3619,13 +3176,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/jumpoints/{{jumpointId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jumpoints",
-                "{{jumpointId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jumpoints", "{{jumpointId}}"]
             },
             "description": "Updates the configuration of an existing jumpoint. Only the specified fields will be modified."
           },
@@ -3644,13 +3196,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jumpoints/{{jumpointId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jumpoints",
-                "{{jumpointId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jumpoints", "{{jumpointId}}"]
             },
             "description": "Permanently deletes a jumpoint from the system. This action cannot be undone."
           },
@@ -3669,14 +3216,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jumpoints/{{jumpointId}}/nodes",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jumpoints",
-                "{{jumpointId}}",
-                "nodes"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jumpoints", "{{jumpointId}}", "nodes"]
             },
             "description": "Retrieves the list of nodes associated with the specified jumpoint."
           },
@@ -3695,14 +3236,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jumpoints/{{jumpointId}}/installer",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jumpoints",
-                "{{jumpointId}}",
-                "installer"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jumpoints", "{{jumpointId}}", "installer"]
             },
             "description": "Downloads the installer package for a specific jumpoint, enabling deployment on target systems."
           },
@@ -3732,12 +3267,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-policies",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-policies"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-policies"]
             }
           },
           "response": []
@@ -3759,13 +3290,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-policies/{{policyId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-policies",
-                "{{policyId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-policies", "{{policyId}}"]
             }
           },
           "response": []
@@ -3795,12 +3321,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/jump-policies",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-policies"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-policies"]
             }
           },
           "response": []
@@ -3830,13 +3352,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/jump-policies/{{policyId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-policies",
-                "{{policyId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-policies", "{{policyId}}"]
             }
           },
           "response": []
@@ -3858,13 +3375,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-policies/{{policyId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-policies",
-                "{{policyId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-policies", "{{policyId}}"]
             }
           },
           "response": []
@@ -3893,12 +3405,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/users",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
             }
           },
           "response": []
@@ -3920,13 +3428,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/users/{{userId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{userId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
             }
           },
           "response": []
@@ -3956,12 +3459,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/users",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
             }
           },
           "response": []
@@ -3991,13 +3490,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/users/{{userId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{userId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
             }
           },
           "response": []
@@ -4019,13 +3513,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/users/{{userId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{userId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
             }
           },
           "response": []
@@ -4047,14 +3536,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/users/{{userId}}/group-policies",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{userId}}",
-                "group-policies"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}", "group-policies"]
             }
           },
           "response": []
@@ -4084,14 +3567,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/users/{{userId}}/group-policies",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{userId}}",
-                "group-policies"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}", "group-policies"]
             }
           },
           "response": []
@@ -4120,12 +3597,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/teams",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "teams"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["teams"]
             }
           },
           "response": []
@@ -4147,13 +3620,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/teams/{{teamId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "teams",
-                "{{teamId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{teamId}}"]
             }
           },
           "response": []
@@ -4183,12 +3651,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/teams",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "teams"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["teams"]
             }
           },
           "response": []
@@ -4218,13 +3682,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/teams/{{teamId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "teams",
-                "{{teamId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{teamId}}"]
             }
           },
           "response": []
@@ -4246,13 +3705,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/teams/{{teamId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "teams",
-                "{{teamId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{teamId}}"]
             }
           },
           "response": []
@@ -4274,14 +3728,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/teams/{{teamId}}/users",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "teams",
-                "{{teamId}}",
-                "users"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{teamId}}", "users"]
             }
           },
           "response": []
@@ -4311,14 +3759,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/teams/{{teamId}}/users",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "teams",
-                "{{teamId}}",
-                "users"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{teamId}}", "users"]
             }
           },
           "response": []
@@ -4340,15 +3782,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/teams/{{teamId}}/users/{{userId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "teams",
-                "{{teamId}}",
-                "users",
-                "{{userId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{teamId}}", "users", "{{userId}}"]
             }
           },
           "response": []
@@ -4377,12 +3812,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/group-policies",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies"]
             }
           },
           "response": []
@@ -4404,13 +3835,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies",
-                "{{groupPolicyId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies", "{{groupPolicyId}}"]
             }
           },
           "response": []
@@ -4440,12 +3866,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/group-policies",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies"]
             }
           },
           "response": []
@@ -4475,13 +3897,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies",
-                "{{groupPolicyId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies", "{{groupPolicyId}}"]
             }
           },
           "response": []
@@ -4503,13 +3920,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies",
-                "{{groupPolicyId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies", "{{groupPolicyId}}"]
             }
           },
           "response": []
@@ -4531,14 +3943,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/members",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies",
-                "{{groupPolicyId}}",
-                "members"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies", "{{groupPolicyId}}", "members"]
             }
           },
           "response": []
@@ -4568,14 +3974,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/members",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies",
-                "{{groupPolicyId}}",
-                "members"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies", "{{groupPolicyId}}", "members"]
             }
           },
           "response": []
@@ -4597,9 +3997,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/members/{{memberId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "group-policies",
                 "{{groupPolicyId}}",
@@ -4627,14 +4025,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/jumpoints",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies",
-                "{{groupPolicyId}}",
-                "jumpoints"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies", "{{groupPolicyId}}", "jumpoints"]
             }
           },
           "response": []
@@ -4664,14 +4056,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/jumpoints",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies",
-                "{{groupPolicyId}}",
-                "jumpoints"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies", "{{groupPolicyId}}", "jumpoints"]
             }
           },
           "response": []
@@ -4693,9 +4079,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/jumpoints/{{jumpointId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "group-policies",
                 "{{groupPolicyId}}",
@@ -4723,14 +4107,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/jump-groups",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies",
-                "{{groupPolicyId}}",
-                "jump-groups"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies", "{{groupPolicyId}}", "jump-groups"]
             }
           },
           "response": []
@@ -4760,14 +4138,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/jump-groups",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies",
-                "{{groupPolicyId}}",
-                "jump-groups"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies", "{{groupPolicyId}}", "jump-groups"]
             }
           },
           "response": []
@@ -4789,9 +4161,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/jump-groups/{{jumpGroupId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "group-policies",
                 "{{groupPolicyId}}",
@@ -4819,14 +4189,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/teams",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies",
-                "{{groupPolicyId}}",
-                "teams"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies", "{{groupPolicyId}}", "teams"]
             }
           },
           "response": []
@@ -4856,14 +4220,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/teams",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "group-policies",
-                "{{groupPolicyId}}",
-                "teams"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["group-policies", "{{groupPolicyId}}", "teams"]
             }
           },
           "response": []
@@ -4885,9 +4243,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/group-policies/{{groupPolicyId}}/teams/{{teamId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "group-policies",
                 "{{groupPolicyId}}",
@@ -4922,12 +4278,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-clients",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-clients"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-clients"]
             }
           },
           "response": []
@@ -4949,13 +4301,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-clients/{{jumpClientId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-clients",
-                "{{jumpClientId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-clients", "{{jumpClientId}}"]
             }
           },
           "response": []
@@ -4985,13 +4332,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/jump-clients/{{jumpClientId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-clients",
-                "{{jumpClientId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-clients", "{{jumpClientId}}"]
             }
           },
           "response": []
@@ -5013,13 +4355,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-clients/{{jumpClientId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-clients",
-                "{{jumpClientId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-clients", "{{jumpClientId}}"]
             }
           },
           "response": []
@@ -5041,14 +4378,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-clients/{{jumpClientId}}/copy",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-clients",
-                "{{jumpClientId}}",
-                "copy"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-clients", "{{jumpClientId}}", "copy"]
             }
           },
           "response": []
@@ -5077,13 +4408,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-clients/installers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-clients",
-                "installers"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-clients", "installers"]
             }
           },
           "response": []
@@ -5105,14 +4431,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-clients/installers/{{installerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-clients",
-                "installers",
-                "{{installerId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-clients", "installers", "{{installerId}}"]
             }
           },
           "response": []
@@ -5142,13 +4462,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/jump-clients/installers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-clients",
-                "installers"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-clients", "installers"]
             }
           },
           "response": []
@@ -5170,14 +4485,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-clients/installers/{{installerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-clients",
-                "installers",
-                "{{installerId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-clients", "installers", "{{installerId}}"]
             }
           },
           "response": []
@@ -5199,9 +4508,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-clients/installers/{{installerId}}/platforms/{{platformType}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "jump-clients",
                 "installers",
@@ -5237,12 +4544,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-groups",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-groups"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-groups"]
             }
           },
           "response": []
@@ -5264,13 +4567,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-groups/{{jumpGroupId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-groups",
-                "{{jumpGroupId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-groups", "{{jumpGroupId}}"]
             }
           },
           "response": []
@@ -5300,12 +4598,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/jump-groups",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-groups"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-groups"]
             }
           },
           "response": []
@@ -5335,13 +4629,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/jump-groups/{{jumpGroupId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-groups",
-                "{{jumpGroupId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-groups", "{{jumpGroupId}}"]
             }
           },
           "response": []
@@ -5363,13 +4652,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jump-groups/{{jumpGroupId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jump-groups",
-                "{{jumpGroupId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jump-groups", "{{jumpGroupId}}"]
             }
           },
           "response": []
@@ -5401,13 +4685,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/jump-items/remote-rdps",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "jump-items",
-                    "remote-rdps"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["jump-items", "remote-rdps"]
                 }
               },
               "response": []
@@ -5429,14 +4708,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/jump-items/remote-rdps/{{rdpId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "jump-items",
-                    "remote-rdps",
-                    "{{rdpId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["jump-items", "remote-rdps", "{{rdpId}}"]
                 }
               },
               "response": []
@@ -5466,13 +4739,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/jump-items/remote-rdps",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "jump-items",
-                    "remote-rdps"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["jump-items", "remote-rdps"]
                 }
               },
               "response": []
@@ -5502,14 +4770,8 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/jump-items/remote-rdps/{{rdpId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "jump-items",
-                    "remote-rdps",
-                    "{{rdpId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["jump-items", "remote-rdps", "{{rdpId}}"]
                 }
               },
               "response": []
@@ -5531,14 +4793,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/jump-items/remote-rdps/{{rdpId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "jump-items",
-                    "remote-rdps",
-                    "{{rdpId}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["jump-items", "remote-rdps", "{{rdpId}}"]
                 }
               },
               "response": []
@@ -5560,15 +4816,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/jump-items/remote-rdps/{{rdpId}}/copy",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "jump-items",
-                    "remote-rdps",
-                    "{{rdpId}}",
-                    "copy"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["jump-items", "remote-rdps", "{{rdpId}}", "copy"]
                 }
               },
               "response": []
@@ -5596,13 +4845,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/jump-items/remote-vncs",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "jump-items",
-                    "remote-vncs"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["jump-items", "remote-vncs"]
                 }
               },
               "response": []
@@ -5630,13 +4874,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/jump-items/shell-jumps",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "jump-items",
-                    "shell-jumps"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["jump-items", "shell-jumps"]
                 }
               },
               "response": []
@@ -5664,13 +4903,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/jump-items/web-jumps",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "jump-items",
-                    "web-jumps"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["jump-items", "web-jumps"]
                 }
               },
               "response": []
@@ -5698,13 +4932,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/jump-items/protocol-tunnel-jumps",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "jump-items",
-                    "protocol-tunnel-jumps"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["jump-items", "protocol-tunnel-jumps"]
                 }
               },
               "response": []
@@ -5736,13 +4965,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/jumpoints/installers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "jumpoints",
-                "installers"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["jumpoints", "installers"]
             }
           },
           "response": []
@@ -5790,14 +5014,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/discrepancies/scan/all",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "discrepancies",
-                        "scan",
-                        "all"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["discrepancies", "scan", "all"]
                     },
                     "description": "**Purpose:**\nInitiates a scan to identify and summarize discrepancies across all supported entity types in the system. Use this endpoint to compare internal and external data sources and retrieve a detailed report of mismatches, missing, or extra records for each entity type.\n\n**Endpoint:**\nPOST `{{baseUrl}}/discrepancies/scan/all`\n\n**Required Headers:**\n- `X-Tenant-Id: {{tenantId}}` (Specifies the tenant context for the scan)\n\n**Request Body:**\n- None. This endpoint does not require a request body.\n\n**Response Structure:**\nReturns a JSON array where each object summarizes discrepancies for a specific entity type. Each object contains:\n- `entityType` (string): The type of entity scanned (e.g., 'user', 'group-policy').\n- `totalBtData` (integer): Total records found in the external (BeyondTrust) data source.\n- `totalDbData` (integer): Total records found in the internal database.\n- `identicalIds` (array of integers): IDs present and matching in both sources.\n- `onlyInExternalIds` (array of integers): IDs found only in the external source.\n- `onlyInInternalIds` (array of integers): IDs found only in the internal source.\n- `mismatchedIds` (array of integers): IDs present in both sources but with differing data.\n\n**Example Response:**\n```json\n[\n  {\n    \"entityType\": \"user\",\n    \"totalBtData\": 314,\n    \"totalDbData\": 313,\n    \"identicalIds\": [2,5,6,7,8,10,13,34,116,119],\n    \"onlyInExternalIds\": [622],\n    \"onlyInInternalIds\": [],\n    \"mismatchedIds\": [1,3,9,18,33,122,127,155,235,238]\n  },\n  ...\n]\n```\n\n**When to Use:**\nCall this endpoint to perform a comprehensive discrepancy scan across all entities for the specified tenant. Useful for data integrity checks, audits, and synchronization processes."
                   },
@@ -5823,14 +5041,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/discrepancies/scan/:entityType",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "discrepancies",
-                        "scan",
-                        ":entityType"
-                      ],
+                      "host": ["{{baseUrl}}"],
+                      "path": ["discrepancies", "scan", ":entityType"],
                       "variable": [
                         {
                           "key": "entityType",
@@ -5877,14 +5089,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/discrepancies/:id/sync",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "discrepancies",
-                        ":id",
-                        "sync"
-                      ],
+                      "host": ["{{baseUrl}}"],
+                      "path": ["discrepancies", ":id", "sync"],
                       "variable": [
                         {
                           "key": "id",
@@ -5920,9 +5126,7 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/discrepancies/sync-all/external-to-internal",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
+                      "host": ["{{baseUrl}}"],
                       "path": [
                         "discrepancies",
                         "sync-all",
@@ -5952,12 +5156,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/discrepancies",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "discrepancies"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["discrepancies"],
               "query": [
                 {
                   "key": "pageSize",
@@ -6003,12 +5203,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/logs?pageSize=100&pageNumber=1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "logs"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["logs"],
               "query": [
                 {
                   "key": "pageSize",
@@ -6061,12 +5257,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/logs",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "logs"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["logs"],
               "query": [
                 {
                   "key": "creationDateFrom",
@@ -6101,9 +5293,7 @@
         "id": "606b5925-a93b-450c-afda-860581d2ebfe",
         "type": "text/javascript",
         "requests": {},
-        "exec": [
-          ""
-        ]
+        "exec": [""]
       }
     },
     {
@@ -6112,9 +5302,7 @@
         "id": "e5f0728b-55b1-492c-969a-39b0a19001d5",
         "type": "text/javascript",
         "requests": {},
-        "exec": [
-          ""
-        ]
+        "exec": [""]
       }
     }
   ],
@@ -6130,7 +5318,7 @@
       "value": "1"
     },
     {
-      "id": "215179ce-838b-4290-b781-a727279de7ff",
+      "id": "your-access-key",
       "key": "accessKey",
       "value": ""
     },
