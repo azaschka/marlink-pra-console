@@ -1,6 +1,6 @@
 {
   "name": "pra-console",
-  "version": "1.2.0",
+  "version": "2.0.1",
   "scripts": {
     "ng": "ng",
     "start": "nx serve",
@@ -12,7 +12,7 @@
     "docker:scan:console": "docker scan pra-console",
     "docker:tag:console": "docker tag pra-console:latest shamrock-nexus.cdn-vas.net/marlink-pra-console:${npm_package_version}",
     "docker:prepare:console": "npm run build:console && npm run docker:build:console && npm run docker:tag:console",
-    "docker:login:marlink": "docker login shamrock-nexus.cdn-vas.net -u shamrock -p marlinkdockerpassword",
+    "docker:login:marlink": "docker login shamrock-nexus.cdn-vas.net -u shamrock -p xWCfg5FgXYkmCTx",
     "docker:push:console": "docker push shamrock-nexus.cdn-vas.net/marlink-pra-console:${npm_package_version}",
     "publish:console": "npm run docker:prepare:console && npm run docker:login:marlink && npm run docker:push:console"
   },
@@ -43,6 +43,7 @@
     "ngx-skeleton-loader": "^6.0.0",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
+    "uuid": "^9.0.1",
     "xlsx": "^0.18.5",
     "zone.js": "~0.11.4"
   },
