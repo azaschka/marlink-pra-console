@@ -86,11 +86,6 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit {
                 this.isModuleLoading = false;
             }
         });
-
-        // Check Auth Token is valid
-        await this.jwtAuth.checkTokenIsValid();
-
-        // Note: AppService will auto-initialize on first access by components
     }
     @HostListener("window:resize", ["$event"])
     onResize(event) {

@@ -43,10 +43,13 @@ export class HeaderSideComponent implements OnInit, OnDestroy {
         private readonly router: Router
     ) {}
 
-    public ngOnInit(): void {
+    public async ngOnInit(): Promise<void> {
         this.egretThemes = this.themeService.egretThemes;
         this.layoutConf = this.layout.layoutConf;
         this.translate.use("en");
+
+        // Ensure AppService is initialized before subscribing to prevent empty data
+        await this.appService.initialize();
 
         // Subscribe to instances
         this.subscriptionsToClear.add(
