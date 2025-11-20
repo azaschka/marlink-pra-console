@@ -46,13 +46,13 @@
                 </div>
                 <div fxFlex="50">
                     <mat-form-field class="full-width">
-                        <mat-label>Billing Type</mat-label>
-                        <mat-select formControlName="billingType">
-                            <mat-option *ngFor="let type of billingTypes" [value]="type.value">
-                                {{ type.label }}
+                        <mat-label>BeyondTrust Instance</mat-label>
+                        <mat-select formControlName="beyondtrustInstanceId">
+                            <mat-option *ngFor="let instance of beyondtrustInstances" [value]="instance.id">
+                                {{ instance.name }} (ID: {{ instance.id }})
                             </mat-option>
                         </mat-select>
-                        <mat-error *ngIf="billingType?.hasError('required')">Billing type is
+                        <mat-error *ngIf="beyondtrustInstanceId?.hasError('required')">BeyondTrust instance is
                             <strong>required</strong></mat-error>
                     </mat-form-field>
                 </div>

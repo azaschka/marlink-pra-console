@@ -1,7 +1,7 @@
 import { ParsedCustomer } from "../../../shared/services/site-excel-parser.service";
 import { StringSanitizer } from "../../../shared/helpers";
 import { CustomerCreateRequest } from "../models";
-import { CustomerBillingType, CustomerBusinessUnit } from "../enums";
+import { CustomerBusinessUnit } from "../enums";
 
 export class CustomerFactoryError extends Error {
     constructor(message: string) {
@@ -12,6 +12,7 @@ export class CustomerFactoryError extends Error {
 
 export class CustomerFactory {
     public static create(
+        beyondtrustInstanceId: number,
         parsedCustomer: ParsedCustomer
     ): CustomerCreateRequest {
         if (!parsedCustomer)
@@ -28,9 +29,8 @@ export class CustomerFactory {
             );
 
         const businessUnit = this.mapBusinessUnit(parsedCustomer.businessUnit);
-        const billingType = CustomerBillingType.Asset;
 
-        return { key, name, businessUnit, billingType };
+        return { key, name, businessUnit, beyondtrustInstanceId };
     }
 
     private static sanitizeKey(key: string): string {

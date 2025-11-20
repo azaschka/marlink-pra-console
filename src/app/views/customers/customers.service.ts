@@ -34,6 +34,10 @@ export class CustomersService {
         );
     }
 
+    public async deleteCustomer(id: number): Promise<void> {
+        return firstValueFrom(this.http.delete<void>(`customers/${id}`));
+    }
+
     public async deactivateCustomer(id: number): Promise<void> {
         return firstValueFrom(
             this.http.post<void>(`customers/${id}/deactivate`, {})

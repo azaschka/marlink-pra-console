@@ -96,6 +96,9 @@
                             (click)="reactivateCustomerHandler(row)" matTooltip="Reactivate Customer">
                             <mat-icon>published_with_changes</mat-icon>
                         </button>
+                        <button mat-icon-button color="warn" (click)="deleteCustomerHandler(row)">
+                            <mat-icon>delete</mat-icon>
+                        </button>
                     </mat-cell>
                 </ng-container>
 

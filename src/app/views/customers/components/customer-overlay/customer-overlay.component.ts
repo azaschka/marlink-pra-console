@@ -8,7 +8,9 @@ import {
     CustomerCreateRequest,
     CustomerModifyRequest,
 } from "../../models";
-import { CustomerBillingType, CustomerBusinessUnit } from "../../enums";
+import { CustomerBusinessUnit } from "../../enums";
+import { AppService } from "../../../../app.service";
+import { BeyondtrustInstance } from "../../../dashboard/components/beyondtrust-instaces/models";
 
 export type CustomerOverlayMode = "add" | "edit";
 export interface CustomerOverlayDialogData {
@@ -24,6 +26,7 @@ export class CustomerOverlayComponent implements OnInit {
     public isLoading = false;
     public mode: CustomerOverlayMode;
     public customer?: Customer;
+    public beyondtrustInstances: BeyondtrustInstance[] = [];
 
     public businessUnits = [
         { value: "MT", label: "Maritime" },
@@ -31,10 +34,6 @@ export class CustomerOverlayComponent implements OnInit {
         { value: "MC", label: "Marlink Cyber" },
         { value: "EG", label: "EEG" },
         { value: "TE", label: "Telemar" },
-    ];
-    public billingTypes = [
-        { value: "user", label: "User-based" },
-        { value: "asset", label: "Asset-based" },
     ];
 
     public customerFormGroup = new FormGroup({
@@ -45,25 +44,32 @@ export class CustomerOverlayComponent implements OnInit {
             Validators.required,
         ]),
         businessUnit: new FormControl("", [Validators.required]),
-        billingType: new FormControl("", [Validators.required]),
+        beyondtrustInstanceId: new FormControl<number | null>(null, [
+            Validators.required,
+        ]),
     });
 
     constructor(
         public dialogRef: MatDialogRef<CustomerOverlayComponent>,
         @Inject(MAT_DIALOG_DATA) public data: CustomerOverlayDialogData,
         private readonly customerService: CustomersService,
-        private readonly errorDialog: ErrorDialogService
+        private readonly errorDialog: ErrorDialogService,
+        private readonly appService: AppService
     ) {
         this.mode = data.mode;
         this.customer = data.customer;
     }
 
-    public ngOnInit(): void {
+    public async ngOnInit(): Promise<void> {
+        // Initialize AppService and load BeyondTrust instances
+        await this.appService.initialize();
+        this.beyondtrustInstances = this.appService.getInstances();
+
         if (this.mode === "edit" && this.customer) {
             this.customerFormGroup.patchValue({
                 key: this.customer.key,
                 name: this.customer.name,
-                billingType: this.customer.billingType,
+                beyondtrustInstanceId: this.customer.beyondtrustInstanceId,
             });
             this.customerFormGroup.get("key")?.disable();
             this.customerFormGroup.get("name")?.disable();
@@ -101,10 +107,10 @@ export class CustomerOverlayComponent implements OnInit {
     private async createCustomer(): Promise<void> {
         const form = this.customerFormGroup.value;
         const body: CustomerCreateRequest = {
-            key: form.key.trim(),
-            name: form.name.trim(),
+            key: form.key!.trim(),
+            name: form.name!.trim(),
             businessUnit: form.businessUnit as CustomerBusinessUnit,
-            billingType: form.billingType as CustomerBillingType,
+            beyondtrustInstanceId: form.beyondtrustInstanceId!,
         };
         await this.customerService.createCustomer(body);
     }
@@ -113,7 +119,7 @@ export class CustomerOverlayComponent implements OnInit {
         if (!this.customer) return;
         const form = this.customerFormGroup.value;
         const body: CustomerModifyRequest = {
-            billingType: form.billingType as CustomerBillingType,
+            beyondtrustInstanceId: form.beyondtrustInstanceId!,
         };
         await this.customerService.modifyCustomer(this.customer.id, body);
     }
@@ -127,7 +133,7 @@ export class CustomerOverlayComponent implements OnInit {
     get businessUnit() {
         return this.customerFormGroup.get("businessUnit");
     }
-    get billingType() {
-        return this.customerFormGroup.get("billingType");
+    get beyondtrustInstanceId() {
+        return this.customerFormGroup.get("beyondtrustInstanceId");
     }
 }

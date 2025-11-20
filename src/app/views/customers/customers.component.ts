@@ -117,6 +117,31 @@ export class CustomersComponent implements OnInit, OnDestroy {
             });
     }
 
+    public async deleteCustomerHandler(customer: Customer): Promise<void> {
+        const confirmed = await this.confirmDialog.show({
+            title: "Delete Customer",
+            message: `Are you sure you want to delete customer:<br><strong>${customer.name} (${customer.key})</strong>?<br><br>This action <strong>cannot be undone.</strong> All data associated with this customer will be permanently deleted and cannot be recovered.`,
+        });
+        if (confirmed) {
+            this.isLoading = true;
+            try {
+                await this.customersService.deleteCustomer(customer.id);
+                this.notificationDialog.show({
+                    message: `Customer ${customer.name} has been deleted.`,
+                });
+                await this.loadPage();
+            } catch (err: any) {
+                this.errorDialog.show({
+                    title: "Delete Customer Failed",
+                    message:
+                        err?.message ??
+                        "The customer could not be deleted. Please try again later.",
+                });
+                this.isLoading = false;
+            }
+        }
+    }
+
     public async deactivateCustomerHandler(customer: Customer): Promise<void> {
         const confirmed = await this.confirmDialog.show({
             title: "Deactivate Customer",
