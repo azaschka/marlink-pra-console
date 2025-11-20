@@ -21,6 +21,7 @@ export class AppService {
     /**
      * Observable stream of all BeyondTrust instances.
      * Subscribe to this in components for reactive updates when instances change.
+     * Automatically triggers initialization if not yet initialized.
      *
      * @example
      * ```typescript
@@ -127,33 +128,41 @@ export class AppService {
     }
 
     /**
-     * Ensures the service is initialized before proceeding.
-     * Automatically called by methods that need instance data.
-     * @private
+     * Reloads instances from API and updates the state.
+     * Use this after CRUD operations or when you need fresh data.
+     *
+     * @example
+     * ```typescript
+     * // After creating/updating/deleting an instance
+     * await this.appService.refreshInstances();
+     * ```
      */
-    private async ensureInitialized(): Promise<void> {
-        if (!this.isInitialized) {
-            await this.initialize();
+    public async refreshInstances(): Promise<void> {
+        try {
+            this.isLoadingSubject.next(true);
+            const instances = await this.beyondtrustInstancesService.fetchAll();
+            this.instancesSubject.next(instances || []);
+
+            // Re-validate selected instance still exists
+            const selectedId = this.selectedInstanceIdSubject.value;
+            if (selectedId && !instances.some((i) => i.id === selectedId)) {
+                this.resetToDefaultInstance(instances);
+            }
+        } catch (error) {
+            console.error("Failed to refresh BeyondTrust instances:", error);
+            throw error;
+        } finally {
+            this.isLoadingSubject.next(false);
         }
     }
 
     /**
-     * Updates the global instances state after CRUD operations.
-     * This method automatically revalidates the selected instance and resets to default if needed.
-     *
-     * **Called by:** Components after create/update/delete operations
-     *
-     * @param instances - The updated list of BeyondTrust instances
-     *
-     * @example
-     * ```typescript
-     * // After deleting an instance
-     * await this.beyondtrustInstancesService.delete(instanceId);
-     * const updatedInstances = await this.beyondtrustInstancesService.fetchAll();
-     * this.appService.setInstances(updatedInstances); // ✅ Updates global state
-     * ```
+     * @deprecated Use refreshInstances() instead. This method will be removed in a future version.
      */
     public setInstances(instances: BeyondtrustInstance[]): void {
+        console.warn(
+            "setInstances() is deprecated. Use refreshInstances() instead."
+        );
         this.instancesSubject.next(instances);
 
         // Re-validate selected instance still exists
@@ -317,46 +326,5 @@ export class AppService {
      */
     public getInstanceById(id: number): BeyondtrustInstance | undefined {
         return this.instancesSubject.value.find((i) => i.id === id);
-    }
-
-    /**
-     * Gets the API base URL of the first available BeyondTrust instance.
-     * Used for legacy compatibility where specific instance selection wasn't implemented.
-     *
-     * **Prefer using:** `getSelectedInstance().apiBaseUrl` for instance-aware operations
-     *
-     * @returns The protocol and host of the first instance (e.g., "https://bt.example.com")
-     * @deprecated Use getSelectedInstance() for explicit instance selection
-     *
-     * @example
-     * ```typescript
-     * // ❌ Legacy pattern
-     * const baseUrl = await this.appService.fetchDefaultBeyondTrustInstanceApiBaseUrl();
-     *
-     * // ✅ Preferred pattern
-     * const instance = this.appService.getSelectedInstance();
-     * if (instance) {
-     *   const url = new URL(instance.apiBaseUrl);
-     *   const baseUrl = `${url.protocol}//${url.host}`;
-     * }
-     * ```
-     */
-    public async fetchDefaultBeyondTrustInstanceApiBaseUrl(): Promise<string> {
-        const instances = this.instancesSubject.value;
-
-        // If instances not loaded yet, fetch them
-        if (instances.length === 0) {
-            await this.loadInstances();
-        }
-
-        const defaultInstance = this.instancesSubject.value[0];
-
-        if (!defaultInstance) {
-            console.error("No BeyondTrust instances found.");
-            return "";
-        }
-
-        const baseUrl = new URL(defaultInstance.apiBaseUrl);
-        return `${baseUrl.protocol}//${baseUrl.host}`;
     }
 }
