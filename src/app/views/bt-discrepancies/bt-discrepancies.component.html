@@ -1,0 +1,96 @@
+<div>
+    <div class="m-8 mt-16">
+        <!-- filter -->
+        <div class="pr-16" fxFlex="33">
+            <mat-form-field class="full-width m-16">
+                <input matInput placeholder="Type to filter all columns" [disabled]="!dataSource?.data?.length"
+                    [(ngModel)]="filterValue" (ngModelChange)="applyFilter()" />
+                <button *ngIf="filterValue" matSuffix mat-icon-button aria-label="Clear" (click)="removeFilter()">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </mat-form-field>
+        </div>
+        <div fxFlex></div>
+        <div class="pl-16">
+            <button mat-raised-button class="m-16" color="primary" translate="views.bt-discrepancies.buttons.scanAll"
+                (click)="scanAllHandler()" [disabled]="isScanning || isLoading">
+            </button>
+        </div>
+    </div>
+
+    <mat-card class="p-0">
+        <mat-card-content class="p-0">
+            <mat-table [dataSource]="dataSource" matSort matSortActive="expirationDate" matSortDirection="desc">
+                <!-- Loader -->
+                <ng-container matColumnDef="loader">
+                    <mat-header-cell *matHeaderCellDef [attr.colspan]="displayedColumns.length">
+                        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+                    </mat-header-cell>
+                    <mat-cell *matCellDef="let row"></mat-cell>
+                </ng-container>
+
+                <!-- ID -->
+                <ng-container matColumnDef="entityId">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>ID</mat-header-cell>
+                    <mat-cell *matCellDef="let row" [matTooltip]="row.entityId">{{ row.entityId || '—' }}</mat-cell>
+                </ng-container>
+
+                <!-- Entity Type -->
+                <ng-container matColumnDef="entityType">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Entity Type</mat-header-cell>
+                    <mat-cell *matCellDef="let row" [matTooltip]="row.entityType">{{ row.entityType || '—' }}</mat-cell>
+                </ng-container>
+
+                <!-- Data Diff -->
+                <ng-container matColumnDef="diff">
+                    <mat-header-cell *matHeaderCellDef>Differences (PRA Platform ↔ BeyondTrust)</mat-header-cell>
+                    <mat-cell *matCellDef="let row" class="diff-cell">
+                        <div [innerHTML]="getDiffHtml(row)" class="diff-container"></div>
+                    </mat-cell>
+                </ng-container>
+
+                <!-- Creation Date -->
+                <ng-container matColumnDef="creationDate">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Creation&nbsp;Date</mat-header-cell>
+                    <mat-cell *matCellDef="let row">{{ row.creationDate | date : "dd.MM.yy - HH:mm:ss" }}</mat-cell>
+                </ng-container>
+
+                <!-- Actions -->
+                <ng-container matColumnDef="actions">
+                    <mat-header-cell *matHeaderCellDef></mat-header-cell>
+                    <mat-cell *matCellDef="let row">
+                        <button mat-icon-button color="primary" matTooltip="Apply BeyondTrust Data"
+                            (click)="syncDiscrepancyHandler(row, DiscrepancySyncType.ExternalToInternal)">
+                            <mat-icon>cloud_download</mat-icon>
+                        </button>
+
+                        <button mat-icon-button color="primary" matTooltip="Apply PRA Platform Data"
+                            (click)="syncDiscrepancyHandler(row, DiscrepancySyncType.InternalToExternal)">
+                            <mat-icon>cloud_upload</mat-icon>
+                        </button>
+
+                        <button mat-icon-button color="primary" (click)="viewDetailsHandler(row)">
+                            <mat-icon>info</mat-icon>
+                        </button>
+                    </mat-cell>
+                </ng-container>
+
+                <!-- Header / Rows -->
+                <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+                <mat-header-row *matHeaderRowDef="['loader']; sticky: true" class="progress-row"
+                    [class.hidden]="!isLoading"></mat-header-row>
+                <mat-row class="selectable" *matRowDef="let row; columns: displayedColumns"></mat-row>
+
+                <!-- No-data -->
+                <tr class="mat-row" *matNoDataRow style="display: flex">
+                    <td class="mat-cell full-width pt-12" [attr.colspan]="displayedColumns.length">
+                        No discrepancies found.
+                    </td>
+                </tr>
+            </mat-table>
+
+            <mat-paginator #tablePaginator [length]="dataCount" [pageSize]="defaultPageSize"
+                [pageSizeOptions]="pageSizeOptions" showFirstLastButtons></mat-paginator>
+        </mat-card-content>
+    </mat-card>
+</div>

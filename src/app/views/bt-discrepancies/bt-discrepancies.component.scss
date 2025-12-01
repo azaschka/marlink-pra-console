@@ -1,0 +1,74 @@
+.mat-row {
+    min-height: 36px;
+}
+
+.progress-row {
+    height: 0;
+    min-height: 0;
+    &.hidden {
+        display: none;
+    }
+    .mat-header-cell {
+        padding: 0;
+        border: none;
+    }
+}
+
+.mat-header-cell,
+.mat-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.mat-column-entityId {
+    flex: 0 0 90px;
+    width: 90px;
+    white-space: nowrap;
+}
+.mat-column-entityType {
+    flex: 0 0 300px;
+    width: 300px;
+    white-space: nowrap;
+}
+.mat-column-creationDate {
+    flex: 0 0 150px;
+    width: 150px;
+    white-space: nowrap;
+}
+.mat-column-actions {
+    flex: 0 0 120px;
+    min-width: 120px;
+    width: 120px;
+}
+
+.mat-column-diff {
+    flex: 1 1 auto;
+    min-width: 400px;
+}
+
+.diff-cell {
+    white-space: normal !important;
+    padding: 8px !important;
+}
+
+.diff-container {
+    max-height: 400px;
+    overflow: auto;
+    font-size: 12px;
+    line-height: 1.5;
+
+    .no-data,
+    .no-diff,
+    .error {
+        padding: 12px;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+    }
+
+    .error {
+        color: #d32f2f;
+    }
+}

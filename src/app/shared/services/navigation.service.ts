@@ -143,6 +143,13 @@ export class NavigationService {
             ],
         },
         {
+            name: "views.bt-discrepancies.headline",
+            type: "link",
+            icon: "sync_problem",
+            state: "bt-discrepancies",
+            roles: [AuthRole.SUPER_ADMIN, AuthRole.DATA_CENTER_ENGINEER],
+        },
+        {
             name: "views.bt-backups.headline",
             type: "link",
             icon: "settings_backup_restore",

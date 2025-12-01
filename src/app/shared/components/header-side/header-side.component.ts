@@ -88,6 +88,8 @@ export class HeaderSideComponent implements OnInit, OnDestroy {
     private updateInstanceSelectorVisibility(url: string): void {
         const hiddenRoutes = [
             "/dashboard",
+            "/sites",
+            "/customers",
             "/pra-users",
             "/bt-backups",
             "/logs",

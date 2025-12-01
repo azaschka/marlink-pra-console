@@ -104,6 +104,12 @@
         "add": "Add new PRA User"
       }
     },
+    "bt-discrepancies": {
+      "headline": "BT Discrepancies",
+      "buttons": {
+        "scanAll": "Scan for Discrepancies"
+      }
+    },
     "bt-backups": {
       "headline": "BT Backups",
       "buttons": {

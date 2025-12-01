@@ -174,6 +174,22 @@ export const AppRoutes: Routes = [
                 canActivate: [UserRoleGuard],
             },
             {
+                path: "bt-discrepancies",
+                loadChildren: () =>
+                    import(
+                        "./views/bt-discrepancies/bt-discrepancies.module"
+                    ).then((m) => m.BtDiscrepanciesModule),
+                data: {
+                    title: "BT Discrepancies",
+                    breadcrumb: "views.bt-discrepancies.headline",
+                    roles: [
+                        AuthRole.SUPER_ADMIN,
+                        AuthRole.DATA_CENTER_ENGINEER,
+                    ],
+                },
+                canActivate: [UserRoleGuard],
+            },
+            {
                 path: "bt-backups",
                 loadChildren: () =>
                     import("./views/bt-backups/bt-backups.module").then(
@@ -182,7 +198,10 @@ export const AppRoutes: Routes = [
                 data: {
                     title: "BT Backups",
                     breadcrumb: "views.bt-backups.headline",
-                    roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+                    roles: [
+                        AuthRole.SUPER_ADMIN,
+                        AuthRole.DATA_CENTER_ENGINEER,
+                    ],
                 },
                 canActivate: [UserRoleGuard],
             },
@@ -195,7 +214,10 @@ export const AppRoutes: Routes = [
                 data: {
                     title: "System Log",
                     breadcrumb: "views.logs.headline",
-                    roles: [AuthRole.SUPER_ADMIN],
+                    roles: [
+                        AuthRole.SUPER_ADMIN,
+                        AuthRole.DATA_CENTER_ENGINEER,
+                    ],
                 },
                 canActivate: [UserRoleGuard],
             },
