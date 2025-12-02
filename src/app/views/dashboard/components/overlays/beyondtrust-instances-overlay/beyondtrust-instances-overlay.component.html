@@ -1,0 +1,88 @@
+<div class="relative overlay-container">
+    <div *ngIf="isLoading" class="absolute overlay-loader">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    </div>
+
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="close()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle>
+        {{ mode === 'add' ? 'Add BeyondTrust Instance' : 'Edit BeyondTrust Instance' }}
+    </h2>
+
+    <form [formGroup]="instanceFormGroup" (ngSubmit)="submitHandler()" style="width: 640px;">
+        <div fxLayout="row wrap" fxLayoutGap="24px">
+            <div fxFlex="100" class="m-0" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
+                <div fxFlex="70">
+                    <mat-form-field class="full-width">
+                        <mat-label>Instance Name</mat-label>
+                        <input matInput formControlName="name" placeholder="Instance Name" />
+                        <mat-error *ngIf="name?.hasError('required')">Name is <strong>required</strong></mat-error>
+                    </mat-form-field>
+                </div>
+                <div fxFlex="30">
+                    <mat-form-field class="full-width">
+                        <mat-label>Billing Type</mat-label>
+                        <mat-select formControlName="billingType">
+                            <mat-option *ngFor="let type of billingTypes" [value]="type.value">
+                                {{ type.label }}
+                            </mat-option>
+                        </mat-select>
+                        <mat-error *ngIf="billingType?.hasError('required')">Billing type is
+                            <strong>required</strong></mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <div fxFlex="100" class="m-0 mt-16">
+                <mat-form-field class="full-width">
+                    <mat-label>Auth Client ID</mat-label>
+                    <input matInput formControlName="authClientId" placeholder="Client ID" />
+                    <mat-error *ngIf="authClientId?.hasError('required')">Client ID is
+                        <strong>required</strong></mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="100" class="m-0 mt-16">
+                <mat-form-field class="full-width">
+                    <mat-label>Auth Client Secret</mat-label>
+                    <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="authClientSecret"
+                        placeholder="Client Secret" />
+                    <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword"
+                        [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hidePassword">
+                        <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+                    </button>
+                    <mat-error *ngIf="authClientSecret?.hasError('required')">Client Secret is
+                        <strong>required</strong></mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="100" class="m-0 mt-16">
+                <mat-form-field class="full-width">
+                    <mat-label>OAuth2 Token URL</mat-label>
+                    <input matInput formControlName="oauth2TokenUrl" placeholder="https://example.com/oauth2/token" />
+                    <mat-error *ngIf="oauth2TokenUrl?.hasError('required')">Token URL is
+                        <strong>required</strong></mat-error>
+                </mat-form-field>
+            </div>
+
+            <div fxFlex="100" class="m-0 mt-16">
+                <mat-form-field class="full-width">
+                    <mat-label>API Base URL</mat-label>
+                    <input matInput formControlName="apiBaseUrl" placeholder="https://api.example.com" />
+                    <mat-error *ngIf="apiBaseUrl?.hasError('required')">API Base URL is
+                        <strong>required</strong></mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Submit -->
+            <div fxFlex="100" class="mt-32" fxLayout="row" fxLayoutAlign="end center">
+                <span fxFlex></span>
+                <button mat-raised-button color="primary" [disabled]="instanceFormGroup.invalid || isLoading">
+                    {{ mode === 'add' ? 'Save' : 'Update' }}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

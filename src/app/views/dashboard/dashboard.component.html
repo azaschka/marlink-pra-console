@@ -1,14 +1,15 @@
-<div class="m-333" [@animate]="{ value: '*', params: { y: '50px', delay: '100ms' } }">
-    <!-- filter -->
-    <div class="pr-16" fxFlex="33"></div>
-
-    <!-- spacer -->
-    <div fxFlex></div>
-
-    <!-- actions -->
-    <div class="pl-16"></div>
+<div class="m-8 mt-16" fxLayout="row" fxLayoutAlign="start center" style="height: 80px;">
+    <h1>Super Admin Dashboard</h1>
 </div>
 
-<div [@animate]="{ value: '*', params: { y: '50px', delay: '150ms' } }">
-    <app-dashboard-beyondtrust-instances></app-dashboard-beyondtrust-instances>
+<div class="p-0" [@animate]="{ value: '*', params: { y: '50px', delay: '150ms' } }" fxLayout="row" fxLayoutGap="16px"
+    fxLayoutAlign="space-between stretch">
+    <app-dashboard-beyondtrust-instances fxFlex="75" fxFlex.gt-sm="75"
+        fxFlex.sm="100"></app-dashboard-beyondtrust-instances>
+    <app-dashboard-health fxFlex="25" fxFlex.gt-sm="25" fxFlex.sm="100"></app-dashboard-health>
+</div>
+
+<div class="p-0 mt-40" [@animate]="{ value: '*', params: { y: '50px', delay: '300ms' } }" fxLayout="row"
+    fxLayoutGap="16px" fxLayoutAlign="space-between stretch">
+    <app-dashboard-access-keys fxFlex="50" fxFlex.gt-sm="50" fxFlex.sm="100"></app-dashboard-access-keys>
 </div>

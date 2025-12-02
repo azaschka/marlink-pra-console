@@ -11,8 +11,25 @@ import { DashboardComponent } from "./dashboard.component";
 
 // Components
 import { BeyondtrustInstancesComponent } from "./components/beyondtrust-instaces/beyondtrust-instances.component";
+import { HealthComponent } from "./components/health/health.component";
+import { AccessKeysComponent } from "./components/access-keys/access-keys.component";
 
-const COMPONENTS = [DashboardComponent, BeyondtrustInstancesComponent];
+// Overlays
+import { BeyondtrustInstancesOverlayComponent } from "./components/overlays/beyondtrust-instances-overlay/beyondtrust-instances-overlay.component";
+import { AccessKeyOverlayComponent } from "./components/overlays/access-key-overlay/access-key-overlay.component";
+
+const COMPONENTS = [
+    DashboardComponent,
+    BeyondtrustInstancesComponent,
+    BeyondtrustInstancesOverlayComponent,
+    HealthComponent,
+    AccessKeysComponent,
+];
+
+const OVERLAYS = [
+    BeyondtrustInstancesOverlayComponent,
+    AccessKeyOverlayComponent,
+];
 
 const SERVICES = [];
 
@@ -26,7 +43,7 @@ const SERVICES = [];
         SharedModule,
         RouterModule.forChild(DashboardRoutes),
     ],
-    declarations: COMPONENTS,
+    declarations: [...COMPONENTS, ...OVERLAYS],
     providers: SERVICES,
 })
 export class DashboardModule {}

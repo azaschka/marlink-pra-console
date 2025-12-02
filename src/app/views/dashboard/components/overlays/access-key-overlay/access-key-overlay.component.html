@@ -1,0 +1,69 @@
+<div class="relative overlay-container">
+    <div *ngIf="isLoading" class="absolute overlay-loader">
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+    </div>
+
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="close()">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle>{{ dialogTitle }}</h2>
+
+    <form [formGroup]="form" (ngSubmit)="submitHandler()" style="width: 640px;">
+        <div fxLayout="row wrap" fxLayoutGap="24px">
+            <div fxFlex="100" class="m-0" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
+                <div fxFlex="30">
+                    <mat-form-field class="full-width">
+                        <mat-label>Name</mat-label>
+                        <input matInput formControlName="name" required />
+                        <mat-error *ngIf="name?.hasError('required')">
+                            Name is required
+                        </mat-error>
+                        <mat-error *ngIf="name?.hasError('minlength')">
+                            Name must be at least 3 characters
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+                <div fxFlex="70">
+                    <mat-form-field class="full-width">
+                        <mat-label>Key</mat-label>
+                        <input matInput formControlName="key" required />
+                        <button mat-icon-button matSuffix type="button" (click)="regenerateKey()"
+                            matTooltip="Regenerate Key">
+                            <mat-icon>refresh</mat-icon>
+                        </button>
+                        <mat-error *ngIf="key?.hasError('required')">
+                            Key is required
+                        </mat-error>
+                        <mat-error *ngIf="key?.hasError('minlength')">
+                            Key must be at least 3 characters
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <div fxFlex="100" class="m-0 mt-16">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Business Units</mat-label>
+                    <mat-select formControlName="businessUnits" multiple required>
+                        <mat-option *ngFor="let unit of businessUnits" [value]="unit">
+                            {{ businessUnitLabels[unit] }}
+                        </mat-option>
+                    </mat-select>
+                    <mat-hint>Select at least one business unit</mat-hint>
+                    <mat-error *ngIf="businessUnitsControl?.hasError('required')">
+                        At least one business unit is required
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Submit -->
+            <div fxFlex="100" class="mt-32" fxLayout="row" fxLayoutAlign="end center">
+                <span fxFlex></span>
+                <button mat-raised-button color="primary" [disabled]="form.invalid || isLoading">
+                    {{ isEditMode ? "Update" : "Create" }}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
