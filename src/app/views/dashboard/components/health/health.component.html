@@ -1,0 +1,31 @@
+<mat-card class="my-0 p-0" style="height: 100%;">
+    <mat-card-title class="mb-0">
+        <div class="card-title-text">
+            <span class="text-13 pt-4">Health Status</span>
+
+            <span fxFlex></span>
+        </div>
+        <mat-divider></mat-divider>
+        <mat-progress-bar *ngIf="isLoading" mode="indeterminate" color="primary"></mat-progress-bar>
+    </mat-card-title>
+
+    <mat-card-content class="my-0 p-0">
+        <mat-table [dataSource]="dataSource">
+            <ng-container matColumnDef="status">
+                <mat-cell *matCellDef="let row" data-label="status">
+                    <div class="status-light cursor-pointer" [ngClass]="row.cssClass"></div>
+                </mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="name">
+                <mat-header-cell *matHeaderCellDef mat-sort-header>Service</mat-header-cell>
+                <mat-cell *matCellDef="let row" data-label="name">{{ row.displayName }}</mat-cell>
+            </ng-container>
+
+            <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+        </mat-table>
+
+        <mat-paginator #tablePaginator [style.display]="dataCount < 5 ? 'none' : 'block'" [length]="dataCount"
+            pageSize="4"></mat-paginator>
+    </mat-card-content>
+</mat-card>
