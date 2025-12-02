@@ -101,17 +101,8 @@ export class SitesComponent implements OnInit, OnDestroy {
     }
 
     public importExcelHandler(): void {
-        if (!this.currentTenantId) {
-            this.errorDialog.show({
-                title: "No Instance Selected",
-                message: "Please select an instance before importing data.",
-            });
-            return;
-        }
-
         this.dialog
             .open(ImportExcelOverlayComponent, {
-                data: { tenantId: this.currentTenantId },
                 disableClose: true,
             })
             .afterClosed()
