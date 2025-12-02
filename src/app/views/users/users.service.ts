@@ -91,12 +91,48 @@ export class UsersService {
         userId: number
     ): Promise<UserGroupPolicy[]> {
         const params = new HttpParams().set("pageSize", "9999");
-        return firstValueFrom(
-            this.http.get<UserGroupPolicy[]>(`users/${userId}/group-policies`, {
-                params,
-                ...this.createHeaders(tenantId),
-            })
-        );
+        try {
+            const response = await firstValueFrom(
+                this.http.get<any>(`users/${userId}/group-policies`, {
+                    params,
+                    ...this.createHeaders(tenantId),
+                })
+            );
+
+            // Check if response is a paged result or direct array
+            if (Array.isArray(response)) {
+                return response as UserGroupPolicy[];
+            } else if (
+                response &&
+                response.items &&
+                Array.isArray(response.items)
+            ) {
+                // Handle paginated response
+                return response.items as UserGroupPolicy[];
+            } else {
+                console.error("Unexpected response structure:", response);
+                throw new Error(
+                    "Unexpected API response structure for user group policies"
+                );
+            }
+        } catch (error) {
+            console.error("Error fetching user group policies:", error);
+            if (error instanceof HttpErrorResponse) {
+                // Return empty array for 403 (permission denied) - user can still edit basic info
+                if (error.status === 403) {
+                    console.warn(
+                        "Insufficient permissions to load user group policies. Continuing without group policy data."
+                    );
+                    return [];
+                }
+                const messages = ErrorUtils.extractMessages(error.error);
+                let errorMessage = "Failed to fetch user group policies";
+                errorMessage += "<br>- Status code: " + error.status;
+                errorMessage += "<br>- " + messages.join("<br>- ");
+                throw new Error(errorMessage);
+            }
+            throw error;
+        }
     }
 
     public async updateUserGroupPolicies(
