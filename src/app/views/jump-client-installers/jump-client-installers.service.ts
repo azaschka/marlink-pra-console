@@ -51,9 +51,8 @@ export class JumpClientInstallersService {
         );
     }
 
-    // https://marlinksra-pp.beyondtrustcloud.com/download_client_connector?jc=0f09872dc4d2500e68c09749b8d451ee&p=linux64-x86
-
     public downloadJumpClientInstallerPlatform(
+        tenantId: number,
         installerId: string,
         platform: string
     ): Observable<HttpEvent<Blob>> {
@@ -62,6 +61,7 @@ export class JumpClientInstallersService {
             observe: "events",
             responseType: "blob",
             reportProgress: true,
+            ...this.createHeaders(tenantId),
         });
     }
 }

@@ -17,7 +17,7 @@
 
             <!-- 2. Preview -->
             <app-excel-import-preview *ngSwitchCase="'preview'" [preview]="previewData"
-                (startImport)="startImport()"></app-excel-import-preview>
+                (startImport)="startImport($event)"></app-excel-import-preview>
 
             <!-- 3. Import Progress -->
             <app-excel-import-progress *ngSwitchCase="'importing'" [steps]="importSteps"></app-excel-import-progress>

@@ -1,4 +1,4 @@
-import { Component, Inject } from "@angular/core";
+import { Component } from "@angular/core";
 import {
     ParsedCustomer,
     ParsedJumpAsset,
@@ -10,11 +10,7 @@ import {
 } from "app/shared/services/site-excel-parser.service";
 import { SiteImportWorkflowService } from "../../workflows/site-import-workflow";
 import { ImportState, ImportStep } from "../../models";
-import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
-
-export interface ImportExcelDialogData {
-    tenantId: number;
-}
+import { MatDialogRef } from "@angular/material/dialog";
 
 @Component({
     selector: "app-import-excel-overlay",
@@ -42,8 +38,7 @@ export class ImportExcelOverlayComponent {
 
     constructor(
         public dialogRef: MatDialogRef<ImportExcelOverlayComponent>,
-        public workflow: SiteImportWorkflowService,
-        @Inject(MAT_DIALOG_DATA) public data: ImportExcelDialogData
+        public workflow: SiteImportWorkflowService
     ) {}
 
     public get headline(): string {
@@ -73,18 +68,14 @@ export class ImportExcelOverlayComponent {
         this.importState = ImportState.Preview;
     }
 
-    public async startImport(): Promise<void> {
+    public async startImport(tenantId: number): Promise<void> {
         if (!this.previewData) return;
         this.importSteps = [];
         this.importResult = undefined;
         this.hasError = false;
         this.importState = ImportState.Importing;
         this.workflow
-            .startWorkflow(
-                this.data.tenantId,
-                this.previewData,
-                this.importSteps
-            )
+            .startWorkflow(tenantId, this.previewData, this.importSteps)
             .subscribe({
                 next: (steps) => (this.importSteps = [...steps]),
                 error: (err) => {

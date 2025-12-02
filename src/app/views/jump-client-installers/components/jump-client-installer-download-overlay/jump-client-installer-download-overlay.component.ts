@@ -94,6 +94,8 @@ export class JumpClientInstallerDownloadOverlayComponent
     public progressMode: "determinate" | "indeterminate" = "determinate";
     public downloadUrl = "";
 
+    private currentTenantId: number | null = null;
+
     public readonly platformOptions: PlatformOption[] = (() => {
         // Get all valid platform types (using LINK_PLATFORM_MAP for validation)
         const validPlatforms = Object.values(
@@ -132,6 +134,8 @@ export class JumpClientInstallerDownloadOverlayComponent
     ) {}
 
     public ngOnInit(): void {
+        this.currentTenantId = this.appService.getSelectedInstanceId();
+
         this.platformCtrl.valueChanges
             .pipe(takeUntil(this.destroy$))
             .subscribe(() => {
@@ -162,8 +166,15 @@ export class JumpClientInstallerDownloadOverlayComponent
         }
 
         try {
-            const baseUrl =
-                await this.appService.fetchDefaultBeyondTrustInstanceApiBaseUrl();
+            const instance = this.appService.getSelectedInstance();
+            if (!instance) {
+                console.error("No BeyondTrust instance selected");
+                this.downloadUrl = "";
+                return;
+            }
+
+            const url = new URL(instance.apiBaseUrl);
+            const baseUrl = `${url.protocol}//${url.host}`;
             const mappedPlatform = LINK_PLATFORM_MAP[this.platformCtrl.value];
             this.downloadUrl = `${baseUrl}/download_client_connector?jc=${this.data.installerId}&p=${mappedPlatform}`;
         } catch (error) {
@@ -177,12 +188,21 @@ export class JumpClientInstallerDownloadOverlayComponent
         const btPlatform = uiPlatform ? DOWNLOAD_MAP[uiPlatform] : undefined;
         if (!btPlatform) return;
 
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No Instance Selected",
+                message: "Please select a BeyondTrust instance first.",
+            });
+            return;
+        }
+
         this.isDownloading = true;
         this.downloadPercent = 0;
         this.progressMode = "determinate";
 
         this.jumpClientInstallersService
             .downloadJumpClientInstallerPlatform(
+                this.currentTenantId,
                 this.data.installerId,
                 btPlatform
             )

@@ -113,6 +113,7 @@ export class SiteImportWorkflowService {
                 sub.next([...steps]);
                 // Build customer request
                 const customerRequest = this.buildCustomerRequest(
+                    tenantId,
                     parsed.customer,
                     steps[0]
                 );
@@ -400,11 +401,12 @@ export class SiteImportWorkflowService {
     }
 
     private buildCustomerRequest(
+        tenantId: number,
         parsedCustomer: ParsedCustomer,
         step: ImportStep
     ): CustomerCreateRequest | undefined {
         try {
-            return CustomerFactory.create(parsedCustomer);
+            return CustomerFactory.create(tenantId, parsedCustomer);
         } catch (err: any) {
             step.status = ImportStatus.Error;
             step.label = "Customer creation failed!";
@@ -719,8 +721,14 @@ export class SiteImportWorkflowService {
     ): string {
         const jumpPolicySuffix =
             this.translateTeamTrustLevelToJumpPolicySuffix(team);
+        const customerName = SiteImportWorkflowService.sanitizeString(
+            customer.name
+        ).toUpperCase();
+        const sanitizedSiteName = SiteImportWorkflowService.sanitizeString(
+            site.name
+        ).toUpperCase();
 
-        return `${customer.name.toUpperCase()}_${site.name.toUpperCase()}_${site.key.toUpperCase()}_${jumpPolicySuffix}`;
+        return `${customerName}_${sanitizedSiteName}_${site.key.toUpperCase()}_${jumpPolicySuffix}`;
     }
 
     private translateTeamTrustLevelToJumpPolicySuffix(

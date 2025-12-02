@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from "@angular/core";
+import { Component, Input, Output, EventEmitter, OnInit } from "@angular/core";
 import {
     ParsedCustomer,
     ParsedJumpAsset,
@@ -10,6 +10,8 @@ import {
 } from "../../../../shared/services/site-excel-parser.service";
 import { NestedTreeControl } from "@angular/cdk/tree";
 import { MatTreeNestedDataSource } from "@angular/material/tree";
+import { AppService } from "app/app.service";
+import { BeyondtrustInstance } from "app/views/dashboard/components/beyondtrust-instaces/models";
 
 interface PreviewTreeNode {
     label: string;
@@ -34,7 +36,7 @@ type ExcelImportPreviewData = {
     templateUrl: "./excel-import-preview.component.html",
     styleUrls: ["./excel-import-preview.component.scss"],
 })
-export class ExcelImportPreviewComponent {
+export class ExcelImportPreviewComponent implements OnInit {
     private _preview?: ExcelImportPreviewData;
     @Input()
     set preview(value: ExcelImportPreviewData | undefined) {
@@ -49,7 +51,10 @@ export class ExcelImportPreviewComponent {
         return this._preview;
     }
 
-    @Output() startImport = new EventEmitter<void>();
+    @Output() startImport = new EventEmitter<number>();
+
+    public instances: BeyondtrustInstance[] = [];
+    public selectedInstanceId: number | null = null;
 
     public treeControl = new NestedTreeControl<PreviewTreeNode>(
         (node) => node.children
@@ -58,6 +63,24 @@ export class ExcelImportPreviewComponent {
 
     public hasChild = (_: number, node: PreviewTreeNode) =>
         !!node.children && node.children.length > 0;
+
+    constructor(private readonly appService: AppService) {}
+
+    public async ngOnInit(): Promise<void> {
+        await this.appService.initialize();
+        this.instances = this.appService.getInstances();
+        this.selectedInstanceId = this.appService.getSelectedInstanceId();
+    }
+
+    public onStartImport(): void {
+        if (this.selectedInstanceId) {
+            console.log(
+                "Starting import for instance ID:",
+                this.selectedInstanceId
+            );
+            this.startImport.emit(this.selectedInstanceId);
+        }
+    }
 
     private buildPreviewTree(): PreviewTreeNode[] {
         if (!this.preview) return [];
