@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
+import { MatDialog } from "@angular/material/dialog";
 import { Subscription } from "rxjs";
 import { BeyondtrustInstance } from "./models";
 import { BeyondtrustInstancesService } from "./beyondtrust-instances.service";
@@ -9,6 +10,11 @@ import { ConfirmDialogService } from "app/shared/dialogs/confirm-dialog/confirm-
 import { ErrorDialogService } from "app/shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "app/shared/dialogs/notification-dialog/notification-dialog.service";
 import { AppService } from "app/app.service";
+import {
+    BeyondtrustInstancesOverlayComponent,
+    BeyondtrustInstanceOverlayDialogData,
+} from "../overlays/beyondtrust-instances-overlay/beyondtrust-instances-overlay.component";
+import { ThreadingUtility } from "app/shared/utilities";
 
 @Component({
     selector: "app-dashboard-beyondtrust-instances",
@@ -21,22 +27,28 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
         "name",
         "apiBaseUrl",
         // "billingType",
-        // "creationDate",
+        "creationDate",
         "actions",
     ];
 
     @ViewChild(MatSort) sort!: MatSort;
-    @ViewChild(MatPaginator) paginator!: MatPaginator;
+    @ViewChild("tablePaginator")
+    set tablePaginator(value: MatPaginator) {
+        this.paginator = value;
+        this.configurePaginator();
+    }
 
     public dataSource = new MatTableDataSource<BeyondtrustInstance>();
     public displayedColumns = BeyondtrustInstancesComponent.DISPLAYED_COLUMNS;
     public dataCount = 0;
+    public isLoading = true;
 
-    public isLoading = false;
+    private paginator!: MatPaginator;
 
     private readonly subscriptionsToClear = new Subscription();
 
     constructor(
+        private readonly dialog: MatDialog,
         private readonly beyondtrustInstancesService: BeyondtrustInstancesService,
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
@@ -44,15 +56,11 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
         private readonly notificationDialog: NotificationDialogService
     ) {}
 
-    public ngOnInit(): void {
-        // Subscribe to instances from AppService state (already loaded at app start)
-        this.subscriptionsToClear.add(
-            this.appService.instances$.subscribe((instances) => {
-                this.dataSource.data = instances;
-                this.dataSource.sort = this.sort;
-                this.dataSource.paginator = this.paginator;
-                this.dataCount = instances.length;
-            })
+    public async ngOnInit(): Promise<void> {
+        this.addListeners();
+
+        await ThreadingUtility.delayForLoadingAnimation(
+            this.appService.initialize()
         );
     }
 
@@ -61,17 +69,45 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
     }
 
     public openAddBeyondtrustInstanceModalHandler(): void {
-        //
-    }
-
-    public refreshBeyondtrustInstancesHealthStatus(): void {
-        //
+        this.dialog
+            .open(BeyondtrustInstancesOverlayComponent, {
+                data: { mode: "add" } as BeyondtrustInstanceOverlayDialogData,
+                disableClose: true,
+            })
+            .afterClosed()
+            .subscribe((created: boolean) => {
+                if (created) {
+                    this.notificationDialog.show({
+                        message:
+                            "BeyondTrust instance has been created successfully.",
+                        icon: "check_circle",
+                    });
+                    this.refreshBeyondtrustInstancesHealthStatus();
+                }
+            });
     }
 
     public openUpdateBeyondtrustInstanceModalHandler(
         instance: BeyondtrustInstance
     ): void {
-        //
+        this.dialog
+            .open(BeyondtrustInstancesOverlayComponent, {
+                data: {
+                    mode: "edit",
+                    instance,
+                } as BeyondtrustInstanceOverlayDialogData,
+                disableClose: true,
+            })
+            .afterClosed()
+            .subscribe((updated: boolean) => {
+                if (updated) {
+                    this.notificationDialog.show({
+                        message: `BeyondTrust instance "${instance.name}" has been updated successfully.`,
+                        icon: "check_circle",
+                    });
+                    this.refreshBeyondtrustInstancesHealthStatus();
+                }
+            });
     }
 
     public async deleteBeyondtrustInstanceHandler(
@@ -89,9 +125,8 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
             // Call service directly
             await this.beyondtrustInstancesService.delete(instance.id);
 
-            // Reload instances and update AppService state
-            const instances = await this.beyondtrustInstancesService.fetchAll();
-            this.appService.setInstances(instances);
+            // Refresh instances from API
+            await this.appService.refreshInstances();
 
             this.notificationDialog.show({
                 message: `Instance "${instance.name}" has been deleted successfully.`,
@@ -109,13 +144,12 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
         }
     }
 
-    public async refreshInstances(): Promise<void> {
+    public async refreshBeyondtrustInstancesHealthStatus(): Promise<void> {
         try {
             this.isLoading = true;
 
-            // Call service directly and update AppService state
-            const instances = await this.beyondtrustInstancesService.fetchAll();
-            this.appService.setInstances(instances);
+            // Use AppService's refreshInstances method
+            await this.appService.refreshInstances();
         } catch (error: any) {
             await this.errorDialog.show({
                 title: "Error Loading Instances",
@@ -126,5 +160,29 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
         } finally {
             this.isLoading = false;
         }
+    }
+
+    private addListeners(): void {
+        this.subscriptionsToClear.add(
+            this.appService.instances$.subscribe((instances) => {
+                this.isLoading = true;
+                this.dataSource.data = instances;
+                this.dataSource.sort = this.sort;
+                this.dataSource.paginator = this.paginator;
+                this.dataCount = instances.length;
+                this.isLoading = false;
+            })
+        );
+    }
+
+    private configurePaginator(): void {
+        if (!this.paginator) {
+            return;
+        }
+
+        this.paginator.hidePageSize = true;
+        this.paginator._intl.nextPageLabel = "";
+        this.paginator._intl.previousPageLabel = "";
+        this.dataSource.paginator = this.paginator;
     }
 }

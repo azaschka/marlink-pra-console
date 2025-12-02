@@ -1,4 +1,4 @@
-<mat-card class="p-0" fxFlex="50" fxFlex.gt-sm="50" fxFlex.sm="100">
+<mat-card class="my-0 p-0" style="height: 100%;">
     <mat-card-title class="mb-0">
         <div class="card-title-text">
             <span class="text-13 pt-4" translate="views.dashboard.btInstances.headline"></span>
@@ -12,16 +12,17 @@
                     <mat-icon>add</mat-icon>
                     <span translate="views.dashboard.btInstances.buttons.add"></span>
                 </button>
-                <!-- <button mat-menu-item (click)="refreshBeyondtrustInstancesHealthStatus()">
+                <button mat-menu-item (click)="refreshBeyondtrustInstancesHealthStatus()">
                     <mat-icon>sync</mat-icon>
                     <span translate="views.dashboard.btInstances.buttons.refresh"></span>
-                </button> -->
+                </button>
             </mat-menu>
         </div>
         <mat-divider></mat-divider>
         <mat-progress-bar *ngIf="isLoading" mode="indeterminate" color="primary"></mat-progress-bar>
     </mat-card-title>
-    <mat-card-content class="p-0">
+
+    <mat-card-content class="my-0 p-0">
         <mat-table [dataSource]="dataSource">
             <ng-container matColumnDef="status">
                 <mat-cell *matCellDef="let row" data-label="status">
@@ -39,6 +40,16 @@
                 <mat-cell *matCellDef="let row" data-label="apiBaseUrl">{{ row.apiBaseUrl }}</mat-cell>
             </ng-container>
 
+            <!-- <ng-container matColumnDef="billingType">
+                <mat-header-cell *matHeaderCellDef mat-sort-header>Billing Type</mat-header-cell>
+                <mat-cell *matCellDef="let row" data-label="billingType">Billing Type: {{ row.billingType }}</mat-cell>
+            </ng-container> -->
+
+            <ng-container matColumnDef="creationDate">
+                <mat-header-cell *matHeaderCellDef mat-sort-header>Creation Date</mat-header-cell>
+                <mat-cell *matCellDef="let row">{{ row.creationDate | date : "dd.MM.yy - HH:mm:ss" }}</mat-cell>
+            </ng-container>
+
             <ng-container matColumnDef="actions">
                 <mat-cell *matCellDef="let row">
                     <div class="full-width text-right">
@@ -46,9 +57,9 @@
                             (click)="openUpdateBeyondtrustInstanceModalHandler(row)">
                             <mat-icon>edit</mat-icon>
                         </button>
-                        <button mat-icon-button mat-sm-button color="warn"
-                            (click)="deleteBeyondtrustInstanceHandler(row)">
-                            <mat-icon>close</mat-icon>
+                        <button mat-icon-button mat-sm-button color="warn" matTooltip="Delete BeyondTrust Instance"
+                            [class.disabled]="row.id === 1" (click)="deleteBeyondtrustInstanceHandler(row)">
+                            <mat-icon>delete</mat-icon>
                         </button>
                     </div>
                 </mat-cell>
