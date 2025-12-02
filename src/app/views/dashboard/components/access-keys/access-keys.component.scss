@@ -1,0 +1,42 @@
+.mat-header-cell,
+.mat-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.mat-column-name {
+    flex: 0 0 230px;
+    width: 230px;
+    white-space: nowrap;
+}
+.mat-column-key {
+    flex: 1 1 auto;
+}
+.mat-column-actions {
+    flex: 0 0 96px;
+    min-width: 96px;
+    width: 96px;
+}
+
+.key-display {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    background-color: rgba(0, 0, 0, 0.05);
+
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    &.revealed {
+        background-color: rgba(63, 81, 181, 0.1);
+        color: #3f51b5;
+
+        &:hover {
+            background-color: rgba(63, 81, 181, 0.15);
+        }
+    }
+}

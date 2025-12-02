@@ -1,0 +1,59 @@
+<mat-card class="my-0 p-0" style="height: 100%;">
+    <mat-card-title class="mb-0">
+        <div class="card-title-text">
+            <span class="text-13 pt-4">PRA API Access Keys</span>
+            <span fxFlex></span>
+            <button class="card-control" mat-icon-button [matMenuTriggerFor]="accessKeysMenu">
+                <mat-icon class="text-muted text-18">more_vert</mat-icon>
+            </button>
+            <mat-menu #accessKeysMenu="matMenu">
+                <button mat-menu-item (click)="openAddAccessKeyModalHandler()">
+                    <mat-icon>add</mat-icon>
+                    <span>Add Access Key</span>
+                </button>
+            </mat-menu>
+        </div>
+        <mat-divider></mat-divider>
+        <mat-progress-bar *ngIf="isLoading" mode="indeterminate" color="primary"></mat-progress-bar>
+    </mat-card-title>
+
+    <mat-card-content class="my-0 p-0">
+        <mat-table [dataSource]="dataSource">
+            <ng-container matColumnDef="name">
+                <mat-cell *matCellDef="let row" data-label="name">{{ row.name }}</mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="key">
+                <mat-cell *matCellDef="let row" data-label="key">
+                    <span class="key-display" [class.revealed]="isKeyRevealed(row)" (click)="toggleKeyVisibility(row)"
+                        [matTooltip]="isKeyRevealed(row) ? 'Click to hide' : 'Click to reveal'"
+                        style="cursor: pointer; user-select: none; font-family: monospace;">
+                        {{ getDisplayKey(row) }}
+                    </span>
+                </mat-cell>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+                <mat-cell *matCellDef="let row" data-label="actions">
+                    <div class="actions-column">
+                        <button mat-icon-button (click)="copyToClipboard(row.key)" matTooltip="Copy to clipboard">
+                            <mat-icon>content_copy</mat-icon>
+                        </button>
+                        <button mat-icon-button color="primary" (click)="openUpdateAccessKeyModalHandler(row)"
+                            matTooltip="Edit">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" (click)="deleteAccessKeyHandler(row)" matTooltip="Delete">
+                            <mat-icon>delete</mat-icon>
+                        </button>
+                    </div>
+                </mat-cell>
+            </ng-container>
+
+            <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+        </mat-table>
+
+        <mat-paginator #tablePaginator [style.display]="dataCount < 6 ? 'none' : 'block'" [length]="dataCount"
+            pageSize="5"></mat-paginator>
+    </mat-card-content>
+</mat-card>
