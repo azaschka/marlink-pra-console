@@ -38,7 +38,9 @@
                 <!-- Entity Type -->
                 <ng-container matColumnDef="entityType">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>Entity Type</mat-header-cell>
-                    <mat-cell *matCellDef="let row" [matTooltip]="row.entityType">{{ row.entityType || '—' }}</mat-cell>
+                    <mat-cell *matCellDef="let row" [matTooltip]="getEntityTypeLabel(row.entityType)">
+                        {{ getEntityTypeLabel(row.entityType) || '—' }}
+                    </mat-cell>
                 </ng-container>
 
                 <!-- Data Diff -->

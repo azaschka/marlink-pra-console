@@ -12,7 +12,7 @@ import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { BtDiscrepanciesService } from "./bt-discrepancies.service";
 import { Discrepancy } from "./models";
 import { AppService } from "../../app.service";
-import { DiscrepancySyncType } from "./enums";
+import { DiscrepancyEntityType, DiscrepancySyncType } from "./enums";
 
 @Component({
     selector: "app-bt-discrepancies",
@@ -30,6 +30,33 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
         "actions",
     ];
 
+    private static readonly ENTITY_TYPE_LABELS: Record<
+        DiscrepancyEntityType,
+        string
+    > = {
+        [DiscrepancyEntityType.GroupPolicy]: "Group Policy",
+        [DiscrepancyEntityType.GroupPolicyJumpGroup]: "Group Policy Jump Group",
+        [DiscrepancyEntityType.GroupPolicyJumpoint]: "Group Policy Jumpoint",
+        [DiscrepancyEntityType.GroupPolicyMember]: "Group Policy Member",
+        [DiscrepancyEntityType.GroupPolicyTeam]: "Group Policy Team",
+        [DiscrepancyEntityType.JumpClient]: "Jump Client",
+        [DiscrepancyEntityType.JumpClientInstaller]: "Jump Client Installer",
+        [DiscrepancyEntityType.JumpGroup]: "Jump Group",
+        [DiscrepancyEntityType.JumpItemProtocolTunnelJump]:
+            "Jump Item (Protocol Tunnel)",
+        [DiscrepancyEntityType.JumpItemRemoteRdp]: "Jump Item (Remote RDP)",
+        [DiscrepancyEntityType.JumpItemRemoteVnc]: "Jump Item (Remote VNC)",
+        [DiscrepancyEntityType.JumpItemShellJump]: "Jump Item (Shell Jump)",
+        [DiscrepancyEntityType.JumpItemWebJump]: "Jump Item (Web Jump)",
+        [DiscrepancyEntityType.JumpPolicy]: "Jump Policy",
+        [DiscrepancyEntityType.Jumpoint]: "Jumpoint",
+        [DiscrepancyEntityType.JumpointNode]: "Jumpoint Node",
+        [DiscrepancyEntityType.Team]: "Team",
+        [DiscrepancyEntityType.TeamUser]: "Team User",
+        [DiscrepancyEntityType.User]: "User",
+        [DiscrepancyEntityType.UserGroupPolicy]: "User Group Policy",
+    };
+
     @ViewChild(MatSort, { static: true }) sort!: MatSort;
     @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -46,6 +73,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
 
     private currentTenantId: number | null = null;
     private formatHtml: any;
+    private htmlFormatterModule: any;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -242,10 +270,15 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
 
     private async loadHtmlFormatter(): Promise<void> {
         try {
-            const htmlFormatterModule = await (import(
+            this.htmlFormatterModule = await (import(
                 "jsondiffpatch/formatters/html" as any
             ) as Promise<any>);
-            this.formatHtml = htmlFormatterModule.format;
+            this.formatHtml = this.htmlFormatterModule.format;
+
+            // Hide unchanged values by default - only show differences
+            if (this.htmlFormatterModule.hideUnchanged) {
+                this.htmlFormatterModule.hideUnchanged();
+            }
 
             // Load CSS styles dynamically from local assets
             if (!document.getElementById("jsondiffpatch-styles")) {
@@ -261,5 +294,12 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
                 error
             );
         }
+    }
+
+    public getEntityTypeLabel(entityType: DiscrepancyEntityType): string {
+        return (
+            BtDiscrepanciesComponent.ENTITY_TYPE_LABELS[entityType] ||
+            entityType
+        );
     }
 }
