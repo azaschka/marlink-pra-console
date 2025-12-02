@@ -1,6 +1,6 @@
 {
   "name": "pra-console",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "scripts": {
     "ng": "ng",
     "start": "nx serve",
@@ -36,6 +36,7 @@
     "@ngx-translate/http-loader": "^7.0.0",
     "core-js": "^3.25.1",
     "echarts": "^5.3.3",
+    "jsondiffpatch": "^0.7.3",
     "moment": "^2.29.4",
     "ng2-file-upload": "^1.4.0",
     "ngx-clipboard": "^15.1.0",
