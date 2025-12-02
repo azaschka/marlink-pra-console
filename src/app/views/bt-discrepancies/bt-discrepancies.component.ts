@@ -23,7 +23,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
-        "entityId",
+        "id",
         "entityType",
         "diff",
         "creationDate",
@@ -41,14 +41,12 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
     public displayedColumns = BtDiscrepanciesComponent.DISPLAYED_COLUMNS;
 
     public isLoading = true;
-    public isScanning = false;
     public filterValue = "";
     public dataCount = 0;
 
     private currentTenantId: number | null = null;
     private formatHtml: any;
 
-    private readonly differ: any; // DiffPatcher type causes export errors
     private readonly subscriptionsToClear: Subscription;
 
     constructor(
@@ -61,7 +59,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
         private readonly sanitizer: DomSanitizer
     ) {
         this.subscriptionsToClear = new Subscription();
-        this.differ = jsondiffpatch.create({
+        jsondiffpatch.create({
             objectHash: (obj: any) => obj?.id || JSON.stringify(obj),
             arrays: { detectMove: true },
         });
@@ -71,8 +69,6 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
         this.jwtAuthService.getPraUser();
         this.addListeners();
 
-        // Load the HTML formatter asynchronously (non-blocking)
-        // Temporarily disabled to test sidebar issue
         await this.loadHtmlFormatter();
         await this.loadPage();
     }
@@ -92,13 +88,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
     }
 
     public async scanAllHandler(): Promise<void> {
-        if (!this.currentTenantId) {
-            this.errorDialog.show({
-                title: "No Instance Selected",
-                message: "Please select a BeyondTrust instance first.",
-            });
-            return;
-        }
+        if (!this.currentTenantId) return;
 
         const confirmed = await this.confirmDialog.show({
             title: "Scan for Discrepancies",
@@ -107,7 +97,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
         });
 
         if (confirmed) {
-            this.isScanning = true;
+            this.isLoading = true;
             try {
                 await this.btDiscrepanciesService.scanAllDiscrepancies(
                     this.currentTenantId
@@ -124,8 +114,42 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
                         "The discrepancy scan failed. Please try again later.",
                 });
             } finally {
-                this.isScanning = false;
+                this.isLoading = false;
             }
+        }
+    }
+
+    public getDiffHtml(discrepancy: Discrepancy): SafeHtml {
+        const left = discrepancy.internalData || {};
+        const right = discrepancy.externalData || {};
+
+        if (Object.keys(left).length === 0 && Object.keys(right).length === 0) {
+            return this.sanitizer.bypassSecurityTrustHtml(
+                '<div class="no-data">No data available</div>'
+            );
+        }
+
+        try {
+            const delta = jsondiffpatch.diff(left, right);
+            if (!delta) {
+                return this.sanitizer.bypassSecurityTrustHtml(
+                    '<div class="no-diff">No differences found</div>'
+                );
+            }
+
+            if (!this.formatHtml) {
+                return this.sanitizer.bypassSecurityTrustHtml(
+                    '<div class="error">Formatter not loaded yet</div>'
+                );
+            }
+
+            const html = this.formatHtml(delta, left);
+            return this.sanitizer.bypassSecurityTrustHtml(html);
+        } catch (error) {
+            console.error("Error generating diff:", error);
+            return this.sanitizer.bypassSecurityTrustHtml(
+                '<div class="error">Error generating diff</div>'
+            );
         }
     }
 
@@ -133,13 +157,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
         discrepancy: Discrepancy,
         syncType: DiscrepancySyncType
     ): Promise<void> {
-        if (!this.currentTenantId) {
-            this.errorDialog.show({
-                title: "No Instance Selected",
-                message: "Please select a BeyondTrust instance first.",
-            });
-            return;
-        }
+        if (!this.currentTenantId) return;
 
         const direction =
             syncType === DiscrepancySyncType.InternalToExternal
@@ -148,7 +166,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
 
         const confirmed = await this.confirmDialog.show({
             title: "Sync Discrepancy",
-            message: `Are you sure you want to sync this discrepancy?<br><br><strong>Direction:</strong> ${direction}<br><strong>Entity Type:</strong> ${discrepancy.entityType}<br><strong>Entity ID:</strong> ${discrepancy.entityId}<br><br>This action <strong>cannot be undone.</strong>`,
+            message: `Are you sure you want to sync this discrepancy?<br><br><strong>Direction:</strong> ${direction}<br><strong>Entity Type:</strong> ${discrepancy.entityType}<br><br>This action <strong>cannot be undone.</strong>`,
         });
 
         if (confirmed) {
@@ -173,11 +191,6 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
                 this.isLoading = false;
             }
         }
-    }
-
-    public viewDetailsHandler(discrepancy: Discrepancy): void {
-        // TODO: Implement detail view or dialog showing internalData and externalData
-        console.log("View details for discrepancy:", discrepancy);
     }
 
     private async loadPage(): Promise<void> {
@@ -234,58 +247,18 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
             ) as Promise<any>);
             this.formatHtml = htmlFormatterModule.format;
 
-            // Load CSS styles dynamically
+            // Load CSS styles dynamically from local assets
             if (!document.getElementById("jsondiffpatch-styles")) {
                 const link = document.createElement("link");
                 link.id = "jsondiffpatch-styles";
                 link.rel = "stylesheet";
-                link.href =
-                    "node_modules/jsondiffpatch/lib/formatters/styles/html.css";
+                link.href = "assets/styles/jsondiffpatch@0.7.3.css";
                 document.head.appendChild(link);
             }
         } catch (error) {
             console.error(
                 "Failed to load jsondiffpatch HTML formatter:",
                 error
-            );
-        }
-    }
-
-    // Expose enum for template
-
-    /**
-     * Generates HTML diff visualization between internal and external data
-     */
-    public getDiffHtml(discrepancy: Discrepancy): SafeHtml {
-        const left = discrepancy.internalData || {};
-        const right = discrepancy.externalData || {};
-
-        if (Object.keys(left).length === 0 && Object.keys(right).length === 0) {
-            return this.sanitizer.bypassSecurityTrustHtml(
-                '<div class="no-data">No data available</div>'
-            );
-        }
-
-        try {
-            const delta = this.differ.diff(left, right);
-            if (!delta) {
-                return this.sanitizer.bypassSecurityTrustHtml(
-                    '<div class="no-diff">No differences found</div>'
-                );
-            }
-
-            if (!this.formatHtml) {
-                return this.sanitizer.bypassSecurityTrustHtml(
-                    '<div class="error">Formatter not loaded</div>'
-                );
-            }
-
-            const html = this.formatHtml(delta, left);
-            return this.sanitizer.bypassSecurityTrustHtml(html);
-        } catch (error) {
-            console.error("Error generating diff:", error);
-            return this.sanitizer.bypassSecurityTrustHtml(
-                '<div class="error">Error generating diff</div>'
             );
         }
     }

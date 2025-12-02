@@ -13,7 +13,7 @@
         <div fxFlex></div>
         <div class="pl-16">
             <button mat-raised-button class="m-16" color="primary" translate="views.bt-discrepancies.buttons.scanAll"
-                (click)="scanAllHandler()" [disabled]="isScanning || isLoading">
+                (click)="scanAllHandler()" [disabled]="isLoading">
             </button>
         </div>
     </div>
@@ -30,9 +30,9 @@
                 </ng-container>
 
                 <!-- ID -->
-                <ng-container matColumnDef="entityId">
+                <ng-container matColumnDef="id">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>ID</mat-header-cell>
-                    <mat-cell *matCellDef="let row" [matTooltip]="row.entityId">{{ row.entityId || '—' }}</mat-cell>
+                    <mat-cell *matCellDef="let row" [matTooltip]="row.id">{{ row.id || '—' }}</mat-cell>
                 </ng-container>
 
                 <!-- Entity Type -->
@@ -59,18 +59,14 @@
                 <ng-container matColumnDef="actions">
                     <mat-header-cell *matHeaderCellDef></mat-header-cell>
                     <mat-cell *matCellDef="let row">
-                        <button mat-icon-button color="primary" matTooltip="Apply BeyondTrust Data"
-                            (click)="syncDiscrepancyHandler(row, DiscrepancySyncType.ExternalToInternal)">
-                            <mat-icon>cloud_download</mat-icon>
-                        </button>
-
-                        <button mat-icon-button color="primary" matTooltip="Apply PRA Platform Data"
+                        <button mat-icon-button class="sync-btn-red" matTooltip="Apply PRA Platform Data"
                             (click)="syncDiscrepancyHandler(row, DiscrepancySyncType.InternalToExternal)">
                             <mat-icon>cloud_upload</mat-icon>
                         </button>
 
-                        <button mat-icon-button color="primary" (click)="viewDetailsHandler(row)">
-                            <mat-icon>info</mat-icon>
+                        <button mat-icon-button class="sync-btn-green" matTooltip="Apply BeyondTrust Data"
+                            (click)="syncDiscrepancyHandler(row, DiscrepancySyncType.ExternalToInternal)">
+                            <mat-icon>cloud_download</mat-icon>
                         </button>
                     </mat-cell>
                 </ng-container>

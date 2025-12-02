@@ -1,5 +1,6 @@
 .mat-row {
     min-height: 36px;
+    align-items: stretch !important;
 }
 
 .progress-row {
@@ -20,11 +21,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
 }
 
-.mat-column-entityId {
-    flex: 0 0 90px;
-    width: 90px;
+.mat-column-id {
+    flex: 0 0 110px;
+    width: 110px;
     white-space: nowrap;
 }
 .mat-column-entityType {
@@ -38,9 +42,9 @@
     white-space: nowrap;
 }
 .mat-column-actions {
-    flex: 0 0 120px;
-    min-width: 120px;
-    width: 120px;
+    flex: 0 0 64px;
+    min-width: 64px;
+    width: 64px;
 }
 
 .mat-column-diff {
@@ -54,8 +58,8 @@
 }
 
 .diff-container {
-    max-height: 400px;
-    overflow: auto;
+    // max-height: 400px;
+    // overflow: auto;
     font-size: 12px;
     line-height: 1.5;
 
@@ -70,5 +74,20 @@
 
     .error {
         color: #d32f2f;
+    }
+}
+
+// Sync button colors matching jsondiffpatch diff colors
+.sync-btn-green {
+    color: #28a745 !important;
+    &:hover {
+        background-color: #bbffbb;
+    }
+}
+
+.sync-btn-red {
+    color: #dc3545 !important;
+    &:hover {
+        background-color: #ffbbbb;
     }
 }
