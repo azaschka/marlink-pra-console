@@ -23,7 +23,7 @@
     position: relative;
 }
 .absolute {
-    position: absolute;
+    position: absolute !important;
 
     &.bottom {
         left: 0;

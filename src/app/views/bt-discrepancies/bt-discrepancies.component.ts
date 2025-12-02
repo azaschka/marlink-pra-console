@@ -70,6 +70,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
     public isLoading = true;
     public filterValue = "";
     public dataCount = 0;
+    public expandedRowId: number | null = null;
 
     private currentTenantId: number | null = null;
     private formatHtml: any;
@@ -171,7 +172,12 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
                 );
             }
 
-            const html = this.formatHtml(delta, left);
+            // Only pass 'left' parameter if this row is expanded
+            // When left is passed, unchanged values are shown; when omitted, only changes are shown
+            const html =
+                this.expandedRowId === discrepancy.id
+                    ? this.formatHtml(delta, left)
+                    : this.formatHtml(delta);
             return this.sanitizer.bypassSecurityTrustHtml(html);
         } catch (error) {
             console.error("Error generating diff:", error);
@@ -222,10 +228,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
     }
 
     private async loadPage(): Promise<void> {
-        if (!this.currentTenantId) {
-            this.isLoading = false;
-            return;
-        }
+        if (!this.currentTenantId) return;
 
         this.isLoading = true;
         try {
@@ -239,12 +242,16 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
             this.dataCount = discrepancies.length;
+
+            // Allow diffs to render, then hide the indicator
+            setTimeout(() => {
+                this.isLoading = false;
+            }, 500);
         } catch (err: any) {
             await this.errorDialog.show({
                 title: "Error",
                 message: err?.message ?? "Unexpected error",
             });
-        } finally {
             this.isLoading = false;
         }
     }
@@ -275,11 +282,6 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
             ) as Promise<any>);
             this.formatHtml = this.htmlFormatterModule.format;
 
-            // Hide unchanged values by default - only show differences
-            if (this.htmlFormatterModule.hideUnchanged) {
-                this.htmlFormatterModule.hideUnchanged();
-            }
-
             // Load CSS styles dynamically from local assets
             if (!document.getElementById("jsondiffpatch-styles")) {
                 const link = document.createElement("link");
@@ -301,5 +303,10 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
             BtDiscrepanciesComponent.ENTITY_TYPE_LABELS[entityType] ||
             entityType
         );
+    }
+
+    public toggleRowExpansion(row: Discrepancy): void {
+        // Toggle expanded state - getDiffHtml will automatically show/hide unchanged values
+        this.expandedRowId = this.expandedRowId === row.id ? null : row.id;
     }
 }

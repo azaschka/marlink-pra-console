@@ -24,7 +24,7 @@
                 <!-- Loader -->
                 <ng-container matColumnDef="loader">
                     <mat-header-cell *matHeaderCellDef [attr.colspan]="displayedColumns.length">
-                        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+                        <mat-progress-bar mode="indeterminate" color="primary" class="absolute"></mat-progress-bar>
                     </mat-header-cell>
                     <mat-cell *matCellDef="let row"></mat-cell>
                 </ng-container>
@@ -32,13 +32,13 @@
                 <!-- ID -->
                 <ng-container matColumnDef="id">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>ID</mat-header-cell>
-                    <mat-cell *matCellDef="let row" [matTooltip]="row.id">{{ row.id || '—' }}</mat-cell>
+                    <mat-cell *matCellDef="let row">{{ row.id || '—' }}</mat-cell>
                 </ng-container>
 
                 <!-- Entity Type -->
                 <ng-container matColumnDef="entityType">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>Entity Type</mat-header-cell>
-                    <mat-cell *matCellDef="let row" [matTooltip]="getEntityTypeLabel(row.entityType)">
+                    <mat-cell *matCellDef="let row">
                         {{ getEntityTypeLabel(row.entityType) || '—' }}
                     </mat-cell>
                 </ng-container>
@@ -62,12 +62,12 @@
                     <mat-header-cell *matHeaderCellDef></mat-header-cell>
                     <mat-cell *matCellDef="let row">
                         <button mat-icon-button class="sync-btn-red" matTooltip="Apply PRA Platform Data"
-                            (click)="syncDiscrepancyHandler(row, DiscrepancySyncType.InternalToExternal)">
+                            (click)="syncDiscrepancyHandler(row, DiscrepancySyncType.InternalToExternal); $event.stopPropagation()">
                             <mat-icon>cloud_upload</mat-icon>
                         </button>
 
                         <button mat-icon-button class="sync-btn-green" matTooltip="Apply BeyondTrust Data"
-                            (click)="syncDiscrepancyHandler(row, DiscrepancySyncType.ExternalToInternal)">
+                            (click)="syncDiscrepancyHandler(row, DiscrepancySyncType.ExternalToInternal); $event.stopPropagation()">
                             <mat-icon>cloud_download</mat-icon>
                         </button>
                     </mat-cell>
@@ -77,7 +77,10 @@
                 <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
                 <mat-header-row *matHeaderRowDef="['loader']; sticky: true" class="progress-row"
                     [class.hidden]="!isLoading"></mat-header-row>
-                <mat-row class="selectable" *matRowDef="let row; columns: displayedColumns"></mat-row>
+                <mat-row class="selectable" [class.expanded]="expandedRowId === row.id"
+                    *matRowDef="let row; columns: displayedColumns" (click)="toggleRowExpansion(row)"
+                    [matTooltip]="expandedRowId === row.id ? 'Click to hide unchanged values' : 'Click to show all data'">
+                </mat-row>
 
                 <!-- No-data -->
                 <tr class="mat-row" *matNoDataRow style="display: flex">
