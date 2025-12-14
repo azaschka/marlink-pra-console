@@ -1,6 +1,6 @@
 {
   "name": "pra-console",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "scripts": {
     "ng": "ng",
     "start": "nx serve",
