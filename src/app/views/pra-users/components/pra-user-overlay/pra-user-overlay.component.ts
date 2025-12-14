@@ -8,6 +8,7 @@ import {
 } from "@angular/forms";
 import { Subject, takeUntil } from "rxjs";
 import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/error-dialog.service";
+import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraUsersService } from "../../pra-users.service";
 import {
     PraUser,
@@ -15,6 +16,7 @@ import {
     PraUserUpdateRequest,
 } from "../../models";
 import { BusinessUnit, BusinessUnitLabels, UserRole } from "../../enums";
+import { PraUser as AuthPraUser } from "../../../../shared/models";
 
 export type PraUserOverlayMode = "add" | "edit";
 
@@ -51,6 +53,7 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
 
     public readonly mode: PraUserOverlayMode;
     public readonly user?: PraUser;
+    public readonly currentUser: AuthPraUser;
 
     public readonly businessUnits = Object.values(BusinessUnit);
     public readonly businessUnitLabels = BusinessUnitLabels;
@@ -65,9 +68,11 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
         @Inject(MAT_DIALOG_DATA) public data: PraUserOverlayDialogData,
         private readonly praUsersService: PraUsersService,
         private readonly errorDialog: ErrorDialogService,
+        private readonly jwtAuthService: JwtAuthService
     ) {
         this.mode = data.mode;
         this.user = data.user;
+        this.currentUser = this.jwtAuthService.getPraUser();
         this.form = this.createForm();
     }
 
@@ -144,6 +149,17 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Checks if the current user is an Admin with canManagePraUsers permission
+     * These users should be restricted to their own business unit
+     */
+    private isRestrictedAdmin(): boolean {
+        return (
+            this.currentUser?.role === "Admin" &&
+            this.currentUser?.canManagePraUsers === true
+        );
+    }
+
+    /**
      * Updates business unit field state (enabled/disabled, validators) based on role
      */
     private updateBusinessUnitField(role: UserRole): void {
@@ -159,7 +175,6 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
             businessUnitControl.clearValidators();
         } else if (role === UserRole.Admin) {
             // Admin requires business unit
-            businessUnitControl.enable({ emitEvent: false });
             businessUnitControl.setValidators([Validators.required]);
 
             // Set default value if empty
@@ -168,6 +183,17 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
                 businessUnitControl.setValue(defaultValue, {
                     emitEvent: false,
                 });
+            }
+
+            // Restrict business unit selection for Admin users with canManagePraUsers
+            if (this.isRestrictedAdmin()) {
+                // Lock to current user's business unit
+                businessUnitControl.setValue(this.currentUser.businessUnit, {
+                    emitEvent: false,
+                });
+                businessUnitControl.disable({ emitEvent: false });
+            } else {
+                businessUnitControl.enable({ emitEvent: false });
             }
         } else {
             // Other roles: optional business unit
@@ -200,6 +226,11 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
      * Gets the default business unit based on context
      */
     private getDefaultBusinessUnit(): BusinessUnit {
+        // Restricted admins must use their own business unit
+        if (this.isRestrictedAdmin() && this.currentUser.businessUnit) {
+            return this.currentUser.businessUnit;
+        }
+
         if (this.mode === "edit" && this.user?.businessUnit) {
             return this.user.businessUnit;
         }
@@ -283,10 +314,10 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
      * Extracts business unit for API request based on role
      */
     private getBusinessUnitForRequest(
-        formValue: PraUserFormValue,
+        formValue: PraUserFormValue
     ): BusinessUnit | undefined {
         return formValue.role === UserRole.Admin
-            ? (formValue.businessUnit ?? undefined)
+            ? formValue.businessUnit ?? undefined
             : undefined;
     }
 
@@ -295,7 +326,7 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
      * Only Admin users can have this permission
      */
     private getCanManagePraUsersForRequest(
-        formValue: PraUserFormValue,
+        formValue: PraUserFormValue
     ): boolean | undefined {
         return formValue.role === UserRole.Admin
             ? formValue.canManagePraUsers
