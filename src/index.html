@@ -10,7 +10,9 @@
         <link rel="icon" type="image/x-icon" href="favicon.ico" />
 
         <!-- Load environment variables -->
-        <script src="assets/scripts/env.js?cb=202511170240"></script>
+        <script>
+            document.write('<script src="assets/scripts/env.js?cb=' + new Date().getTime() + '"><\/script>');
+        </script>
 
         <style>
             .app-loader {
