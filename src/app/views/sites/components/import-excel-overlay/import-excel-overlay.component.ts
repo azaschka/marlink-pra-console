@@ -3,7 +3,7 @@ import {
     ParsedCustomer,
     ParsedJumpAsset,
     ParsedSite,
-    ParsedSiteAdministrator,
+    ParsedSiteAuditor,
     ParsedSiteManager,
     ParsedSupportTeam,
     ParsedUser,
@@ -25,7 +25,7 @@ export class ImportExcelOverlayComponent {
         | {
               customer: ParsedCustomer;
               site: ParsedSite;
-              siteAdministrators: ParsedSiteAdministrator[];
+              siteAuditors: ParsedSiteAuditor[];
               siteManagers: ParsedSiteManager[];
               siteApprovers: string[];
               supportTeams: ParsedSupportTeam[];

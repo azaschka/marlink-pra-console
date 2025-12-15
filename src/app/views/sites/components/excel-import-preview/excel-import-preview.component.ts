@@ -3,7 +3,7 @@ import {
     ParsedCustomer,
     ParsedJumpAsset,
     ParsedSite,
-    ParsedSiteAdministrator,
+    ParsedSiteAuditor,
     ParsedSiteManager,
     ParsedSupportTeam,
     ParsedUser,
@@ -23,7 +23,7 @@ interface PreviewTreeNode {
 type ExcelImportPreviewData = {
     customer: ParsedCustomer;
     site: ParsedSite;
-    siteAdministrators: ParsedSiteAdministrator[];
+    siteAuditors: ParsedSiteAuditor[];
     siteManagers: ParsedSiteManager[];
     siteApprovers?: string[];
     supportTeams: ParsedSupportTeam[];
@@ -85,7 +85,7 @@ export class ExcelImportPreviewComponent implements OnInit {
     private buildPreviewTree(): PreviewTreeNode[] {
         if (!this.preview) return [];
         const {
-            siteAdministrators = [],
+            siteAuditors = [],
             siteManagers = [],
             siteApprovers = [],
             supportTeams = [],
@@ -93,8 +93,8 @@ export class ExcelImportPreviewComponent implements OnInit {
             jumpAssets = [],
         } = this.preview;
 
-        // Site Admins
-        const adminNodes = siteAdministrators.map((a) => ({
+        // Site Auditors
+        const auditorNodes = siteAuditors.map((a) => ({
             label: `${a.username} (${a.email})`,
             value: a.isAdminOperator
                 ? "AdminOperator: Yes"
@@ -142,8 +142,10 @@ export class ExcelImportPreviewComponent implements OnInit {
 
         return [
             {
-                label: "Site Administrators",
-                children: adminNodes.length ? adminNodes : [{ label: "None" }],
+                label: "Site Auditors",
+                children: auditorNodes.length
+                    ? auditorNodes
+                    : [{ label: "None" }],
             },
             {
                 label: "Site Managers",

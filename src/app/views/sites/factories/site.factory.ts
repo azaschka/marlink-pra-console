@@ -1,6 +1,6 @@
 import {
     ParsedSite,
-    ParsedSiteAdministrator,
+    ParsedSiteAuditor,
     ParsedSiteManager,
     ParsedSupportTeam,
     ParsedUser,
@@ -9,7 +9,7 @@ import { FieldValidators, StringSanitizer } from "../../../shared/helpers";
 import {
     CreateSiteDtoInput,
     SiteSupportTeamMemberDtoInput,
-    SiteAdministratorDtoInput,
+    SiteAuditorDtoInput,
     SiteManagerDtoInput,
 } from "../models";
 import {
@@ -28,7 +28,7 @@ export class SiteFactory {
     public static create(
         site: ParsedSite,
         customerKey: string,
-        siteAdministrators: ParsedSiteAdministrator[],
+        siteAuditors: ParsedSiteAuditor[],
         siteManagers: ParsedSiteManager[],
         siteApprovers: string[],
         supportTeams: ParsedSupportTeam[],
@@ -52,7 +52,7 @@ export class SiteFactory {
             );
         this.sanitizeSiteManagers(siteManagers);
 
-        this.sanitizeSiteAdministrators(siteAdministrators);
+        this.sanitizeSiteAuditors(siteAuditors);
 
         this.sanitizeSiteApprovers(siteApprovers);
 
@@ -66,7 +66,7 @@ export class SiteFactory {
             name,
             customerKey,
             siteManagers,
-            siteAdministrators,
+            siteAuditors,
             siteApprovers,
             siteSupportTeamMembers,
         };
@@ -135,30 +135,28 @@ export class SiteFactory {
         });
     }
 
-    private static sanitizeSiteAdministrators(
-        siteAdministrators: ParsedSiteAdministrator[]
-    ): SiteAdministratorDtoInput[] {
-        if (!siteAdministrators?.length) return [];
-        return siteAdministrators.map((admin) => {
+    private static sanitizeSiteAuditors(
+        siteAuditors: ParsedSiteAuditor[]
+    ): SiteAuditorDtoInput[] {
+        if (!siteAuditors?.length) return [];
+        return siteAuditors.map((admin) => {
             if (!admin.username || !admin.email) {
                 throw new SiteFactoryError(
-                    `Site administrator is missing username or email: ${JSON.stringify(
+                    `Site auditor is missing username or email: ${JSON.stringify(
                         admin
                     )}`
                 );
             }
             if (!FieldValidators.isValidUsername(admin.username)) {
                 throw new SiteFactoryError(
-                    `Site administrator has invalid username: ${JSON.stringify(
+                    `Site auditor has invalid username: ${JSON.stringify(
                         admin
                     )}`
                 );
             }
             if (!FieldValidators.isValidEmail(admin.email)) {
                 throw new SiteFactoryError(
-                    `Site administrator has invalid email: ${JSON.stringify(
-                        admin
-                    )}`
+                    `Site auditor has invalid email: ${JSON.stringify(admin)}`
                 );
             }
             return {

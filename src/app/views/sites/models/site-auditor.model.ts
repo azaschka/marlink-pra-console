@@ -1,4 +1,4 @@
-export interface SiteAdministrator {
+export interface SiteAuditor {
     username: string;
     email: string;
     isAdminOperator: boolean;

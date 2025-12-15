@@ -5,7 +5,7 @@ import {
     ParsedJumpItemType,
     ParsedJumpType,
     ParsedSite,
-    ParsedSiteAdministrator,
+    ParsedSiteAuditor,
     ParsedSiteManager,
     ParsedSupportTeam,
     ParsedTrustLevel,
@@ -92,7 +92,7 @@ export class SiteImportWorkflowService {
         parsed: {
             customer: ParsedCustomer;
             site: ParsedSite;
-            siteAdministrators: ParsedSiteAdministrator[];
+            siteAuditors: ParsedSiteAuditor[];
             siteManagers: ParsedSiteManager[];
             siteApprovers: string[];
             supportTeams: ParsedSupportTeam[];
@@ -145,7 +145,7 @@ export class SiteImportWorkflowService {
                 const siteRequest = this.buildSiteRequest(
                     parsed.site,
                     customerRequest.key,
-                    parsed.siteAdministrators,
+                    parsed.siteAuditors,
                     parsed.siteManagers,
                     parsed.siteApprovers,
                     parsed.supportTeams,
@@ -173,14 +173,14 @@ export class SiteImportWorkflowService {
                 // === 3. FETCH GROUPS, POLICIES, JUMPOINTS ===
                 // 3.1 JumpGroups
                 steps.push({
-                    label: "Creating site administrators ...",
+                    label: "Creating site auditors ...",
                     status: ImportStatus.InProgress,
                 });
                 sub.next([...steps]);
                 try {
                     this.jumpGroups =
                         await this.jumpGroupsService.fetchJumpGroups(tenantId);
-                    steps[2].result = "Site administrators created.";
+                    steps[2].result = "Site auditors created.";
                     steps[2].status = ImportStatus.Success;
                 } catch (err: any) {
                     steps[2].status = ImportStatus.Error;
@@ -418,7 +418,7 @@ export class SiteImportWorkflowService {
     private buildSiteRequest(
         site: ParsedSite,
         customerKey: string,
-        siteAdministrators: ParsedSiteAdministrator[],
+        siteAuditors: ParsedSiteAuditor[],
         siteManagers: ParsedSiteManager[],
         siteApprovers: string[],
         supportTeams: ParsedSupportTeam[],
@@ -429,7 +429,7 @@ export class SiteImportWorkflowService {
             return SiteFactory.create(
                 site,
                 customerKey,
-                siteAdministrators,
+                siteAuditors,
                 siteManagers,
                 siteApprovers,
                 supportTeams,

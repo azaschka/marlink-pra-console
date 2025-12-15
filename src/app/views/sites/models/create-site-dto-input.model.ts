@@ -1,4 +1,4 @@
-import { SiteAdministratorDtoInput } from "./site-administrator-dto-input.model";
+import { SiteAuditorDtoInput } from "./site-auditor-dto-input.model";
 import { SiteManagerDtoInput } from "./site-manager-dto-input.model";
 import { SiteSupportTeamMemberDtoInput } from "./site-support-team-member-dto-input.model";
 
@@ -7,7 +7,7 @@ export interface CreateSiteDtoInput {
     name: string;
     customerKey: string;
     siteManagers: SiteManagerDtoInput[];
-    siteAdministrators?: SiteAdministratorDtoInput[];
+    siteAuditors?: SiteAuditorDtoInput[];
     siteSupportTeamMembers?: SiteSupportTeamMemberDtoInput[];
     siteApprovers?: string[];
 }
