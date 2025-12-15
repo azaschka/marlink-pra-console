@@ -70,13 +70,6 @@ export class NavigationService {
             roles: [AuthRole.SUPER_ADMIN],
         },
         {
-            name: "Sites",
-            type: "link",
-            icon: "location_on",
-            state: "sites",
-            roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
-        },
-        {
             name: "Customers",
             type: "link",
             icon: "business",
@@ -88,6 +81,13 @@ export class NavigationService {
             type: "link",
             icon: "group",
             state: "users",
+            roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
+        },
+        {
+            name: "Sites",
+            type: "link",
+            icon: "location_on",
+            state: "sites",
             roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
         },
         {
