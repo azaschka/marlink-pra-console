@@ -481,7 +481,10 @@ export class SiteExcelParserService {
             i++
         ) {
             const row = sheet[i];
-            if (row && row[0]) {
+            // Jump Clients only need System Name (col 1), Protocol (col 2), and Team (col 5+)
+            // Jump Items (hosts) need IP Address (col 0), System Name, and Protocol
+            // So we validate on System Name (col 1) instead of IP Address
+            if (row && row[1]) {
                 const protocol = this.sanitizeValue(row[2]).toUpperCase();
                 const port = row[3] ? parseInt(row[3], 10) : undefined;
 
