@@ -139,30 +139,30 @@ export class SiteFactory {
         siteAuditors: ParsedSiteAuditor[]
     ): SiteAuditorDtoInput[] {
         if (!siteAuditors?.length) return [];
-        return siteAuditors.map((admin) => {
-            if (!admin.username || !admin.email) {
+        return siteAuditors.map((auditor) => {
+            if (!auditor.username || !auditor.email) {
                 throw new SiteFactoryError(
                     `Site auditor is missing username or email: ${JSON.stringify(
-                        admin
+                        auditor
                     )}`
                 );
             }
-            if (!FieldValidators.isValidUsername(admin.username)) {
+            if (!FieldValidators.isValidUsername(auditor.username)) {
                 throw new SiteFactoryError(
                     `Site auditor has invalid username: ${JSON.stringify(
-                        admin
+                        auditor
                     )}`
                 );
             }
-            if (!FieldValidators.isValidEmail(admin.email)) {
+            if (!FieldValidators.isValidEmail(auditor.email)) {
                 throw new SiteFactoryError(
-                    `Site auditor has invalid email: ${JSON.stringify(admin)}`
+                    `Site auditor has invalid email: ${JSON.stringify(auditor)}`
                 );
             }
             return {
-                username: admin.username,
-                email: admin.email,
-                isAdminOperator: admin.isAdminOperator,
+                username: auditor.username,
+                email: auditor.email,
+                isAdminOperator: auditor.isAdminOperator,
             };
         });
     }

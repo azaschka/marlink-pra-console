@@ -8,7 +8,7 @@ import { UserRoleGuard } from "./shared/guards/user-role.guard";
 export const AppRoutes: Routes = [
     {
         path: "",
-        redirectTo: "sites",
+        redirectTo: "customers",
         pathMatch: "full",
     },
     {
