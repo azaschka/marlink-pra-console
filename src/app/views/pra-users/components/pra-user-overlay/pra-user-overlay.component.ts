@@ -57,7 +57,6 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
 
     public readonly businessUnits = Object.values(BusinessUnit);
     public readonly businessUnitLabels = BusinessUnitLabels;
-    public readonly userRoles = Object.values(UserRole);
 
     public readonly form: FormGroup;
 
@@ -84,6 +83,21 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
     public ngOnDestroy(): void {
         this.destroy$.next();
         this.destroy$.complete();
+    }
+
+    /**
+     * Returns available user roles based on current user's permissions
+     * Admin users cannot assign SuperAdmin role
+     */
+    public get availableUserRoles(): UserRole[] {
+        const allRoles = Object.values(UserRole);
+
+        // Admin users cannot assign SuperAdmin role
+        if (this.currentUser?.role === "Admin") {
+            return allRoles.filter((role) => role !== UserRole.SuperAdmin);
+        }
+
+        return allRoles;
     }
 
     /**
