@@ -14,12 +14,12 @@ export class UserRoleGuard implements CanActivate {
     constructor(
         private readonly jwtAuthService: JwtAuthService,
         private readonly router: Router,
-        private readonly snack: MatSnackBar
+        private readonly snack: MatSnackBar,
     ) {}
 
     public canActivate(
         route: ActivatedRouteSnapshot,
-        state: RouterStateSnapshot
+        state: RouterStateSnapshot,
     ) {
         const praUser = this.jwtAuthService.getPraUser();
 
@@ -36,9 +36,9 @@ export class UserRoleGuard implements CanActivate {
                 .onAction()
                 .subscribe(() => {
                     if (praUser.role === AuthRole.ADMIN) {
-                        this.router.navigateByUrl("/subscriptions");
+                        this.router.navigateByUrl("/customers");
                     } else if (praUser.role === AuthRole.DATA_CENTER_ENGINEER) {
-                        this.router.navigateByUrl("/backups");
+                        this.router.navigateByUrl("/bt-backups");
                     }
                 });
 

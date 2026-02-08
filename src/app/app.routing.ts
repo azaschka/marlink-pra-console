@@ -19,7 +19,7 @@ export const AppRoutes: Routes = [
                 path: "sessions",
                 loadChildren: () =>
                     import("./views/sessions/sessions.module").then(
-                        (m) => m.SessionsModule
+                        (m) => m.SessionsModule,
                     ),
                 data: { title: "Session" },
             },
@@ -34,7 +34,7 @@ export const AppRoutes: Routes = [
                 path: "dashboard",
                 loadChildren: () =>
                     import("./views/dashboard/dashboard.module").then(
-                        (m) => m.DashboardModule
+                        (m) => m.DashboardModule,
                     ),
                 data: {
                     title: "Dashboard",
@@ -47,7 +47,7 @@ export const AppRoutes: Routes = [
                 path: "sites",
                 loadChildren: () =>
                     import("./views/sites/sites.module").then(
-                        (m) => m.SitesModule
+                        (m) => m.SitesModule,
                     ),
                 data: {
                     title: "Sites",
@@ -60,7 +60,7 @@ export const AppRoutes: Routes = [
                 path: "customers",
                 loadChildren: () =>
                     import("./views/customers/customers.module").then(
-                        (m) => m.CustomersModule
+                        (m) => m.CustomersModule,
                     ),
                 data: {
                     title: "Customers",
@@ -73,7 +73,7 @@ export const AppRoutes: Routes = [
                 path: "users",
                 loadChildren: () =>
                     import("./views/users/users.module").then(
-                        (m) => m.UsersModule
+                        (m) => m.UsersModule,
                     ),
                 data: {
                     title: "Users",
@@ -86,7 +86,7 @@ export const AppRoutes: Routes = [
                 path: "group-policies",
                 loadChildren: () =>
                     import("./views/group-policies/group-policies.module").then(
-                        (m) => m.GroupPoliciesModule
+                        (m) => m.GroupPoliciesModule,
                     ),
                 data: {
                     title: "Group Policies",
@@ -99,7 +99,7 @@ export const AppRoutes: Routes = [
                 path: "jumpoints",
                 loadChildren: () =>
                     import("./views/jumpoints/jumpoints.module").then(
-                        (m) => m.JumpointsModule
+                        (m) => m.JumpointsModule,
                     ),
                 data: {
                     title: "Jumpoints",
@@ -112,7 +112,7 @@ export const AppRoutes: Routes = [
                 path: "jump-groups",
                 loadChildren: () =>
                     import("./views/jump-groups/jump-groups.module").then(
-                        (m) => m.JumpGroupsModule
+                        (m) => m.JumpGroupsModule,
                     ),
                 data: {
                     title: "Jump Groups",
@@ -125,20 +125,7 @@ export const AppRoutes: Routes = [
                 path: "jump-assets",
                 loadChildren: () =>
                     import("./views/jump-assets/jump-assets.module").then(
-                        (m) => m.JumpAssetsModule
-                    ),
-                data: {
-                    title: "Jump Assets",
-                    breadcrumb: "views.jump-assets.headline",
-                    roles: [AuthRole.SUPER_ADMIN, AuthRole.ADMIN],
-                },
-                canActivate: [UserRoleGuard],
-            },
-            {
-                path: "jump-assets",
-                loadChildren: () =>
-                    import("./views/jump-assets/jump-assets.module").then(
-                        (m) => m.JumpAssetsModule
+                        (m) => m.JumpAssetsModule,
                     ),
                 data: {
                     title: "Jump Assets",
@@ -150,9 +137,9 @@ export const AppRoutes: Routes = [
             {
                 path: "jump-client-installers",
                 loadChildren: () =>
-                    import(
-                        "./views/jump-client-installers/jump-client-installers.module"
-                    ).then((m) => m.JumpClientInstallersModule),
+                    import("./views/jump-client-installers/jump-client-installers.module").then(
+                        (m) => m.JumpClientInstallersModule,
+                    ),
                 data: {
                     title: "Jump Client Installers",
                     breadcrumb: "views.jump-client-installers.headline",
@@ -164,7 +151,7 @@ export const AppRoutes: Routes = [
                 path: "pra-users",
                 loadChildren: () =>
                     import("./views/pra-users/pra-users.module").then(
-                        (m) => m.PraUsersModule
+                        (m) => m.PraUsersModule,
                     ),
                 data: {
                     title: "PRA Users",
@@ -176,9 +163,9 @@ export const AppRoutes: Routes = [
             {
                 path: "bt-discrepancies",
                 loadChildren: () =>
-                    import(
-                        "./views/bt-discrepancies/bt-discrepancies.module"
-                    ).then((m) => m.BtDiscrepanciesModule),
+                    import("./views/bt-discrepancies/bt-discrepancies.module").then(
+                        (m) => m.BtDiscrepanciesModule,
+                    ),
                 data: {
                     title: "BT Discrepancies",
                     breadcrumb: "views.bt-discrepancies.headline",
@@ -193,7 +180,7 @@ export const AppRoutes: Routes = [
                 path: "bt-backups",
                 loadChildren: () =>
                     import("./views/bt-backups/bt-backups.module").then(
-                        (m) => m.BtBackupsModule
+                        (m) => m.BtBackupsModule,
                     ),
                 data: {
                     title: "BT Backups",
@@ -209,7 +196,7 @@ export const AppRoutes: Routes = [
                 path: "logs",
                 loadChildren: () =>
                     import("./views/logs/logs.module").then(
-                        (m) => m.LogsModule
+                        (m) => m.LogsModule,
                     ),
                 data: {
                     title: "System Log",
