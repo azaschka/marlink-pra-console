@@ -12,25 +12,27 @@ import {
 export class CustomersService {
     constructor(private readonly http: HttpClient) {}
 
+    // TODO: Implement pagination and filtering
     public async fetchCustomers(): Promise<Customer[]> {
-        const params = new HttpParams().set("pageSize", "9999");
-        return firstValueFrom(
-            this.http.get<Customer[]>("customers", { params })
-        );
+        // const params = new HttpParams().set("pageSize", "9999");
+        // return firstValueFrom(
+        //     this.http.get<Customer[]>("customers", { params })
+        // );
+        return firstValueFrom(this.http.get<Customer[]>("customers"));
     }
 
     public async createCustomer(
-        body: CustomerCreateRequest
+        body: CustomerCreateRequest,
     ): Promise<Customer> {
         return firstValueFrom(this.http.post<Customer>("customers", body));
     }
 
     public async modifyCustomer(
         id: number,
-        body: CustomerModifyRequest
+        body: CustomerModifyRequest,
     ): Promise<Customer> {
         return firstValueFrom(
-            this.http.patch<Customer>(`customers/${id}`, body)
+            this.http.patch<Customer>(`customers/${id}`, body),
         );
     }
 
@@ -40,24 +42,24 @@ export class CustomersService {
 
     public async deactivateCustomer(id: number): Promise<void> {
         return firstValueFrom(
-            this.http.post<void>(`customers/${id}/deactivate`, {})
+            this.http.post<void>(`customers/${id}/deactivate`, {}),
         );
     }
 
     public async reactivateCustomer(id: number): Promise<void> {
         return firstValueFrom(
-            this.http.post<void>(`customers/${id}/reactivate`, {})
+            this.http.post<void>(`customers/${id}/reactivate`, {}),
         );
     }
 
     public async calculateLicenseUsage(
-        id: number
+        id: number,
     ): Promise<CustomerLicenseUsage> {
         return firstValueFrom(
             this.http.post<CustomerLicenseUsage>(
                 `license-usages/customers/${id}`,
-                {}
-            )
+                {},
+            ),
         );
     }
 }

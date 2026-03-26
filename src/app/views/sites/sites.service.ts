@@ -8,17 +8,19 @@ import { Jumpoint } from "../jumpoints/models";
 export class SitesService {
     constructor(private http: HttpClient) {}
 
+    // TODO: Implement pagination and filtering
     public async fetchSites(): Promise<Site[]> {
-        const params = new HttpParams().set("pageSize", "9999");
-        return firstValueFrom(this.http.get<Site[]>("sites", { params }));
+        // const params = new HttpParams().set("pageSize", "9999");
+        // return firstValueFrom(this.http.get<Site[]>("sites", { params }));
+        return firstValueFrom(this.http.get<Site[]>("sites"));
     }
     public async fetchSiteByKey(key: string): Promise<Site | undefined> {
         const params = new HttpParams();
-        params.set("pageSize", "9999");
+        // params.set("pageSize", "9999");
         if (key) params.set("key", key);
 
         const sites = await firstValueFrom(
-            this.http.get<Site[]>(`sites`, { params })
+            this.http.get<Site[]>(`sites`, { params }),
         );
 
         return sites[0] ?? undefined;
@@ -26,7 +28,7 @@ export class SitesService {
 
     public async fetchSiteJumpoints(id: number): Promise<Jumpoint[]> {
         return firstValueFrom(
-            this.http.get<Jumpoint[]>(`sites/${id}/jumpoints`)
+            this.http.get<Jumpoint[]>(`sites/${id}/jumpoints`),
         );
     }
 

@@ -180,13 +180,13 @@ export class NavigationService {
             type: "download",
             tooltip: "Download Postman Collection",
             icon: "download",
-            state: `/assets/docs/Marlink PRA API v2.0.4.postman_collection.json`,
+            state: `/assets/docs/Marlink PRA API v3.0.0.postman_collection.json`,
             roles: [AuthRole.SUPER_ADMIN, AuthRole.DATA_CENTER_ENGINEER],
         },
     ];
 
     private readonly menuItems = new BehaviorSubject<IMenuItem[]>(
-        this.defaultMenu
+        this.defaultMenu,
     );
 
     /**
