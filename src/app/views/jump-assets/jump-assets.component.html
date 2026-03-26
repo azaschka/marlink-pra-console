@@ -1,27 +1,39 @@
 <mat-card class="m-16 p-0" [@animate]="{ value: '*', params: { y: '50px', delay: '300ms' } }">
     <mat-tab-group>
         <mat-tab label="{{ 'views.jump-assets.types.remoteRdps' | translate }}">
-            <app-remote-rdp></app-remote-rdp>
+            <ng-template matTabContent>
+                <app-remote-rdp></app-remote-rdp>
+            </ng-template>
         </mat-tab>
 
         <mat-tab label="{{ 'views.jump-assets.types.remoteVncs' | translate }}">
-            <app-remote-vnc></app-remote-vnc>
+            <ng-template matTabContent>
+                <app-remote-vnc></app-remote-vnc>
+            </ng-template>
         </mat-tab>
 
         <mat-tab label="{{ 'views.jump-assets.types.shellJumps' | translate }}">
-            <app-shell-jump></app-shell-jump>
+            <ng-template matTabContent>
+                <app-shell-jump></app-shell-jump>
+            </ng-template>
         </mat-tab>
 
         <mat-tab label="{{ 'views.jump-assets.types.webJumps' | translate }}">
-            <app-web-jump></app-web-jump>
+            <ng-template matTabContent>
+                <app-web-jump></app-web-jump>
+            </ng-template>
         </mat-tab>
 
         <mat-tab label="{{ 'views.jump-assets.types.protocolTunnelJumps' | translate }}">
-            <app-protocol-tunnel></app-protocol-tunnel>
+            <ng-template matTabContent>
+                <app-protocol-tunnel></app-protocol-tunnel>
+            </ng-template>
         </mat-tab>
 
         <mat-tab label="{{ 'views.jump-assets.types.jumpClients' | translate }}">
-            <app-jump-clients></app-jump-clients>
+            <ng-template matTabContent>
+                <app-jump-clients></app-jump-clients>
+            </ng-template>
         </mat-tab>
     </mat-tab-group>
 </mat-card>

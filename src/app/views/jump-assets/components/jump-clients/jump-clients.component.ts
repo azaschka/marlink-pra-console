@@ -58,10 +58,6 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
     public filterValue = "";
     public dataCount = 0;
 
-    private jumpGroups: JumpGroup[] = [];
-    private jumpPolicies: JumpPolicy[] = [];
-
-    private currentBusinessUnit: BusinessUnit | null | undefined;
     private currentTenantId: number | null = null;
 
     private readonly subscriptionsToClear: Subscription;
@@ -75,7 +71,7 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
@@ -128,7 +124,7 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
                         await this.jumpAssetsService.copyJumpClient(
                             this.currentTenantId,
                             asset.id,
-                            result
+                            result,
                         );
                         this.notificationDialog.show({
                             message: `Jump Client "${result.name}" successfully copied to Jump Group ID "${result.jumpGroupId}".`,
@@ -178,7 +174,7 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
                         await this.jumpAssetsService.updateJumpClient(
                             this.currentTenantId,
                             asset.id,
-                            result
+                            result,
                         );
                         this.notificationDialog.show({
                             message: "Jump Client successfully updated.",
@@ -217,7 +213,7 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
                     try {
                         await this.jumpAssetsService.deleteJumpClient(
                             this.currentTenantId,
-                            asset.id
+                            asset.id,
                         );
                         this.notificationDialog.show({
                             message: `Jump Client "${asset.name}" successfully deleted.`,
@@ -236,7 +232,7 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
     }
 
     private async loadPage(
-        overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
+        overrides: Partial<{ pageNumber: number; pageSize: number }> = {},
     ): Promise<void> {
         if (!this.currentTenantId) {
             return;
@@ -250,13 +246,9 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
                 this.jumpAssetsService.fetchJumpClients(this.currentTenantId),
                 this.jumpGroupsService.fetchJumpGroups(this.currentTenantId),
                 this.jumpPoliciesService.fetchJumpPolicies(
-                    this.currentTenantId
+                    this.currentTenantId,
                 ),
             ]);
-
-            // Store lookup tables (if needed later)
-            this.jumpGroups = jumpGroups;
-            this.jumpPolicies = jumpPolicies;
 
             // Enrich items directly
             const enriched = items.map((item) => ({
@@ -269,13 +261,6 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
                         ?.displayName ?? "—",
             }));
 
-            // Apply business unit filter
-            const filteredItems = PraDataFilter.filterByBusinessUnit(
-                enriched,
-                this.currentBusinessUnit,
-                [(j) => j.jumpGroupName, (j) => j.jumpPolicyName]
-            );
-
             // Optional pagination overrides (if the calling location wants it)
             if (overrides.pageNumber !== undefined && this.paginator) {
                 this.paginator.pageIndex = overrides.pageNumber;
@@ -285,17 +270,16 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
             }
 
             // Provide MatTableDataSource
-            this.dataSource.data = filteredItems;
+            this.dataSource.data = enriched;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
-            this.dataCount = filteredItems.length;
+            this.dataCount = enriched.length;
 
             // Ensure paginator is on a valid page
             if (this.paginator) {
                 const maxPageIndex = Math.max(
-                    Math.ceil(filteredItems.length / this.paginator.pageSize) -
-                        1,
-                    0
+                    Math.ceil(enriched.length / this.paginator.pageSize) - 1,
+                    0,
                 );
                 if (this.paginator.pageIndex > maxPageIndex) {
                     this.paginator.firstPage();
@@ -311,65 +295,13 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
         }
     }
 
-    // private async loadPage(
-    //     overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
-    // ): Promise<void> {
-    //     this.isLoading = true;
-    //     try {
-    //         const items = await this.jumpAssetsService.fetchJumpClients();
-    //         this.jumpGroups = await this.jumpGroupsService.fetchJumpGroups();
-    //         this.jumpPolicies =
-    //             await this.jumpPoliciesService.fetchJumpPolicies();
-
-    //         this.dataSource.data = items;
-    //         this.dataSource.sort = this.sort;
-    //         this.dataSource.paginator = this.paginator;
-    //         this.dataCount = items.length;
-
-    //         setTimeout(() => this.loadVisibleData(), 10);
-    //         // this.paginator.page.subscribe(() =>
-    //         //     this.loadVisibleLicenseUsages()
-    //         // );
-    //     } catch (err: any) {
-    //         this.errorDialog.show({
-    //             title: "Error",
-    //             message: err?.message ?? "Unexpected error",
-    //         });
-    //     } finally {
-    //         this.isLoading = false;
-    //     }
-    // }
-
-    // private async loadVisibleData(): Promise<void> {
-    //     const data = this.dataSource.filteredData || this.dataSource.data;
-    //     const pageIndex = this.paginator.pageIndex || 0;
-    //     const pageSize = this.paginator.pageSize || 20;
-    //     const start = pageIndex * pageSize;
-    //     const end = start + pageSize;
-    //     const currentPageItems = data; // data.slice(start, end);
-
-    //     for (const item of currentPageItems) {
-    //         if (item.jumpGroupId) {
-    //             item.jumpGroupName =
-    //                 this.jumpGroups.find((g) => g.id === item.jumpGroupId)
-    //                     ?.name || "—";
-    //         }
-    //         if (item.jumpPolicyId) {
-    //             item.jumpPolicyName =
-    //                 this.jumpPolicies.find((p) => p.id === item.jumpPolicyId)
-    //                     ?.displayName || "—";
-    //         }
-    //     }
-    // }
-
     private addListeners(): void {
         this.subscriptionsToClear.add(
             this.jwtAuthService.praUser.subscribe((user) => {
                 if (!user || user.role === "None") {
                     this.jwtAuthService.checkTokenIsValid();
                 }
-                this.currentBusinessUnit = user.businessUnit;
-            })
+            }),
         );
 
         this.subscriptionsToClear.add(
@@ -379,8 +311,8 @@ export class JumpClientsComponent implements OnInit, OnDestroy {
                     if (instanceId) {
                         await this.loadPage();
                     }
-                }
-            )
+                },
+            ),
         );
     }
 }

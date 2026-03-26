@@ -63,7 +63,7 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
@@ -89,13 +89,13 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
     }
 
     public isDownloadDisabled(
-        jumpClientInstaller: JumpClientInstaller
+        jumpClientInstaller: JumpClientInstaller,
     ): boolean {
         return !jumpClientInstaller.keyInfo;
     }
 
     public downloadJumpClientInstallerHandler(
-        jumpClientInstaller: JumpClientInstaller
+        jumpClientInstaller: JumpClientInstaller,
     ): void {
         this.dialog.open(JumpClientInstallerDownloadOverlayComponent, {
             width: "480px",
@@ -109,7 +109,7 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
     }
 
     public async deleteJumpClientInstallerHandler(
-        jumpClientInstaller: JumpClientInstaller
+        jumpClientInstaller: JumpClientInstaller,
     ): Promise<void> {
         const confirmed = await this.confirmDialog.show({
             title: "Delete Jump Client Installer",
@@ -130,7 +130,7 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
             try {
                 await this.jumpClientInstallerService.deleteJumpClientInstaller(
                     this.currentTenantId,
-                    jumpClientInstaller.id
+                    jumpClientInstaller.id,
                 );
                 this.notificationDialog.show({
                     message: `Jump Client Installer "${jumpClientInstaller.name}" has been deleted.`,
@@ -148,22 +148,27 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
         }
     }
 
-    private async loadPage(): Promise<void> {
+    private async loadPage(
+        overrides: Partial<{ pageNumber: number; pageSize: number }> = {},
+    ): Promise<void> {
         if (!this.currentTenantId) {
             return;
         }
 
         this.isLoading = true;
         try {
+            // Load all necessary data in parallel
             const [items, jumpGroups, jumpPolicies] = await Promise.all([
                 this.jumpClientInstallerService.fetchJumpClientInstallers(
-                    this.currentTenantId
+                    this.currentTenantId,
                 ),
                 this.jumpGroupsService.fetchJumpGroups(this.currentTenantId),
                 this.jumpPoliciesService.fetchJumpPolicies(
-                    this.currentTenantId
+                    this.currentTenantId,
                 ),
             ]);
+
+            // Enrich items directly
             const enriched = items.map((item) => ({
                 ...item,
                 jumpGroupName:
@@ -173,15 +178,31 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
                     jumpPolicies.find((p) => p.id === item.jumpPolicyId)
                         ?.displayName ?? "–",
             }));
-            const filteredItems = PraDataFilter.filterByBusinessUnit(
-                enriched,
-                this.currentBusinessUnit,
-                [(j) => j.jumpGroupName]
-            );
+
+            // Optional pagination overrides (if the calling location wants it)
+            if (overrides.pageNumber !== undefined && this.paginator) {
+                this.paginator.pageIndex = overrides.pageNumber;
+            }
+            if (overrides.pageSize !== undefined && this.paginator) {
+                this.paginator.pageSize = overrides.pageSize;
+            }
+
+            // Provide MatTableDataSource
             this.dataSource.data = enriched;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
             this.dataCount = enriched.length;
+
+            // Ensure paginator is on a valid page
+            if (this.paginator) {
+                const maxPageIndex = Math.max(
+                    Math.ceil(enriched.length / this.paginator.pageSize) - 1,
+                    0,
+                );
+                if (this.paginator.pageIndex > maxPageIndex) {
+                    this.paginator.firstPage();
+                }
+            }
         } catch (err: any) {
             await this.errorDialog.show({
                 title: "Error",
@@ -198,9 +219,7 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
                 if (!user || user.role === "None") {
                     this.jwtAuthService.checkTokenIsValid();
                 }
-
-                this.currentBusinessUnit = user.businessUnit;
-            })
+            }),
         );
 
         this.subscriptionsToClear.add(
@@ -210,8 +229,8 @@ export class JumpClientInstallersComponent implements OnInit, OnDestroy {
                     if (instanceId) {
                         await this.loadPage();
                     }
-                }
-            )
+                },
+            ),
         );
     }
 }
