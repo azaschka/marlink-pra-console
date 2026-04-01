@@ -16,14 +16,12 @@ export interface ParsedSite {
 
 // SITE AUDITORS
 export interface ParsedSiteAuditor {
-    username: string; // SITE AUDITOR USERNAME
     email: string; // SITE AUDITOR EMAIL
     isAdminOperator: boolean; // IS ADMIN OPERATOR ("YES"/"NO")
 }
 
 // SITE MANAGERS
 export interface ParsedSiteManager {
-    username: string; // SITE MANAGER USERNAME
     email: string; // SITE MANAGER EMAIL
 }
 
@@ -122,10 +120,8 @@ export class SiteExcelParserService {
         BUSINESS_UNIT: "BUSINESS UNIT",
         MARLINK_SITE_ID: "MARLINK SITE ID",
         SITE_NAME: "SITE NAME",
-        SITE_AUDITOR_USERNAME: "SITE AUDITOR USERNAME",
         SITE_AUDITOR_EMAIL: "SITE AUDITOR EMAIL",
         IS_ADMIN_OPERATOR: "IS ADMIN OPERATOR",
-        SITE_MANAGER_USERNAME: "SITE MANAGER USERNAME",
         SITE_MANAGER_EMAIL: "SITE MANAGER EMAIL",
         SITE_APPROVER_EMAIL: "SITE APPROVER EMAIL",
     };
@@ -200,12 +196,12 @@ export class SiteExcelParserService {
         ];
 
         const missingSheets = requiredSheets.filter(
-            (sheetName) => !workbook.Sheets[sheetName]
+            (sheetName) => !workbook.Sheets[sheetName],
         );
 
         if (missingSheets.length > 0) {
             throw new Error(
-                `Missing required sheet(s): ${missingSheets.join(", ")}`
+                `Missing required sheet(s): ${missingSheets.join(", ")}`,
             );
         }
     }
@@ -227,7 +223,7 @@ export class SiteExcelParserService {
     private parseCustomer(workbook: XLSX.WorkBook): ParsedCustomer {
         const sheet = this.readSheet(
             workbook,
-            SiteExcelParserService.SHEET_SITE
+            SiteExcelParserService.SHEET_SITE,
         );
         const headers = sheet[
             SiteExcelParserService.SITE_SHEET_HEADER_ROW
@@ -242,17 +238,17 @@ export class SiteExcelParserService {
             key: this.getValueByHeader(
                 headers,
                 row,
-                SiteExcelParserService.HEADERS.MARLINK_CUSTOMER_ID
+                SiteExcelParserService.HEADERS.MARLINK_CUSTOMER_ID,
             ),
             name: this.getValueByHeader(
                 headers,
                 row,
-                SiteExcelParserService.HEADERS.CUSTOMER_NAME
+                SiteExcelParserService.HEADERS.CUSTOMER_NAME,
             ),
             businessUnit: this.getValueByHeader(
                 headers,
                 row,
-                SiteExcelParserService.HEADERS.BUSINESS_UNIT
+                SiteExcelParserService.HEADERS.BUSINESS_UNIT,
             ),
         };
     }
@@ -263,7 +259,7 @@ export class SiteExcelParserService {
     private parseSite(workbook: XLSX.WorkBook): ParsedSite {
         const sheet = this.readSheet(
             workbook,
-            SiteExcelParserService.SHEET_SITE
+            SiteExcelParserService.SHEET_SITE,
         );
         const headers = sheet[
             SiteExcelParserService.SITE_SHEET_HEADER_ROW
@@ -278,12 +274,12 @@ export class SiteExcelParserService {
             key: this.getValueByHeader(
                 headers,
                 row,
-                SiteExcelParserService.HEADERS.MARLINK_SITE_ID
+                SiteExcelParserService.HEADERS.MARLINK_SITE_ID,
             ),
             name: this.getValueByHeader(
                 headers,
                 row,
-                SiteExcelParserService.HEADERS.SITE_NAME
+                SiteExcelParserService.HEADERS.SITE_NAME,
             ),
         };
     }
@@ -294,7 +290,7 @@ export class SiteExcelParserService {
     private parseSiteAuditors(workbook: XLSX.WorkBook): ParsedSiteAuditor[] {
         const sheet = this.readSheet(
             workbook,
-            SiteExcelParserService.SHEET_SITE
+            SiteExcelParserService.SHEET_SITE,
         );
         const headers = sheet[
             SiteExcelParserService.SITE_SHEET_HEADER_ROW
@@ -307,26 +303,21 @@ export class SiteExcelParserService {
             i++
         ) {
             const row = sheet[i];
-            const username = this.getValueByHeader(
+            const email = this.getValueByHeader(
                 headers,
                 row,
-                SiteExcelParserService.HEADERS.SITE_AUDITOR_USERNAME
+                SiteExcelParserService.HEADERS.SITE_AUDITOR_EMAIL,
             );
 
-            if (username) {
+            if (email) {
                 result.push({
-                    username,
-                    email: this.getValueByHeader(
-                        headers,
-                        row,
-                        SiteExcelParserService.HEADERS.SITE_AUDITOR_EMAIL
-                    ),
+                    email,
                     isAdminOperator: this.parseBoolean(
                         this.getValueByHeader(
                             headers,
                             row,
-                            SiteExcelParserService.HEADERS.IS_ADMIN_OPERATOR
-                        )
+                            SiteExcelParserService.HEADERS.IS_ADMIN_OPERATOR,
+                        ),
                     ),
                 });
             }
@@ -341,7 +332,7 @@ export class SiteExcelParserService {
     private parseSiteManagers(workbook: XLSX.WorkBook): ParsedSiteManager[] {
         const sheet = this.readSheet(
             workbook,
-            SiteExcelParserService.SHEET_SITE
+            SiteExcelParserService.SHEET_SITE,
         );
         const headers = sheet[
             SiteExcelParserService.SITE_SHEET_HEADER_ROW
@@ -354,21 +345,14 @@ export class SiteExcelParserService {
             i++
         ) {
             const row = sheet[i];
-            const username = this.getValueByHeader(
+            const email = this.getValueByHeader(
                 headers,
                 row,
-                SiteExcelParserService.HEADERS.SITE_MANAGER_USERNAME
+                SiteExcelParserService.HEADERS.SITE_MANAGER_EMAIL,
             );
 
-            if (username) {
-                result.push({
-                    username,
-                    email: this.getValueByHeader(
-                        headers,
-                        row,
-                        SiteExcelParserService.HEADERS.SITE_MANAGER_EMAIL
-                    ),
-                });
+            if (email) {
+                result.push({ email });
             }
         }
 
@@ -381,7 +365,7 @@ export class SiteExcelParserService {
     private parseSiteApprovers(workbook: XLSX.WorkBook): string[] {
         const sheet = this.readSheet(
             workbook,
-            SiteExcelParserService.SHEET_SITE
+            SiteExcelParserService.SHEET_SITE,
         );
         const headers = sheet[
             SiteExcelParserService.SITE_SHEET_HEADER_ROW
@@ -397,7 +381,7 @@ export class SiteExcelParserService {
             const email = this.getValueByHeader(
                 headers,
                 row,
-                SiteExcelParserService.HEADERS.SITE_APPROVER_EMAIL
+                SiteExcelParserService.HEADERS.SITE_APPROVER_EMAIL,
             );
 
             if (email) {
@@ -414,7 +398,7 @@ export class SiteExcelParserService {
     private parseSupportTeams(workbook: XLSX.WorkBook): ParsedSupportTeam[] {
         const sheet = this.readSheet(
             workbook,
-            SiteExcelParserService.SHEET_SUPPORT_TEAMS
+            SiteExcelParserService.SHEET_SUPPORT_TEAMS,
         );
         const result: ParsedSupportTeam[] = [];
 
@@ -442,7 +426,7 @@ export class SiteExcelParserService {
     private parseUsers(workbook: XLSX.WorkBook): ParsedUser[] {
         const sheet = this.readSheet(
             workbook,
-            SiteExcelParserService.SHEET_USERS
+            SiteExcelParserService.SHEET_USERS,
         );
         const result: ParsedUser[] = [];
 
@@ -471,7 +455,7 @@ export class SiteExcelParserService {
     private parseJumpAssets(workbook: XLSX.WorkBook): ParsedJumpAsset[] {
         const sheet = this.readSheet(
             workbook,
-            SiteExcelParserService.SHEET_HOSTS
+            SiteExcelParserService.SHEET_HOSTS,
         );
         const result: ParsedJumpAsset[] = [];
 
@@ -512,7 +496,7 @@ export class SiteExcelParserService {
     private getValueByHeader(
         headers: string[],
         row: any[],
-        headerName: string
+        headerName: string,
     ): string {
         const idx = headers.indexOf(headerName);
         return idx !== -1 && row[idx] !== undefined
@@ -541,14 +525,14 @@ export class SiteExcelParserService {
         return row
             .slice(
                 SiteExcelParserService.JUMP_ASSET_TEAMS_START_COL,
-                SiteExcelParserService.JUMP_ASSET_TEAMS_END_COL
+                SiteExcelParserService.JUMP_ASSET_TEAMS_END_COL,
             )
             .filter(
                 (v): v is string =>
                     v !== null &&
                     v !== undefined &&
                     typeof v === "string" &&
-                    v.trim() !== ""
+                    v.trim() !== "",
             )
             .map((s) => s.trim());
     }

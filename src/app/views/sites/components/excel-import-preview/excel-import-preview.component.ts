@@ -57,7 +57,7 @@ export class ExcelImportPreviewComponent implements OnInit {
     public selectedInstanceId: number | null = null;
 
     public treeControl = new NestedTreeControl<PreviewTreeNode>(
-        (node) => node.children
+        (node) => node.children,
     );
     public dataSource = new MatTreeNestedDataSource<PreviewTreeNode>();
 
@@ -76,7 +76,7 @@ export class ExcelImportPreviewComponent implements OnInit {
         if (this.selectedInstanceId) {
             console.log(
                 "Starting import for instance ID:",
-                this.selectedInstanceId
+                this.selectedInstanceId,
             );
             this.startImport.emit(this.selectedInstanceId);
         }
@@ -95,7 +95,7 @@ export class ExcelImportPreviewComponent implements OnInit {
 
         // Site Auditors
         const auditorNodes = siteAuditors.map((a) => ({
-            label: `${a.username} (${a.email})`,
+            label: a.email,
             value: a.isAdminOperator
                 ? "AdminOperator: Yes"
                 : "AdminOperator: No",
@@ -103,7 +103,7 @@ export class ExcelImportPreviewComponent implements OnInit {
 
         // Site Managers
         const managerNodes = siteManagers.map((m) => ({
-            label: `${m.username} (${m.email})`,
+            label: m.email,
         }));
 
         const approverNodes = siteApprovers.map((approver) => ({
@@ -111,7 +111,7 @@ export class ExcelImportPreviewComponent implements OnInit {
         }));
 
         const parsedSupportTeams = supportTeams.filter((team) =>
-            users.some((user) => user.teamName === team.teamName)
+            users.some((user) => user.teamName === team.teamName),
         );
         // Support Teams (mit Membern als Kindknoten)
         const teamNodes = parsedSupportTeams.map((team) => {

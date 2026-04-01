@@ -50,9 +50,9 @@ export class SiteFactory {
             throw new SiteFactoryError(
                 "At least one site manager is required.",
             );
-        this.sanitizeSiteManagers(siteManagers);
+        const sanitizedManagers = this.sanitizeSiteManagers(siteManagers);
 
-        this.sanitizeSiteAuditors(siteAuditors);
+        const sanitizedAuditors = this.sanitizeSiteAuditors(siteAuditors);
 
         this.sanitizeSiteApprovers(siteApprovers);
 
@@ -65,8 +65,8 @@ export class SiteFactory {
             key,
             name,
             customerKey,
-            siteManagers,
-            siteAuditors,
+            siteManagers: sanitizedManagers,
+            siteAuditors: sanitizedAuditors,
             siteApprovers,
             siteSupportTeamMembers,
         };
@@ -95,18 +95,9 @@ export class SiteFactory {
     ): SiteManagerDtoInput[] {
         if (!siteManagers?.length) return [];
         return siteManagers.map((manager) => {
-            if (!manager.username || !manager.email) {
+            if (!manager.email) {
                 throw new SiteFactoryError(
-                    `Site manager is missing username or email: ${JSON.stringify(
-                        manager,
-                    )}`,
-                );
-            }
-            if (!FieldValidators.isValidUsername(manager.username)) {
-                throw new SiteFactoryError(
-                    `Site manager has invalid username: ${JSON.stringify(
-                        manager,
-                    )}`,
+                    `Site manager is missing email: ${JSON.stringify(manager)}`,
                 );
             }
             if (!FieldValidators.isValidEmail(manager.email)) {
@@ -115,7 +106,7 @@ export class SiteFactory {
                 );
             }
             return {
-                username: manager.username,
+                username: manager.email,
                 email: manager.email,
             };
         });
@@ -141,18 +132,9 @@ export class SiteFactory {
     ): SiteAuditorDtoInput[] {
         if (!siteAuditors?.length) return [];
         return siteAuditors.map((auditor) => {
-            if (!auditor.username || !auditor.email) {
+            if (!auditor.email) {
                 throw new SiteFactoryError(
-                    `Site auditor is missing username or email: ${JSON.stringify(
-                        auditor,
-                    )}`,
-                );
-            }
-            if (!FieldValidators.isValidUsername(auditor.username)) {
-                throw new SiteFactoryError(
-                    `Site auditor has invalid username: ${JSON.stringify(
-                        auditor,
-                    )}`,
+                    `Site auditor is missing email: ${JSON.stringify(auditor)}`,
                 );
             }
             if (!FieldValidators.isValidEmail(auditor.email)) {
@@ -161,7 +143,7 @@ export class SiteFactory {
                 );
             }
             return {
-                username: auditor.username,
+                username: auditor.email,
                 email: auditor.email,
                 isAdminOperator: auditor.isAdminOperator,
             };
