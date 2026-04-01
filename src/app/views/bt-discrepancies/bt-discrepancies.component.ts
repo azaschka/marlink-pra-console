@@ -3,7 +3,8 @@ import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
-import { Subscription } from "rxjs";
+import { interval, Subscription } from "rxjs";
+import { switchMap, takeWhile, finalize } from "rxjs/operators";
 import * as jsondiffpatch from "jsondiffpatch";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
@@ -12,7 +13,11 @@ import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { BtDiscrepanciesService } from "./bt-discrepancies.service";
 import { Discrepancy } from "./models";
 import { AppService } from "../../app.service";
-import { DiscrepancyEntityType, DiscrepancySyncType } from "./enums";
+import {
+    DiscrepancyEntityType,
+    DiscrepancyScanStatus,
+    DiscrepancySyncType,
+} from "./enums";
 
 @Component({
     selector: "app-bt-discrepancies",
@@ -29,6 +34,8 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
         "creationDate",
         "actions",
     ];
+    private static readonly POLL_INTERVAL_MS = 5000;
+    private static readonly MAX_POLL_DURATION_MS = 10 * 60 * 1000;
 
     private static readonly ENTITY_TYPE_LABELS: Record<
         DiscrepancyEntityType,
@@ -68,6 +75,8 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
     public displayedColumns = BtDiscrepanciesComponent.DISPLAYED_COLUMNS;
 
     public isLoading = true;
+    public isScanning = false;
+    public scanError: string | null = null;
     public filterValue = "";
     public dataCount = 0;
     public expandedRowId: number | null = null;
@@ -75,6 +84,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
     private currentTenantId: number | null = null;
     private formatHtml: any;
     private htmlFormatterModule: any;
+    private pollSubscription: Subscription | null = null;
 
     private readonly subscriptionsToClear: Subscription;
 
@@ -85,7 +95,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
-        private readonly sanitizer: DomSanitizer
+        private readonly sanitizer: DomSanitizer,
     ) {
         this.subscriptionsToClear = new Subscription();
         jsondiffpatch.create({
@@ -103,6 +113,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
     }
 
     public ngOnDestroy(): void {
+        this.pollSubscription?.unsubscribe();
         this.subscriptionsToClear.unsubscribe();
     }
 
@@ -126,26 +137,78 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
         });
 
         if (confirmed) {
+            this.isScanning = true;
             this.isLoading = true;
+            this.scanError = null;
             try {
-                await this.btDiscrepanciesService.scanAllDiscrepancies(
-                    this.currentTenantId
-                );
-                this.notificationDialog.show({
-                    message: "Discrepancy scan completed successfully.",
-                });
-                await this.loadPage();
+                const { scanId } =
+                    await this.btDiscrepanciesService.scanAllDiscrepancies(
+                        this.currentTenantId,
+                    );
+                this.pollUntilComplete(scanId);
             } catch (err: any) {
-                this.errorDialog.show({
-                    title: "Scan Failed",
-                    message:
-                        err?.message ??
-                        "The discrepancy scan failed. Please try again later.",
-                });
-            } finally {
+                this.isScanning = false;
                 this.isLoading = false;
+                this.scanError = "Failed to start scan. Please try again.";
             }
         }
+    }
+
+    private pollUntilComplete(scanId: string): void {
+        if (!this.currentTenantId) return;
+        const tenantId = this.currentTenantId;
+        const startTime = Date.now();
+
+        this.pollSubscription?.unsubscribe();
+        this.pollSubscription = interval(
+            BtDiscrepanciesComponent.POLL_INTERVAL_MS,
+        )
+            .pipe(
+                switchMap(() =>
+                    this.btDiscrepanciesService.getScanStatus(tenantId, scanId),
+                ),
+                takeWhile(
+                    (status) => status.status === DiscrepancyScanStatus.Running,
+                    true,
+                ),
+                finalize(() => {
+                    this.isScanning = false;
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe({
+                next: (status) => {
+                    if (
+                        Date.now() - startTime >
+                        BtDiscrepanciesComponent.MAX_POLL_DURATION_MS
+                    ) {
+                        this.isScanning = false;
+                        this.isLoading = false;
+                        this.scanError = "Scan timed out after 10 minutes.";
+                        return;
+                    }
+                    if (status.status === DiscrepancyScanStatus.Completed) {
+                        this.notificationDialog.show({
+                            message: "Discrepancy scan completed successfully.",
+                        });
+                        this.loadPage();
+                    } else if (status.status === DiscrepancyScanStatus.Failed) {
+                        this.scanError =
+                            status.error ?? "Scan failed. Please try again.";
+                    }
+                },
+                error: (err: any) => {
+                    this.isScanning = false;
+                    this.isLoading = false;
+                    if (err?.status === 404) {
+                        this.scanError =
+                            "Scan status unavailable (server restarted). Check results manually.";
+                    } else {
+                        this.scanError =
+                            "Lost connection during scan. Check results manually.";
+                    }
+                },
+            });
     }
 
     public getDiffHtml(discrepancy: Discrepancy): SafeHtml {
@@ -154,7 +217,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
 
         if (Object.keys(left).length === 0 && Object.keys(right).length === 0) {
             return this.sanitizer.bypassSecurityTrustHtml(
-                '<div class="no-data">No data available</div>'
+                '<div class="no-data">No data available</div>',
             );
         }
 
@@ -162,13 +225,13 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
             const delta = jsondiffpatch.diff(left, right);
             if (!delta) {
                 return this.sanitizer.bypassSecurityTrustHtml(
-                    '<div class="no-diff">No differences found</div>'
+                    '<div class="no-diff">No differences found</div>',
                 );
             }
 
             if (!this.formatHtml) {
                 return this.sanitizer.bypassSecurityTrustHtml(
-                    '<div class="error">Formatter not loaded yet</div>'
+                    '<div class="error">Formatter not loaded yet</div>',
                 );
             }
 
@@ -182,14 +245,14 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
         } catch (error) {
             console.error("Error generating diff:", error);
             return this.sanitizer.bypassSecurityTrustHtml(
-                '<div class="error">Error generating diff</div>'
+                '<div class="error">Error generating diff</div>',
             );
         }
     }
 
     public async syncDiscrepancyHandler(
         discrepancy: Discrepancy,
-        syncType: DiscrepancySyncType
+        syncType: DiscrepancySyncType,
     ): Promise<void> {
         if (!this.currentTenantId) return;
 
@@ -209,7 +272,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
                 await this.btDiscrepanciesService.syncDiscrepancy(
                     this.currentTenantId,
                     discrepancy.id,
-                    { syncType }
+                    { syncType },
                 );
                 this.notificationDialog.show({
                     message: "Discrepancy synced successfully.",
@@ -235,7 +298,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
             const discrepancies =
                 await this.btDiscrepanciesService.fetchDiscrepancies(
                     this.currentTenantId,
-                    { pageSize: 9999 }
+                    { pageSize: 9999 },
                 );
 
             this.dataSource.data = discrepancies;
@@ -262,7 +325,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
                 if (!user || user.role === "None") {
                     this.jwtAuthService.checkTokenIsValid();
                 }
-            })
+            }),
         );
 
         this.subscriptionsToClear.add(
@@ -271,7 +334,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
                 if (instanceId) {
                     this.loadPage();
                 }
-            })
+            }),
         );
     }
 
@@ -293,7 +356,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
         } catch (error) {
             console.error(
                 "Failed to load jsondiffpatch HTML formatter:",
-                error
+                error,
             );
         }
     }

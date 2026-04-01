@@ -12,9 +12,12 @@
         </div>
         <div fxFlex></div>
         <div class="pl-16">
-            <button mat-raised-button class="m-16" color="primary" translate="views.bt-discrepancies.buttons.scanAll"
-                (click)="scanAllHandler()" [disabled]="isLoading">
+            <button mat-raised-button class="m-16" color="primary" (click)="scanAllHandler()"
+                [disabled]="isLoading || isScanning">
+                <span *ngIf="!isScanning" translate="views.bt-discrepancies.buttons.scanAll"></span>
+                <span *ngIf="isScanning">Scanning…</span>
             </button>
+            <p *ngIf="scanError" class="scan-error-message">{{ scanError }}</p>
         </div>
     </div>
 

@@ -1,13 +1,13 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, Observable } from "rxjs";
 import {
     Discrepancy,
-    DiscrepancyOverview,
     RetrieveDiscrepanciesParams,
+    ScanStartedResponse,
+    ScanStatusResponse,
     SyncDiscrepancyRequest,
 } from "./models";
-import { DiscrepancyEntityType } from "./enums";
 
 @Injectable()
 export class BtDiscrepanciesService {
@@ -19,7 +19,7 @@ export class BtDiscrepanciesService {
 
     public async fetchDiscrepancies(
         tenantId: number,
-        params: RetrieveDiscrepanciesParams = {}
+        params: RetrieveDiscrepanciesParams = {},
     ): Promise<Discrepancy[]> {
         let httpParams = new HttpParams();
         httpParams = httpParams.set("pageSize", "9999");
@@ -30,7 +30,7 @@ export class BtDiscrepanciesService {
         if (params.pageNumber !== undefined) {
             httpParams = httpParams.set(
                 "pageNumber",
-                params.pageNumber.toString()
+                params.pageNumber.toString(),
             );
         }
         if (params.entityType !== undefined) {
@@ -44,33 +44,43 @@ export class BtDiscrepanciesService {
             this.http.get<Discrepancy[]>("discrepancies", {
                 params: httpParams,
                 ...this.createHeaders(tenantId),
-            })
+            }),
         );
     }
 
     public async scanAllDiscrepancies(
-        tenantId: number
-    ): Promise<DiscrepancyOverview[]> {
+        tenantId: number,
+    ): Promise<ScanStartedResponse> {
         return firstValueFrom(
-            this.http.post<DiscrepancyOverview[]>(
+            this.http.post<ScanStartedResponse>(
                 "discrepancies/scan/all",
                 {},
-                this.createHeaders(tenantId)
-            )
+                this.createHeaders(tenantId),
+            ),
+        );
+    }
+
+    public getScanStatus(
+        tenantId: number,
+        scanId: string,
+    ): Observable<ScanStatusResponse> {
+        return this.http.get<ScanStatusResponse>(
+            `discrepancies/scan/status/${scanId}`,
+            this.createHeaders(tenantId),
         );
     }
 
     public async syncDiscrepancy(
         tenantId: number,
         discrepancyId: number,
-        request: SyncDiscrepancyRequest
+        request: SyncDiscrepancyRequest,
     ): Promise<void> {
         return firstValueFrom(
             this.http.post<void>(
                 `discrepancies/${discrepancyId}/sync`,
                 request,
-                this.createHeaders(tenantId)
-            )
+                this.createHeaders(tenantId),
+            ),
         );
     }
 }
