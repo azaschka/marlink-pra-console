@@ -13,7 +13,7 @@ export class CustomerFactoryError extends Error {
 export class CustomerFactory {
     public static create(
         beyondtrustInstanceId: number,
-        parsedCustomer: ParsedCustomer
+        parsedCustomer: ParsedCustomer,
     ): CustomerCreateRequest {
         if (!parsedCustomer)
             throw new CustomerFactoryError("Customer input is missing.");
@@ -25,7 +25,7 @@ export class CustomerFactory {
         const name = this.sanitizeName(parsedCustomer.name);
         if (!name)
             throw new CustomerFactoryError(
-                "Customer name is missing or empty."
+                "Customer name is missing or empty.",
             );
 
         const businessUnit = this.mapBusinessUnit(parsedCustomer.businessUnit);
@@ -45,13 +45,14 @@ export class CustomerFactory {
         if (!name) return "";
         let out = name.trim();
         out = StringSanitizer.replaceWhitespaceWithUnderscore(out);
+        out = StringSanitizer.replaceHyphensWithUnderscore(out);
         out = StringSanitizer.replaceSpecialCharacters(out);
         out = StringSanitizer.removeSpecialCharacters(out);
         return out.toUpperCase();
     }
 
     private static mapBusinessUnit(
-        raw: string | undefined | null
+        raw: string | undefined | null,
     ): CustomerBusinessUnit {
         if (!raw) return CustomerBusinessUnit.MT;
         // Extract the first two characters and convert to uppercase
@@ -63,10 +64,10 @@ export class CustomerFactory {
     }
 
     private static isBusinessUnit(
-        value: string
+        value: string,
     ): value is CustomerBusinessUnit {
         return (Object.values(CustomerBusinessUnit) as string[]).includes(
-            value
+            value,
         );
     }
 }

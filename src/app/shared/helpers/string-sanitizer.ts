@@ -6,7 +6,7 @@ export class StringSanitizer {
     }
 
     public static replaceWhitespaceWithUnderscore(
-        value: string | undefined | null
+        value: string | undefined | null,
     ): string {
         if (!value) return "";
         return value.trim().replace(/\s+/g, "_");
@@ -15,14 +15,21 @@ export class StringSanitizer {
     public static replaceSpecialCharacters(value: string): string {
         return value.replace(
             /[\u00C0-\u017F]/g,
-            (char) => SPECIAL_CHAR_MAP[char] || char
+            (char) => SPECIAL_CHAR_MAP[char] || char,
         );
     }
 
-    public static removeSpecialCharacters(
-        value: string | undefined | null
+    public static replaceHyphensWithUnderscore(
+        value: string | undefined | null,
     ): string {
         if (!value) return "";
-        return value.replace(/[^a-zA-Z0-9_-]/g, "");
+        return value.replace(/-/g, "_");
+    }
+
+    public static removeSpecialCharacters(
+        value: string | undefined | null,
+    ): string {
+        if (!value) return "";
+        return value.replace(/[^a-zA-Z0-9_]/g, "");
     }
 }

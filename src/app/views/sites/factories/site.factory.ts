@@ -32,7 +32,7 @@ export class SiteFactory {
         siteManagers: ParsedSiteManager[],
         siteApprovers: string[],
         supportTeams: ParsedSupportTeam[],
-        users: ParsedUser[]
+        users: ParsedUser[],
     ): CreateSiteDtoInput {
         if (!site) throw new SiteFactoryError("Site input is missing.");
 
@@ -48,7 +48,7 @@ export class SiteFactory {
 
         if (!siteManagers.length)
             throw new SiteFactoryError(
-                "At least one site manager is required."
+                "At least one site manager is required.",
             );
         this.sanitizeSiteManagers(siteManagers);
 
@@ -58,7 +58,7 @@ export class SiteFactory {
 
         const siteSupportTeamMembers = this.sanitizeSupportTeamMembers(
             supportTeams,
-            users
+            users,
         );
 
         return {
@@ -84,33 +84,34 @@ export class SiteFactory {
         if (!name) return "";
         let out = name.trim();
         out = StringSanitizer.replaceWhitespaceWithUnderscore(out);
+        out = StringSanitizer.replaceHyphensWithUnderscore(out);
         out = StringSanitizer.replaceSpecialCharacters(out);
         out = StringSanitizer.removeSpecialCharacters(out);
         return out.toUpperCase();
     }
 
     private static sanitizeSiteManagers(
-        siteManagers: ParsedSiteManager[]
+        siteManagers: ParsedSiteManager[],
     ): SiteManagerDtoInput[] {
         if (!siteManagers?.length) return [];
         return siteManagers.map((manager) => {
             if (!manager.username || !manager.email) {
                 throw new SiteFactoryError(
                     `Site manager is missing username or email: ${JSON.stringify(
-                        manager
-                    )}`
+                        manager,
+                    )}`,
                 );
             }
             if (!FieldValidators.isValidUsername(manager.username)) {
                 throw new SiteFactoryError(
                     `Site manager has invalid username: ${JSON.stringify(
-                        manager
-                    )}`
+                        manager,
+                    )}`,
                 );
             }
             if (!FieldValidators.isValidEmail(manager.email)) {
                 throw new SiteFactoryError(
-                    `Site manager has invalid email: ${JSON.stringify(manager)}`
+                    `Site manager has invalid email: ${JSON.stringify(manager)}`,
                 );
             }
             return {
@@ -127,8 +128,8 @@ export class SiteFactory {
             if (!FieldValidators.isValidEmail(email)) {
                 throw new SiteFactoryError(
                     `Site approver has invalid email: ${JSON.stringify(
-                        approver
-                    )}`
+                        approver,
+                    )}`,
                 );
             }
             return email;
@@ -136,27 +137,27 @@ export class SiteFactory {
     }
 
     private static sanitizeSiteAuditors(
-        siteAuditors: ParsedSiteAuditor[]
+        siteAuditors: ParsedSiteAuditor[],
     ): SiteAuditorDtoInput[] {
         if (!siteAuditors?.length) return [];
         return siteAuditors.map((auditor) => {
             if (!auditor.username || !auditor.email) {
                 throw new SiteFactoryError(
                     `Site auditor is missing username or email: ${JSON.stringify(
-                        auditor
-                    )}`
+                        auditor,
+                    )}`,
                 );
             }
             if (!FieldValidators.isValidUsername(auditor.username)) {
                 throw new SiteFactoryError(
                     `Site auditor has invalid username: ${JSON.stringify(
-                        auditor
-                    )}`
+                        auditor,
+                    )}`,
                 );
             }
             if (!FieldValidators.isValidEmail(auditor.email)) {
                 throw new SiteFactoryError(
-                    `Site auditor has invalid email: ${JSON.stringify(auditor)}`
+                    `Site auditor has invalid email: ${JSON.stringify(auditor)}`,
                 );
             }
             return {
@@ -169,35 +170,35 @@ export class SiteFactory {
 
     private static sanitizeSupportTeamMembers(
         supportTeams: ParsedSupportTeam[],
-        users: ParsedUser[]
+        users: ParsedUser[],
     ): SiteSupportTeamMemberDtoInput[] {
         if (!users?.length) return [];
         return users.map((user) => {
             const team = supportTeams.find((t) => t.teamName === user.teamName);
             if (!team) {
                 throw new SiteFactoryError(
-                    `No support team found for user: ${user.firstName} ${user.lastName}`
+                    `No support team found for user: ${user.firstName} ${user.lastName}`,
                 );
             }
 
             const email = user.email?.trim();
             if (!FieldValidators.isValidEmail(email)) {
                 throw new SiteFactoryError(
-                    `User has invalid email: ${JSON.stringify(user)}`
+                    `User has invalid email: ${JSON.stringify(user)}`,
                 );
             }
             if (!team.accessLevel || !team.trustLevel) {
                 throw new SiteFactoryError(
                     `Support team is missing access or trust level: ${JSON.stringify(
-                        team
-                    )}`
+                        team,
+                    )}`,
                 );
             }
 
             const supportTeamName = this.sanitizeSupportTeamName(team.teamName);
             if (!supportTeamName) {
                 throw new SiteFactoryError(
-                    `Support team has invalid name: ${team.teamName}`
+                    `Support team has invalid name: ${team.teamName}`,
                 );
             }
 
@@ -206,11 +207,11 @@ export class SiteFactory {
             if (
                 !FieldValidators.isValidEnumValue(
                     SiteSupportTeamAccessLevel,
-                    supportTeamAccessLevel
+                    supportTeamAccessLevel,
                 )
             ) {
                 throw new SiteFactoryError(
-                    `Support team has invalid access level: ${team.accessLevel}`
+                    `Support team has invalid access level: ${team.accessLevel}`,
                 );
             }
 
@@ -219,11 +220,11 @@ export class SiteFactory {
             if (
                 !FieldValidators.isValidEnumValue(
                     SiteSupportTeamTrustLevel,
-                    supportTeamTrustLevel
+                    supportTeamTrustLevel,
                 )
             ) {
                 throw new SiteFactoryError(
-                    `Support team has invalid trust level: ${team.trustLevel}`
+                    `Support team has invalid trust level: ${team.trustLevel}`,
                 );
             }
             return {
