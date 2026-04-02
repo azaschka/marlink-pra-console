@@ -5,7 +5,7 @@ const agent = corporateProxy ? new HttpsProxyAgent(corporateProxy) : undefined;
 
 module.exports = {
     "/api": {
-        target: "https://pra-proxy-pp.cdn-vas.net",
+        target: "https://pra-console-pp.cdn-vas.net/api",
         secure: false,
         changeOrigin: true,
         logLevel: "debug",
