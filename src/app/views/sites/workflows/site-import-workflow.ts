@@ -68,7 +68,7 @@ export interface ImportWorkflowSummary {
 
 @Injectable({ providedIn: "root" })
 export class SiteImportWorkflowService {
-    private site: Site;
+    private site: Site | undefined = undefined;
     private jumpGroups: JumpGroup[] = [];
     private jumpPolicies: JumpPolicy[] = [];
     private jumpoints: Jumpoint[] = [];
@@ -84,7 +84,7 @@ export class SiteImportWorkflowService {
         private readonly sitesService: SitesService,
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
-        private readonly jumpAssetsService: JumpAssetsService
+        private readonly jumpAssetsService: JumpAssetsService,
     ) {}
 
     public startWorkflow(
@@ -99,7 +99,7 @@ export class SiteImportWorkflowService {
             users: ParsedUser[];
             jumpAssets: ParsedJumpAsset[];
         },
-        steps: ImportStep[]
+        steps: ImportStep[],
     ): Observable<ImportStep[]> {
         // Reset result for this run
         this.result = { steps };
@@ -115,7 +115,7 @@ export class SiteImportWorkflowService {
                 const customerRequest = this.buildCustomerRequest(
                     tenantId,
                     parsed.customer,
-                    steps[0]
+                    steps[0],
                 );
                 if (!customerRequest) {
                     sub.next([...steps]);
@@ -150,7 +150,7 @@ export class SiteImportWorkflowService {
                     parsed.siteApprovers,
                     parsed.supportTeams,
                     parsed.users,
-                    steps[1]
+                    steps[1],
                 );
                 if (!siteRequest) {
                     sub.next([...steps]);
@@ -201,7 +201,7 @@ export class SiteImportWorkflowService {
                 try {
                     this.jumpPolicies =
                         await this.jumpPoliciesService.fetchJumpPolicies(
-                            tenantId
+                            tenantId,
                         );
                     steps[3].result = "Site managers created.";
                     steps[3].status = ImportStatus.Success;
@@ -223,7 +223,7 @@ export class SiteImportWorkflowService {
                 sub.next([...steps]);
                 try {
                     this.jumpoints = await this.sitesService.fetchSiteJumpoints(
-                        this.site.id
+                        this.site ? this.site.id : 0,
                     );
                     steps[4].result = "Support teams created.";
                     steps[4].status = ImportStatus.Success;
@@ -245,7 +245,7 @@ export class SiteImportWorkflowService {
                     if (!asset.teams?.length) continue;
                     for (const teamName of asset.teams) {
                         const parsedTeam = parsed.supportTeams.find(
-                            (t) => t.teamName === teamName
+                            (t) => t.teamName === teamName,
                         );
                         if (!parsedTeam) continue;
                         const label = `Creating Host ${asset.name} ...`;
@@ -258,7 +258,7 @@ export class SiteImportWorkflowService {
                                     asset,
                                     parsed.customer,
                                     parsed.site,
-                                    parsedTeam
+                                    parsedTeam,
                                 );
                             if (!jumpAssetRequest) {
                                 steps[currentStepIdx].status =
@@ -276,49 +276,48 @@ export class SiteImportWorkflowService {
                             ) {
                                 await this.jumpAssetsService.createJumpClientInstaller(
                                     tenantId,
-                                    jumpAssetRequest as CreateJumpClientInstallerDtoInput
+                                    jumpAssetRequest as CreateJumpClientInstallerDtoInput,
                                 );
                             } else {
                                 switch (asset.jumpType) {
                                     case ParsedJumpType.RemoteRdp:
                                         await this.jumpAssetsService.createRemoteRdp(
                                             tenantId,
-                                            jumpAssetRequest as CreateRemoteRdpDtoInput
+                                            jumpAssetRequest as CreateRemoteRdpDtoInput,
                                         );
                                         break;
                                     case ParsedJumpType.RemoteVnc:
                                         await this.jumpAssetsService.createRemoteVnc(
                                             tenantId,
-                                            jumpAssetRequest as CreateRemoteVncDtoInput
+                                            jumpAssetRequest as CreateRemoteVncDtoInput,
                                         );
                                         break;
                                     case ParsedJumpType.ShellJump:
                                         await this.jumpAssetsService.createShellJump(
                                             tenantId,
-                                            jumpAssetRequest as CreateShellJumpDtoInput
+                                            jumpAssetRequest as CreateShellJumpDtoInput,
                                         );
                                         break;
                                     case ParsedJumpType.WebJump:
                                         await this.jumpAssetsService.createWebJump(
                                             tenantId,
-                                            jumpAssetRequest as CreateWebJumpDtoInput
+                                            jumpAssetRequest as CreateWebJumpDtoInput,
                                         );
                                         break;
                                     case ParsedJumpType.ProtocolTunnelJump:
                                         await this.jumpAssetsService.createProtocolTunnelJump(
                                             tenantId,
-                                            jumpAssetRequest as CreateProtocolTunnelJumpDtoInput
+                                            jumpAssetRequest as CreateProtocolTunnelJumpDtoInput,
                                         );
                                         break;
                                     default:
                                         steps[currentStepIdx].status =
                                             ImportStatus.Error;
-                                        steps[
-                                            currentStepIdx
-                                        ].result = `Unknown jump type: ${asset.jumpType}`;
+                                        steps[currentStepIdx].result =
+                                            `Unknown jump type: ${asset.jumpType}`;
                                         console.warn(
                                             "[SiteImportWorkflow] Unknown jump type:",
-                                            asset.jumpType
+                                            asset.jumpType,
                                         );
                                         erroredAssets++;
                                         sub.next([...steps]);
@@ -327,9 +326,8 @@ export class SiteImportWorkflowService {
                             }
 
                             steps[currentStepIdx].status = ImportStatus.Success;
-                            steps[
-                                currentStepIdx
-                            ].result = `Created Host: ${asset.name} with Support Team: ${teamName}`;
+                            steps[currentStepIdx].result =
+                                `Created Host: ${asset.name} with Support Team: ${teamName}`;
                             createdAssets++;
                         } catch (err: any) {
                             if (err?.status === 409) {
@@ -358,7 +356,7 @@ export class SiteImportWorkflowService {
                 this.result.summary = this.makeSummary(
                     steps,
                     createdAssets,
-                    erroredAssets
+                    erroredAssets,
                 );
                 sub.complete();
             })();
@@ -374,6 +372,12 @@ export class SiteImportWorkflowService {
     private stringifyError(err: any): string {
         if (!err) return "Unknown error";
         if (typeof err === "string") return err;
+
+        // Dig into nested HttpErrorResponse / API error body
+        const body = err?.error ?? err;
+        const deepest = this.extractDeepestMessage(body);
+        if (deepest) return deepest;
+
         if (err.message) return err.message;
         try {
             return JSON.stringify(err);
@@ -382,20 +386,64 @@ export class SiteImportWorkflowService {
         }
     }
 
+    /**
+     * Recursively unwraps nested `message` objects until reaching the deepest
+     * API error payload, then formats it as a human-readable string.
+     * Example output: "web-jumps, Validation Failed, url: This value must be a valid URL."
+     */
+    private extractDeepestMessage(obj: any): string | null {
+        if (!obj || typeof obj !== "object") return null;
+
+        // Recurse into nested message
+        if (obj.message && typeof obj.message === "object") {
+            const deeper = this.extractDeepestMessage(obj.message);
+            if (deeper) return deeper;
+        }
+
+        const parts: string[] = [];
+
+        // Path: take last segment e.g. "/jump-items/web-jumps" → "web-jumps"
+        if (typeof obj.path === "string") {
+            const segment = obj.path.split("/").filter(Boolean).pop();
+            if (segment) parts.push(segment);
+        }
+
+        // Top-level message string
+        if (typeof obj.message === "string") {
+            parts.push(obj.message);
+        }
+
+        // Validation errors: { field: ["msg1", "msg2"] }
+        if (obj.errors && typeof obj.errors === "object") {
+            for (const [field, messages] of Object.entries(obj.errors)) {
+                const msgs = Array.isArray(messages)
+                    ? messages.join("; ")
+                    : String(messages);
+                parts.push(`${field}: ${msgs}`);
+            }
+        }
+
+        return parts.length > 0 ? parts.join(", ") : null;
+    }
+
     private makeSummary(
         steps: ImportStep[],
         createdAssets = 0,
-        erroredAssets = 0
+        erroredAssets = 0,
     ): ImportWorkflowSummary {
         return {
             totalSteps: steps.length,
             assetsCreated: createdAssets,
             assetsErrored: erroredAssets,
             errors: steps
-                .filter((s) => s.status === ImportStatus.Error)
+                .filter(
+                    (s) =>
+                        s.status === ImportStatus.Error &&
+                        s.result !== undefined,
+                )
                 .map((s) => ({
                     label: s.label,
-                    result: s.result,
+                    result: s.result as string,
                 })),
         };
     }
@@ -403,7 +451,7 @@ export class SiteImportWorkflowService {
     private buildCustomerRequest(
         tenantId: number,
         parsedCustomer: ParsedCustomer,
-        step: ImportStep
+        step: ImportStep,
     ): CustomerCreateRequest | undefined {
         try {
             return CustomerFactory.create(tenantId, parsedCustomer);
@@ -423,7 +471,7 @@ export class SiteImportWorkflowService {
         siteApprovers: string[],
         supportTeams: ParsedSupportTeam[],
         users: ParsedUser[],
-        step: ImportStep
+        step: ImportStep,
     ): CreateSiteDtoInput | undefined {
         try {
             return SiteFactory.create(
@@ -433,7 +481,7 @@ export class SiteImportWorkflowService {
                 siteManagers,
                 siteApprovers,
                 supportTeams,
-                users
+                users,
             );
         } catch (err: any) {
             step.status = ImportStatus.Error;
@@ -445,12 +493,11 @@ export class SiteImportWorkflowService {
 
     private async createCustomer(
         customerRequest: CustomerCreateRequest,
-        step: ImportStep
+        step: ImportStep,
     ): Promise<Customer | undefined> {
         try {
-            const customer = await this.customersService.createCustomer(
-                customerRequest
-            );
+            const customer =
+                await this.customersService.createCustomer(customerRequest);
             step.status = ImportStatus.Success;
             step.result = `Created customer: ${customer.name} (ID: ${customer.key})`;
             return customer;
@@ -470,7 +517,7 @@ export class SiteImportWorkflowService {
 
     private async createSite(
         siteRequest: CreateSiteDtoInput,
-        step: ImportStep
+        step: ImportStep,
     ): Promise<Site | undefined> {
         try {
             const site = await this.sitesService.createSite(siteRequest);
@@ -491,7 +538,7 @@ export class SiteImportWorkflowService {
 
     private async retrieveSite(
         key: string,
-        step: ImportStep
+        step: ImportStep,
     ): Promise<Site | undefined> {
         try {
             const existingSite = await this.sitesService.fetchSiteByKey(key);
@@ -517,7 +564,7 @@ export class SiteImportWorkflowService {
         asset: ParsedJumpAsset,
         customer: ParsedCustomer,
         site: ParsedSite,
-        team: ParsedSupportTeam
+        team: ParsedSupportTeam,
     ):
         | CreateJumpClientInstallerDtoInput
         | CreateRemoteRdpDtoInput
@@ -530,7 +577,7 @@ export class SiteImportWorkflowService {
         const jumpGroupId = this.getJumpGroupIdForSupportTeam(customer, team);
         if (!jumpGroupId) {
             console.error(
-                "[SiteImportWorkflow] Failed to retrieve Jump Group ID."
+                "[SiteImportWorkflow] Failed to retrieve Jump Group ID.",
             );
             return;
         }
@@ -538,11 +585,11 @@ export class SiteImportWorkflowService {
         const jumpPolicyId = this.getJumpPolicyIdForSupportTeam(
             customer,
             site,
-            team
+            team,
         );
         if (!jumpPolicyId) {
             console.error(
-                "[SiteImportWorkflow] Failed to retrieve Jump Policy ID."
+                "[SiteImportWorkflow] Failed to retrieve Jump Policy ID.",
             );
             return;
         }
@@ -550,7 +597,7 @@ export class SiteImportWorkflowService {
         const jumpointId = this.jumpoints[0]?.id;
         if (!jumpointId) {
             console.error(
-                "[SiteImportWorkflow] Failed to retrieve Jumpoint ID."
+                "[SiteImportWorkflow] Failed to retrieve Jumpoint ID.",
             );
             return;
         }
@@ -668,17 +715,17 @@ export class SiteImportWorkflowService {
 
     private getJumpGroupIdForSupportTeam(
         customer: ParsedCustomer,
-        team: ParsedSupportTeam
+        team: ParsedSupportTeam,
     ): number | undefined {
         const customerName = SiteImportWorkflowService.sanitizeString(
-            customer.name
+            customer.name,
         );
         const teamName = SiteImportWorkflowService.sanitizeString(
-            team.teamName
+            team.teamName,
         );
         const jumpGroupName = `${customerName}_${teamName}`;
         const jumpGroup = this.jumpGroups.find(
-            (group) => group.name.toLowerCase() === jumpGroupName.toLowerCase()
+            (group) => group.name.toLowerCase() === jumpGroupName.toLowerCase(),
         );
 
         return jumpGroup ? jumpGroup.id : undefined;
@@ -687,13 +734,13 @@ export class SiteImportWorkflowService {
     private getJumpPolicyIdForSupportTeam(
         customer: ParsedCustomer,
         site: ParsedSite,
-        team: ParsedSupportTeam
+        team: ParsedSupportTeam,
     ): number | undefined {
         const jumpPolicyName = this.composeJumpPolicyName(customer, site, team);
         const jumpPolicy = this.jumpPolicies.find(
             (policy) =>
                 policy.displayName.toLowerCase() ===
-                jumpPolicyName.toLowerCase()
+                jumpPolicyName.toLowerCase(),
         );
 
         return jumpPolicy ? jumpPolicy.id : undefined;
@@ -707,7 +754,7 @@ export class SiteImportWorkflowService {
 
     private createSiteTag(customer: ParsedCustomer, site: ParsedSite): string {
         const customerName = SiteImportWorkflowService.sanitizeString(
-            customer.name
+            customer.name,
         );
         const siteName = SiteImportWorkflowService.sanitizeString(site.name);
 
@@ -717,22 +764,22 @@ export class SiteImportWorkflowService {
     private composeJumpPolicyName(
         customer: ParsedCustomer,
         site: ParsedSite,
-        team: ParsedSupportTeam
+        team: ParsedSupportTeam,
     ): string {
         const jumpPolicySuffix =
             this.translateTeamTrustLevelToJumpPolicySuffix(team);
         const customerName = SiteImportWorkflowService.sanitizeString(
-            customer.name
+            customer.name,
         ).toUpperCase();
         const sanitizedSiteName = SiteImportWorkflowService.sanitizeString(
-            site.name
+            site.name,
         ).toUpperCase();
 
         return `${customerName}_${sanitizedSiteName}_${site.key.toUpperCase()}_${jumpPolicySuffix}`;
     }
 
     private translateTeamTrustLevelToJumpPolicySuffix(
-        team: ParsedSupportTeam
+        team: ParsedSupportTeam,
     ): string {
         if (team.trustLevel === ParsedTrustLevel.NoRestrictions) {
             return "NOAUTH";
@@ -751,6 +798,8 @@ export class SiteImportWorkflowService {
     private static sanitizeString(value: string): string {
         let sanitizeString =
             StringSanitizer.replaceWhitespaceWithUnderscore(value);
+        sanitizeString =
+            StringSanitizer.replaceHyphensWithUnderscore(sanitizeString);
         sanitizeString =
             StringSanitizer.replaceSpecialCharacters(sanitizeString);
         sanitizeString =
