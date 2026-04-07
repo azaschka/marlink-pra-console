@@ -13,12 +13,15 @@ import {
 } from "../../../shared/services/site-excel-parser.service";
 import { Observable } from "rxjs";
 import { CreateSiteDtoInput, ImportStatus, ImportStep, Site } from "../models";
+import { ErrorUtils, StringSanitizer } from "../../../shared/helpers";
 
 // Customer imports
+import { CustomerFactory } from "../../customers/factories/customer.factory";
 import { CustomersService } from "../../customers/customers.service";
 import { Customer, CustomerCreateRequest } from "../../customers/models";
 
 // Site imports
+import { SiteFactory } from "../factories/site.factory";
 import { SitesService } from "../sites.service";
 
 // Jump Groups imports
@@ -30,7 +33,7 @@ import { JumpPoliciesService } from "../../jump-policies/jump-policies.service";
 import { JumpPolicy } from "../../jump-policies/models";
 
 // Jumpoints imports
-import { Jumpoint } from "../../jumpoints/models";
+import { JumpointsService } from "../../jumpoints/jumpoints.service";
 
 // Jump Assets imports
 import {
@@ -41,7 +44,7 @@ import {
     CreateShellJumpDtoInput,
     CreateWebJumpDtoInput,
 } from "../../jump-assets/models";
-import { JumpAssetsService } from "app/views/jump-assets/jump-assets.service";
+import { JumpAssetsService } from "../../jump-assets/jump-assets.service";
 import {
     JumpClientConnectionType,
     JumpClientGroupType,
@@ -51,10 +54,7 @@ import {
     ShellJumpTerminalType,
     TunnelType,
     WebJumpUsernameFormatType,
-} from "app/views/jump-assets/enums";
-import { CustomerFactory } from "app/views/customers/factories/customer.factory";
-import { SiteFactory } from "../factories/site.factory";
-import { ErrorUtils, StringSanitizer } from "app/shared/helpers";
+} from "../../jump-assets/enums";
 
 export interface ImportWorkflowSummary {
     totalSteps: number;
@@ -71,7 +71,6 @@ export class SiteImportWorkflowService {
     private site: Site | undefined = undefined;
     private jumpGroups: JumpGroup[] = [];
     private jumpPolicies: JumpPolicy[] = [];
-    private jumpoints: Jumpoint[] = [];
 
     // RESULT-OBJECT mit Steps und optional Summary
     private result: {
@@ -85,6 +84,7 @@ export class SiteImportWorkflowService {
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
         private readonly jumpAssetsService: JumpAssetsService,
+        private readonly jumpointsService: JumpointsService,
     ) {}
 
     public startWorkflow(
@@ -173,14 +173,15 @@ export class SiteImportWorkflowService {
                 // === 3. FETCH GROUPS, POLICIES, JUMPOINTS ===
                 // 3.1 JumpGroups
                 steps.push({
-                    label: "Creating site auditors ...",
+                    label: "Creating/Updating site auditors and resolving JumpGroups ...",
                     status: ImportStatus.InProgress,
                 });
                 sub.next([...steps]);
                 try {
                     this.jumpGroups =
                         await this.jumpGroupsService.fetchJumpGroups(tenantId);
-                    steps[2].result = "Site auditors created.";
+                    steps[2].result =
+                        "Site auditors created/updated and JumpGroups resolved.";
                     steps[2].status = ImportStatus.Success;
                 } catch (err: any) {
                     steps[2].status = ImportStatus.Error;
@@ -194,7 +195,7 @@ export class SiteImportWorkflowService {
                 sub.next([...steps]);
                 // 3.2 JumpPolicies
                 steps.push({
-                    label: "Creating site managers ...",
+                    label: "Creating/Updating site managers and resolving JumpPolicies ...",
                     status: ImportStatus.InProgress,
                 });
                 sub.next([...steps]);
@@ -203,7 +204,8 @@ export class SiteImportWorkflowService {
                         await this.jumpPoliciesService.fetchJumpPolicies(
                             tenantId,
                         );
-                    steps[3].result = "Site managers created.";
+                    steps[3].result =
+                        "Site managers created/updated and JumpPolicies resolved.";
                     steps[3].status = ImportStatus.Success;
                 } catch (err: any) {
                     steps[3].status = ImportStatus.Error;
@@ -217,15 +219,19 @@ export class SiteImportWorkflowService {
                 sub.next([...steps]);
                 // 3.3 Jumpoints
                 steps.push({
-                    label: "Creating support teams ...",
+                    label: "Creating/Updating support teams and resolving Jumpoint ...",
                     status: ImportStatus.InProgress,
                 });
                 sub.next([...steps]);
+                let jumpointId: number | undefined;
                 try {
-                    this.jumpoints = await this.sitesService.fetchSiteJumpoints(
-                        this.site ? this.site.id : 0,
+                    jumpointId = await this.resolveJumpointId(
+                        tenantId,
+                        parsed.customer,
+                        parsed.site,
                     );
-                    steps[4].result = "Support teams created.";
+                    steps[4].result =
+                        "Support teams created/updated and Jumpoint resolved.";
                     steps[4].status = ImportStatus.Success;
                 } catch (err: any) {
                     steps[4].status = ImportStatus.Error;
@@ -259,6 +265,7 @@ export class SiteImportWorkflowService {
                                     parsed.customer,
                                     parsed.site,
                                     parsedTeam,
+                                    jumpointId,
                                 );
                             if (!jumpAssetRequest) {
                                 steps[currentStepIdx].status =
@@ -565,6 +572,7 @@ export class SiteImportWorkflowService {
         customer: ParsedCustomer,
         site: ParsedSite,
         team: ParsedSupportTeam,
+        jumpointId: number | undefined,
     ):
         | CreateJumpClientInstallerDtoInput
         | CreateRemoteRdpDtoInput
@@ -594,7 +602,6 @@ export class SiteImportWorkflowService {
             return;
         }
 
-        const jumpointId = this.jumpoints[0]?.id;
         if (!jumpointId) {
             console.error(
                 "[SiteImportWorkflow] Failed to retrieve Jumpoint ID.",
@@ -759,6 +766,36 @@ export class SiteImportWorkflowService {
         const siteName = SiteImportWorkflowService.sanitizeString(site.name);
 
         return `${customerName}_${siteName}`;
+    }
+
+    private composeJumpointName(
+        customer: ParsedCustomer,
+        site: ParsedSite,
+    ): string {
+        const businessUnit = SiteImportWorkflowService.sanitizeString(
+            customer.businessUnit,
+        ).toUpperCase();
+        const customerName = SiteImportWorkflowService.sanitizeString(
+            customer.name,
+        ).toUpperCase();
+        const siteName = SiteImportWorkflowService.sanitizeString(
+            site.name,
+        ).toUpperCase();
+        const siteKey = site.key.toUpperCase();
+        return `${businessUnit}_JPOI1_${customerName}_${siteName}_${siteKey}`;
+    }
+
+    private async resolveJumpointId(
+        tenantId: number,
+        customer: ParsedCustomer,
+        site: ParsedSite,
+    ): Promise<number | undefined> {
+        const jumpointName = this.composeJumpointName(customer, site);
+        const jumpoints = await this.jumpointsService.fetchJumpoints(tenantId);
+        const match = jumpoints.find(
+            (j) => j.name.toUpperCase() === jumpointName.toUpperCase(),
+        );
+        return match?.id;
     }
 
     private composeJumpPolicyName(
