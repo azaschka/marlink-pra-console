@@ -35,7 +35,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
         "actions",
     ];
     private static readonly POLL_INTERVAL_MS = 5000;
-    private static readonly MAX_POLL_DURATION_MS = 10 * 60 * 1000;
+    private static readonly MAX_POLL_DURATION_MS = 20 * 60 * 1000;
 
     private static readonly ENTITY_TYPE_LABELS: Record<
         DiscrepancyEntityType,
@@ -184,7 +184,7 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
                     ) {
                         this.isScanning = false;
                         this.isLoading = false;
-                        this.scanError = "Scan timed out after 10 minutes.";
+                        this.scanError = "Scan timed out after 20 minutes.";
                         return;
                     }
                     if (status.status === DiscrepancyScanStatus.Completed) {
@@ -200,12 +200,27 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
                 error: (err: any) => {
                     this.isScanning = false;
                     this.isLoading = false;
-                    if (err?.status === 404) {
+                    const status = err?.status;
+                    if (status === 0) {
                         this.scanError =
-                            "Scan status unavailable (server restarted). Check results manually.";
+                            "Network error: The server could not be reached. Please check your connection.";
+                    } else if (status === 401 || status === 403) {
+                        this.scanError =
+                            "Authentication error: You are not authorized to view scan results. Please log in again.";
+                    } else if (status === 404) {
+                        this.scanError =
+                            "Scan status unavailable. The server may have restarted while the scan was running.";
+                    } else if (status === 500) {
+                        this.scanError =
+                            "Internal server error: The server encountered an unexpected error while reporting scan status.";
+                    } else if (status === 502 || status === 503) {
+                        this.scanError =
+                            "Service unavailable: The server is temporarily unreachable. Please try again later.";
+                    } else if (status === 504) {
+                        this.scanError =
+                            "Gateway timeout: The server took too long to respond.";
                     } else {
-                        this.scanError =
-                            "Lost connection during scan. Check results manually.";
+                        this.scanError = `Unexpected error during scan polling${status ? ` (HTTP ${status})` : ""}.`;
                     }
                 },
             });
