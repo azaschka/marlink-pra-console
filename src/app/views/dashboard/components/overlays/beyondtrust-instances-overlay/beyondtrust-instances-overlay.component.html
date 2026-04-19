@@ -14,7 +14,7 @@
     <form [formGroup]="instanceFormGroup" (ngSubmit)="submitHandler()" style="width: 640px;">
         <div fxLayout="row wrap" fxLayoutGap="24px">
             <div fxFlex="100" class="m-0" fxLayout="row" fxLayoutGap="32px" fxLayoutAlign="space-between start">
-                <div fxFlex="70">
+                <div fxFlex="50">
                     <mat-form-field class="full-width">
                         <mat-label>Instance Name</mat-label>
                         <input matInput formControlName="name" placeholder="Instance Name" />
@@ -22,6 +22,16 @@
                     </mat-form-field>
                 </div>
                 <div fxFlex="30">
+                    <mat-form-field class="full-width">
+                        <mat-label>Business Unit</mat-label>
+                        <mat-select formControlName="businessUnit">
+                            <mat-option *ngFor="let bu of businessUnitOptions" [value]="bu.value">
+                                {{ bu.label }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div fxFlex="20">
                     <mat-form-field class="full-width">
                         <mat-label>Billing Type</mat-label>
                         <mat-select formControlName="billingType">

@@ -21,7 +21,7 @@ export class BeyondtrustInstancesService {
      */
     public async fetchById(id: number): Promise<BeyondtrustInstance> {
         return await firstValueFrom(
-            this.http.get<BeyondtrustInstance>(`${this.baseEndpoint}/${id}`)
+            this.http.get<BeyondtrustInstance>(`${this.baseEndpoint}/${id}`),
         );
     }
 
@@ -31,14 +31,14 @@ export class BeyondtrustInstancesService {
      * @returns Promise of BeyondtrustInstance array
      */
     public async fetchAll(
-        params?: RetrieveBeyondtrustInstancesParams
+        params?: RetrieveBeyondtrustInstancesParams,
     ): Promise<BeyondtrustInstance[]> {
         const httpParams = this.buildQueryParams(params);
 
         return await firstValueFrom(
             this.http.get<BeyondtrustInstance[]>(this.baseEndpoint, {
                 params: httpParams,
-            })
+            }),
         );
     }
 
@@ -48,10 +48,10 @@ export class BeyondtrustInstancesService {
      * @returns Promise of created BeyondtrustInstance
      */
     public async create(
-        dto: CreateBeyondtrustInstanceDto
+        dto: CreateBeyondtrustInstanceDto,
     ): Promise<BeyondtrustInstance> {
         return await firstValueFrom(
-            this.http.post<BeyondtrustInstance>(this.baseEndpoint, dto)
+            this.http.post<BeyondtrustInstance>(this.baseEndpoint, dto),
         );
     }
 
@@ -63,13 +63,13 @@ export class BeyondtrustInstancesService {
      */
     public async update(
         id: number,
-        dto: ModifyBeyondtrustInstanceDto
+        dto: ModifyBeyondtrustInstanceDto,
     ): Promise<BeyondtrustInstance> {
         return await firstValueFrom(
             this.http.patch<BeyondtrustInstance>(
                 `${this.baseEndpoint}/${id}`,
-                dto
-            )
+                dto,
+            ),
         );
     }
 
@@ -80,7 +80,7 @@ export class BeyondtrustInstancesService {
      */
     public async delete(id: number): Promise<void> {
         return firstValueFrom(
-            this.http.delete<void>(`${this.baseEndpoint}/${id}`)
+            this.http.delete<void>(`${this.baseEndpoint}/${id}`),
         );
     }
 
@@ -92,7 +92,7 @@ export class BeyondtrustInstancesService {
      * @returns HttpParams instance
      */
     private buildQueryParams(
-        params?: RetrieveBeyondtrustInstancesParams
+        params?: RetrieveBeyondtrustInstancesParams,
     ): HttpParams {
         let httpParams = new HttpParams();
 
@@ -107,7 +107,7 @@ export class BeyondtrustInstancesService {
         if (params.pageNumber !== undefined) {
             httpParams = httpParams.set(
                 "pageNumber",
-                params.pageNumber.toString()
+                params.pageNumber.toString(),
             );
         }
 
@@ -118,11 +118,17 @@ export class BeyondtrustInstancesService {
         if (params.oauth2TokenUrl) {
             httpParams = httpParams.set(
                 "oauth2TokenUrl",
-                params.oauth2TokenUrl
+                params.oauth2TokenUrl,
             );
         }
         if (params.apiBaseUrl) {
             httpParams = httpParams.set("apiBaseUrl", params.apiBaseUrl);
+        }
+
+        if (params.businessUnits?.length) {
+            params.businessUnits.forEach((bu) => {
+                httpParams = httpParams.append("businessUnits", bu);
+            });
         }
 
         return httpParams;

@@ -15,6 +15,9 @@ import {
     BeyondtrustInstanceOverlayDialogData,
 } from "../overlays/beyondtrust-instances-overlay/beyondtrust-instances-overlay.component";
 import { ThreadingUtility } from "app/shared/utilities";
+import { JwtAuthService } from "app/shared/services/auth/jwt-auth.service";
+import { AuthRole } from "app/shared/enums";
+import { BusinessUnitLabels } from "app/views/pra-users/enums";
 
 @Component({
     selector: "app-dashboard-beyondtrust-instances",
@@ -27,6 +30,7 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
         "name",
         "apiBaseUrl",
         // "billingType",
+        "businessUnit",
         "creationDate",
         "actions",
     ];
@@ -42,6 +46,8 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
     public displayedColumns = BeyondtrustInstancesComponent.DISPLAYED_COLUMNS;
     public dataCount = 0;
     public isLoading = true;
+    public isSuperAdmin = false;
+    public readonly businessUnitLabels = BusinessUnitLabels;
 
     private paginator!: MatPaginator;
 
@@ -53,14 +59,17 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
+        private readonly jwtAuthService: JwtAuthService,
     ) {}
 
     public async ngOnInit(): Promise<void> {
+        this.isSuperAdmin =
+            this.jwtAuthService.getPraUser()?.role === AuthRole.SUPER_ADMIN;
         this.addListeners();
 
         await ThreadingUtility.delayForLoadingAnimation(
-            this.appService.initialize()
+            this.appService.initialize(),
         );
     }
 
@@ -88,7 +97,7 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
     }
 
     public openUpdateBeyondtrustInstanceModalHandler(
-        instance: BeyondtrustInstance
+        instance: BeyondtrustInstance,
     ): void {
         this.dialog
             .open(BeyondtrustInstancesOverlayComponent, {
@@ -111,7 +120,7 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
     }
 
     public async deleteBeyondtrustInstanceHandler(
-        instance: BeyondtrustInstance
+        instance: BeyondtrustInstance,
     ): Promise<void> {
         const confirmed = await this.confirmDialog.show({
             title: "Delete Instance",
@@ -171,7 +180,7 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
                 this.dataSource.paginator = this.paginator;
                 this.dataCount = instances.length;
                 this.isLoading = false;
-            })
+            }),
         );
     }
 

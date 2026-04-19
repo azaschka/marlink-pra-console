@@ -4,7 +4,7 @@
             <span class="text-13 pt-4" translate="views.dashboard.btInstances.headline"></span>
 
             <span fxFlex></span>
-            <button class="card-control" mat-icon-button [matMenuTriggerFor]="hxConfigsMenu">
+            <button class="card-control" *ngIf="isSuperAdmin" mat-icon-button [matMenuTriggerFor]="hxConfigsMenu">
                 <mat-icon class="text-muted text-18">more_vert</mat-icon>
             </button>
             <mat-menu #hxConfigsMenu="matMenu">
@@ -40,10 +40,12 @@
                 <mat-cell *matCellDef="let row" data-label="apiBaseUrl">{{ row.apiBaseUrl }}</mat-cell>
             </ng-container>
 
-            <!-- <ng-container matColumnDef="billingType">
-                <mat-header-cell *matHeaderCellDef mat-sort-header>Billing Type</mat-header-cell>
-                <mat-cell *matCellDef="let row" data-label="billingType">Billing Type: {{ row.billingType }}</mat-cell>
-            </ng-container> -->
+            <ng-container matColumnDef="businessUnit">
+                <mat-header-cell *matHeaderCellDef>Business Unit</mat-header-cell>
+                <mat-cell *matCellDef="let row" data-label="businessUnit">
+                    {{ row.businessUnit ? businessUnitLabels[row.businessUnit] : 'Shared' }}
+                </mat-cell>
+            </ng-container>
 
             <ng-container matColumnDef="creationDate">
                 <mat-header-cell *matHeaderCellDef mat-sort-header>Creation Date</mat-header-cell>
@@ -52,7 +54,7 @@
 
             <ng-container matColumnDef="actions">
                 <mat-cell *matCellDef="let row">
-                    <div class="full-width text-right">
+                    <div *ngIf="isSuperAdmin" class="full-width text-right">
                         <button mat-icon-button mat-sm-button color="primary" class="mr-16"
                             (click)="openUpdateBeyondtrustInstanceModalHandler(row)">
                             <mat-icon>edit</mat-icon>

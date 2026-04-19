@@ -1,4 +1,5 @@
 import { BillingType } from "../enums";
+import { BusinessUnit } from "app/views/pra-users/enums";
 
 export interface CreateBeyondtrustInstanceDto {
     name: string;
@@ -7,4 +8,5 @@ export interface CreateBeyondtrustInstanceDto {
     oauth2TokenUrl: string;
     apiBaseUrl: string;
     billingType: BillingType;
+    businessUnit?: BusinessUnit | null;
 }

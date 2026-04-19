@@ -10,11 +10,11 @@
         <!-- <ng-container *ngIf="showInstanceSelector && instances.length > 0">
             <span>on</span>
         </ng-container> -->
-        <ng-container *ngIf="showInstanceSelector && instances.length > 0">
+        <ng-container *ngIf="showInstanceSelector && filteredInstances.length > 0">
             <mat-form-field style="width: 320px;">
                 <mat-select [value]="selectedInstanceId" (selectionChange)="onInstanceChange($event.value)"
-                    [disabled]="instances.length === 0">
-                    <mat-option *ngFor="let instance of instances" [value]="instance.id">
+                    [disabled]="filteredInstances.length === 0">
+                    <mat-option *ngFor="let instance of filteredInstances" [value]="instance.id">
                         {{ instance.name }} (ID: {{ instance.id }})
                     </mat-option>
                 </mat-select>

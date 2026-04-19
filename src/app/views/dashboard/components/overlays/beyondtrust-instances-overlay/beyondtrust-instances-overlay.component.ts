@@ -9,6 +9,9 @@ import {
     ModifyBeyondtrustInstanceDto,
 } from "../../beyondtrust-instaces/models";
 import { BillingType } from "../../beyondtrust-instaces/enums";
+import { BusinessUnit, BusinessUnitLabels } from "app/views/pra-users/enums";
+import { JwtAuthService } from "app/shared/services/auth/jwt-auth.service";
+import { AuthRole } from "app/shared/enums";
 
 export type BeyondtrustInstanceOverlayMode = "add" | "edit";
 export interface BeyondtrustInstanceOverlayDialogData {
@@ -31,6 +34,17 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
         { value: BillingType.Asset, label: "Asset" },
     ];
 
+    public businessUnitOptions: {
+        value: BusinessUnit | null;
+        label: string;
+    }[] = [
+        { value: null, label: "Shared" },
+        ...Object.entries(BusinessUnitLabels).map(([value, label]) => ({
+            value: value as BusinessUnit,
+            label,
+        })),
+    ];
+
     public instanceFormGroup = new FormGroup({
         name: new FormControl("", [Validators.required]),
         authClientId: new FormControl("", [Validators.required]),
@@ -40,6 +54,7 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
         billingType: new FormControl<BillingType>(BillingType.User, [
             Validators.required,
         ]),
+        businessUnit: new FormControl<BusinessUnit | null>(null),
     });
 
     constructor(
@@ -47,7 +62,8 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
         @Inject(MAT_DIALOG_DATA)
         public data: BeyondtrustInstanceOverlayDialogData,
         private readonly beyondtrustInstancesService: BeyondtrustInstancesService,
-        private readonly errorDialog: ErrorDialogService
+        private readonly errorDialog: ErrorDialogService,
+        private readonly jwtAuthService: JwtAuthService,
     ) {
         this.mode = data.mode;
         this.instance = data.instance;
@@ -62,7 +78,16 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
                 oauth2TokenUrl: this.instance.oauth2TokenUrl,
                 apiBaseUrl: this.instance.apiBaseUrl,
                 billingType: this.instance.billingType,
+                businessUnit: this.instance.businessUnit,
             });
+        }
+
+        const user = this.jwtAuthService.getPraUser();
+        if (user && user.role !== AuthRole.SUPER_ADMIN) {
+            this.instanceFormGroup
+                .get("businessUnit")!
+                .setValue(user.businessUnit ?? null);
+            this.instanceFormGroup.get("businessUnit")!.disable();
         }
     }
 
@@ -94,7 +119,7 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
     }
 
     private async createInstance(): Promise<void> {
-        const form = this.instanceFormGroup.value;
+        const form = this.instanceFormGroup.getRawValue();
         const body: CreateBeyondtrustInstanceDto = {
             name: form.name!.trim(),
             authClientId: form.authClientId!.trim(),
@@ -102,13 +127,14 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
             oauth2TokenUrl: form.oauth2TokenUrl!.trim(),
             apiBaseUrl: form.apiBaseUrl!.trim(),
             billingType: form.billingType!,
+            businessUnit: form.businessUnit ?? null,
         };
         await this.beyondtrustInstancesService.create(body);
     }
 
     private async updateInstance(): Promise<void> {
         if (!this.instance) return;
-        const form = this.instanceFormGroup.value;
+        const form = this.instanceFormGroup.getRawValue();
         const body: ModifyBeyondtrustInstanceDto = {
             name: form.name!.trim(),
             authClientId: form.authClientId!.trim(),
@@ -116,6 +142,7 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
             oauth2TokenUrl: form.oauth2TokenUrl!.trim(),
             apiBaseUrl: form.apiBaseUrl!.trim(),
             billingType: form.billingType!,
+            businessUnit: form.businessUnit ?? null,
         };
         await this.beyondtrustInstancesService.update(this.instance.id, body);
     }
@@ -137,5 +164,8 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
     }
     get billingType() {
         return this.instanceFormGroup.get("billingType");
+    }
+    get businessUnit() {
+        return this.instanceFormGroup.get("businessUnit");
     }
 }

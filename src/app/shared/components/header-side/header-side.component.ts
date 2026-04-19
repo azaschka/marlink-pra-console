@@ -3,6 +3,7 @@ import {
     OnInit,
     OnDestroy,
     Input,
+    QueryList,
     ViewChildren,
 } from "@angular/core";
 import { Router, NavigationEnd } from "@angular/router";
@@ -14,6 +15,8 @@ import { JwtAuthService } from "../../services/auth/jwt-auth.service";
 import { EgretNotifications2Component } from "../egret-notifications2/egret-notifications2.component";
 import { AppService } from "app/app.service";
 import { BeyondtrustInstance } from "app/views/dashboard/components/beyondtrust-instaces/models";
+import { AuthRole } from "app/shared/enums";
+import { PraUser } from "app/shared/models";
 
 @Component({
     selector: "app-header-side",
@@ -21,17 +24,19 @@ import { BeyondtrustInstance } from "app/views/dashboard/components/beyondtrust-
     styleUrls: ["./header-side.component.scss"],
 })
 export class HeaderSideComponent implements OnInit, OnDestroy {
-    @Input() notificPanel;
-    @ViewChildren(EgretNotifications2Component) noti;
+    @Input() notificPanel!: { toggle: () => void };
+    @ViewChildren(EgretNotifications2Component)
+    noti!: QueryList<EgretNotifications2Component>;
 
     public egretThemes: ITheme[] = [];
-    public layoutConf: ILayoutConf;
+    public layoutConf!: ILayoutConf;
 
     // BeyondTrust instance selection
     public instances: BeyondtrustInstance[] = [];
     public selectedInstanceId: number | null = null;
     public showInstanceSelector = true; // Hide on /dashboard and /logs
 
+    private currentUser: PraUser | null = null;
     private readonly subscriptionsToClear = new Subscription();
 
     constructor(
@@ -40,7 +45,7 @@ export class HeaderSideComponent implements OnInit, OnDestroy {
         private readonly translate: TranslateService,
         private readonly jwtAuthService: JwtAuthService,
         private readonly appService: AppService,
-        private readonly router: Router
+        private readonly router: Router,
     ) {}
 
     public async ngOnInit(): Promise<void> {
@@ -55,14 +60,21 @@ export class HeaderSideComponent implements OnInit, OnDestroy {
         this.subscriptionsToClear.add(
             this.appService.instances$.subscribe((instances) => {
                 this.instances = instances;
-            })
+            }),
         );
 
         // Subscribe to selected instance
         this.subscriptionsToClear.add(
             this.appService.selectedInstanceId$.subscribe((id) => {
                 this.selectedInstanceId = id;
-            })
+            }),
+        );
+
+        // Subscribe to current user for BU-based instance filtering
+        this.subscriptionsToClear.add(
+            this.jwtAuthService.praUser.subscribe((user) => {
+                this.currentUser = user;
+            }),
         );
 
         // Hide instance selector on /dashboard and /logs routes
@@ -72,9 +84,9 @@ export class HeaderSideComponent implements OnInit, OnDestroy {
                 .pipe(filter((event) => event instanceof NavigationEnd))
                 .subscribe((event: NavigationEnd) => {
                     this.updateInstanceSelectorVisibility(
-                        event.urlAfterRedirects
+                        event.urlAfterRedirects,
                     );
-                })
+                }),
         );
     }
 
@@ -95,7 +107,22 @@ export class HeaderSideComponent implements OnInit, OnDestroy {
             "/logs",
         ];
         this.showInstanceSelector = !hiddenRoutes.some((route) =>
-            url.startsWith(route)
+            url.startsWith(route),
+        );
+    }
+
+    /**
+     * Returns instances visible to the current user.
+     * SuperAdmin sees all; Admins see only their BU + shared (null) instances.
+     */
+    public get filteredInstances(): BeyondtrustInstance[] {
+        const user = this.currentUser;
+        if (!user || user.role === AuthRole.SUPER_ADMIN) {
+            return this.instances;
+        }
+        return this.instances.filter(
+            (i) =>
+                i.businessUnit === null || i.businessUnit === user.businessUnit,
         );
     }
 
@@ -129,7 +156,7 @@ export class HeaderSideComponent implements OnInit, OnDestroy {
                     sidebarStyle: "full",
                     sidebarCompactToggle: false,
                 },
-                { transitionClass: true }
+                { transitionClass: true },
             );
         }
 
@@ -139,7 +166,7 @@ export class HeaderSideComponent implements OnInit, OnDestroy {
                 sidebarStyle: "compact",
                 sidebarCompactToggle: true,
             },
-            { transitionClass: true }
+            { transitionClass: true },
         );
     }
 
