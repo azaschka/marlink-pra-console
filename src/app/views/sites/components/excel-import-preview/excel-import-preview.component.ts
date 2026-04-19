@@ -74,10 +74,6 @@ export class ExcelImportPreviewComponent implements OnInit {
 
     public onStartImport(): void {
         if (this.selectedInstanceId) {
-            console.log(
-                "Starting import for instance ID:",
-                this.selectedInstanceId,
-            );
             this.startImport.emit(this.selectedInstanceId);
         }
     }
