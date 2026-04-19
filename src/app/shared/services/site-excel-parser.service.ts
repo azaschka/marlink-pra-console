@@ -245,10 +245,12 @@ export class SiteExcelParserService {
                 row,
                 SiteExcelParserService.HEADERS.CUSTOMER_NAME,
             ),
-            businessUnit: this.getValueByHeader(
-                headers,
-                row,
-                SiteExcelParserService.HEADERS.BUSINESS_UNIT,
+            businessUnit: this.parseBusinessUnit(
+                this.getValueByHeader(
+                    headers,
+                    row,
+                    SiteExcelParserService.HEADERS.BUSINESS_UNIT,
+                ),
             ),
         };
     }
@@ -509,6 +511,15 @@ export class SiteExcelParserService {
      */
     private sanitizeValue(val: any): string {
         return val !== null && val !== undefined ? val.toString().trim() : "";
+    }
+
+    /**
+     * Extracts the business unit code from a value like "MT (Maritime)" → "MT".
+     * Takes the first whitespace-separated token, making it robust against
+     * varying separator styles ("MT (Maritime)", "MT-Maritime", "MT Maritime", "MT").
+     */
+    private parseBusinessUnit(value: string): string {
+        return value.trim().split(/\s+/)[0];
     }
 
     /**
