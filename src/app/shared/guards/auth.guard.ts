@@ -6,22 +6,23 @@ import {
     Router,
 } from "@angular/router";
 import { JwtAuthService } from "../services/auth/jwt-auth.service";
+import { AppRoute } from "../enums";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
     constructor(
         private router: Router,
-        private readonly jwtAuthService: JwtAuthService
+        private readonly jwtAuthService: JwtAuthService,
     ) {}
 
     public canActivate(
         route: ActivatedRouteSnapshot,
-        state: RouterStateSnapshot
+        state: RouterStateSnapshot,
     ): boolean {
         if (this.jwtAuthService.isLoggedIn()) {
             return true;
         } else {
-            this.router.navigate(["/sessions/signin"], {
+            this.router.navigate([AppRoute.SignIn], {
                 queryParams: {
                     return: state.url,
                 },

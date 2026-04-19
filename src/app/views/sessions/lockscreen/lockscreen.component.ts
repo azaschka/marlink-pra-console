@@ -1,6 +1,7 @@
 import { Component, ViewChild } from "@angular/core";
 import { MatButton } from "@angular/material/button";
 import { MatProgressBar } from "@angular/material/progress-bar";
+import { AppRoute } from "app/shared/enums";
 
 @Component({
     selector: "app-lockscreen",
@@ -10,6 +11,8 @@ import { MatProgressBar } from "@angular/material/progress-bar";
 export class LockscreenComponent {
     @ViewChild(MatProgressBar) progressBar: MatProgressBar;
     @ViewChild(MatButton) submitButton: MatButton;
+
+    public readonly AppRoute = AppRoute;
 
     public lockscreenData = {
         password: "",

@@ -2,10 +2,12 @@ import { Component, OnInit, ViewChild } from "@angular/core";
 import { MatButton } from "@angular/material/button";
 import { MatProgressBar } from "@angular/material/progress-bar";
 import {
+    AbstractControl,
     Validators,
     UntypedFormGroup,
     UntypedFormControl,
 } from "@angular/forms";
+import { AppRoute } from "app/shared/enums";
 
 @Component({
     selector: "app-signup",
@@ -13,10 +15,11 @@ import {
     styleUrls: ["./signup.component.scss"],
 })
 export class SignupComponent implements OnInit {
-    @ViewChild(MatProgressBar) progressBar: MatProgressBar;
-    @ViewChild(MatButton) submitButton: MatButton;
+    @ViewChild(MatProgressBar) progressBar!: MatProgressBar;
+    @ViewChild(MatButton) submitButton!: MatButton;
 
-    public signupForm: UntypedFormGroup;
+    public readonly AppRoute = AppRoute;
+    public signupForm!: UntypedFormGroup;
 
     public ngOnInit(): void {
         const password = new UntypedFormControl("", Validators.required);
@@ -27,16 +30,13 @@ export class SignupComponent implements OnInit {
                 Validators.email,
             ]),
             password: password,
-            agreed: new UntypedFormControl(
-                "",
-                (control: UntypedFormControl) => {
-                    const agreed = control.value;
-                    if (!agreed) {
-                        return { agreed: true };
-                    }
-                    return null;
+            agreed: new UntypedFormControl("", (control: AbstractControl) => {
+                const agreed = control.value;
+                if (!agreed) {
+                    return { agreed: true };
                 }
-            ),
+                return null;
+            }),
         });
     }
 

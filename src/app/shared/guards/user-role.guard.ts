@@ -7,7 +7,7 @@ import {
 } from "@angular/router";
 import { JwtAuthService } from "../services/auth/jwt-auth.service";
 import { MatSnackBar } from "@angular/material/snack-bar";
-import { AuthRole } from "../enums";
+import { AppRoute, AuthRole } from "../enums";
 
 @Injectable()
 export class UserRoleGuard implements CanActivate {
@@ -36,9 +36,9 @@ export class UserRoleGuard implements CanActivate {
                 .onAction()
                 .subscribe(() => {
                     if (praUser.role === AuthRole.ADMIN) {
-                        this.router.navigateByUrl("/customers");
+                        this.router.navigateByUrl(AppRoute.Customers);
                     } else if (praUser.role === AuthRole.DATA_CENTER_ENGINEER) {
-                        this.router.navigateByUrl("/bt-backups");
+                        this.router.navigateByUrl(AppRoute.BtDiscrepancies);
                     }
                 });
 

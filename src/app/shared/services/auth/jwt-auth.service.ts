@@ -8,6 +8,7 @@ import { LocalStoreService } from "../local-store.service";
 
 // Models
 import { PraUser } from "../../models";
+import { AppRoute } from "../../enums";
 
 @Injectable({
     providedIn: "root",
@@ -25,10 +26,10 @@ export class JwtAuthService {
         private readonly ls: LocalStoreService,
         private readonly http: HttpClient,
         private readonly router: Router,
-        private readonly route: ActivatedRoute
+        private readonly route: ActivatedRoute,
     ) {
         this.route.queryParams.subscribe(
-            (params) => (this.return = params["return"] || "/")
+            (params) => (this.return = params["return"] || "/"),
         );
         this.userProfile = new BehaviorSubject<PraUser>({
             username: "anonymous",
@@ -45,7 +46,7 @@ export class JwtAuthService {
             this.http.post<{ accessToken: string }>("auth/login", {
                 username: username,
                 password: password,
-            })
+            }),
         )
             .then(async (res) => {
                 this.saveJwtTokenToLocalStorage(res.accessToken);
@@ -76,7 +77,7 @@ export class JwtAuthService {
     public signout(): void {
         this.ls.clear();
 
-        void this.router.navigateByUrl("sessions/signin");
+        void this.router.navigateByUrl(AppRoute.SignIn);
     }
 
     public isLoggedIn(): boolean {

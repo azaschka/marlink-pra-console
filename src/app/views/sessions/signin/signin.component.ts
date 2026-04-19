@@ -7,7 +7,7 @@ import {
 } from "@angular/forms";
 import { Subject } from "rxjs";
 import { JwtAuthService } from "../../../shared/services/auth/jwt-auth.service";
-import { AuthRole } from "app/shared/enums";
+import { AppRoute, AuthRole } from "app/shared/enums";
 
 @Component({
     selector: "app-signin",
@@ -15,9 +15,9 @@ import { AuthRole } from "app/shared/enums";
     styleUrls: ["./signin.component.scss"],
 })
 export class SigninComponent implements OnInit, OnDestroy {
-    @ViewChild("submitButton") submitButton: HTMLButtonElement;
+    @ViewChild("submitButton") submitButton!: HTMLButtonElement;
 
-    public signinForm: UntypedFormGroup;
+    public signinForm!: UntypedFormGroup;
     public isLoading: boolean;
     public errorMsg: string = "";
     public currentYear: number = new Date().getFullYear();
@@ -26,7 +26,7 @@ export class SigninComponent implements OnInit, OnDestroy {
 
     constructor(
         private readonly jwtAuthService: JwtAuthService,
-        private readonly router: Router
+        private readonly router: Router,
     ) {
         this.isLoading = true;
         this._unsubscribeAll = new Subject();
@@ -71,13 +71,13 @@ export class SigninComponent implements OnInit, OnDestroy {
         const user = this.jwtAuthService.getPraUser();
 
         if (user && user.role === AuthRole.DATA_CENTER_ENGINEER) {
-            this.router.navigateByUrl("/backups");
+            this.router.navigateByUrl(AppRoute.BtDiscrepancies);
         } else if (
             user &&
             user.role !== AuthRole.SUPER_ADMIN &&
             this.jwtAuthService.return.indexOf("management") > -1
         ) {
-            this.router.navigateByUrl("/subscriptions");
+            this.router.navigateByUrl(AppRoute.Customers);
         } else {
             this.router.navigateByUrl(this.jwtAuthService.return);
         }
