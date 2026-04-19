@@ -29,7 +29,6 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
         "status",
         "name",
         "apiBaseUrl",
-        // "billingType",
         "businessUnit",
         "creationDate",
         "actions",
@@ -64,8 +63,6 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
     ) {}
 
     public async ngOnInit(): Promise<void> {
-        this.isSuperAdmin =
-            this.jwtAuthService.getPraUser()?.role === AuthRole.SUPER_ADMIN;
         this.addListeners();
 
         await ThreadingUtility.delayForLoadingAnimation(
@@ -172,6 +169,11 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
     }
 
     private addListeners(): void {
+        this.subscriptionsToClear.add(
+            this.jwtAuthService.praUser.subscribe((user) => {
+                this.isSuperAdmin = user?.role === AuthRole.SUPER_ADMIN;
+            }),
+        );
         this.subscriptionsToClear.add(
             this.appService.instances$.subscribe((instances) => {
                 this.isLoading = true;
