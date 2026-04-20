@@ -58,7 +58,7 @@ export class JumpointsComponent implements OnInit, OnDestroy {
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
@@ -88,7 +88,7 @@ export class JumpointsComponent implements OnInit, OnDestroy {
     }
 
     public async downloadJumpointInstallerHandler(
-        jumpoint: Jumpoint
+        jumpoint: Jumpoint,
     ): Promise<void> {
         if (!this.currentTenantId) {
             this.errorDialog.show({
@@ -127,7 +127,7 @@ export class JumpointsComponent implements OnInit, OnDestroy {
             try {
                 await this.jumpointsService.deleteJumpoint(
                     this.currentTenantId,
-                    jumpoint.id
+                    jumpoint.id,
                 );
                 this.notificationDialog.show({
                     message: `Jumpoint "${jumpoint.name}" has been deleted.`,
@@ -149,7 +149,7 @@ export class JumpointsComponent implements OnInit, OnDestroy {
         const tenantId = this.currentTenantId;
         if (!tenantId) {
             console.warn(
-                "No BeyondTrust instance selected, skipping jumpoints load"
+                "No BeyondTrust instance selected, skipping jumpoints load",
             );
             this.isLoading = false;
             return;
@@ -161,7 +161,7 @@ export class JumpointsComponent implements OnInit, OnDestroy {
             const filteredItems = PraDataFilter.filterByBusinessUnit(
                 items,
                 this.currentBusinessUnit,
-                [(j) => j.name, (j) => j.codeName]
+                [(j) => j.codeName],
             );
             this.dataSource.data = filteredItems;
             this.dataSource.sort = this.sort;
@@ -185,7 +185,7 @@ export class JumpointsComponent implements OnInit, OnDestroy {
                 }
 
                 this.currentBusinessUnit = user.businessUnit;
-            })
+            }),
         );
 
         // Listen for BeyondTrust instance changes and reload data
@@ -201,7 +201,7 @@ export class JumpointsComponent implements OnInit, OnDestroy {
                 ) {
                     this.loadPage();
                 }
-            })
+            }),
         );
     }
 }
