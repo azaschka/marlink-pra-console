@@ -6,19 +6,46 @@ import {
     CustomerCreateRequest,
     CustomerLicenseUsage,
     CustomerModifyRequest,
+    RetrieveCustomersParams,
 } from "./models";
 
 @Injectable()
 export class CustomersService {
     constructor(private readonly http: HttpClient) {}
 
-    // TODO: Implement pagination and filtering
-    public async fetchCustomers(): Promise<Customer[]> {
-        // const params = new HttpParams().set("pageSize", "9999");
-        // return firstValueFrom(
-        //     this.http.get<Customer[]>("customers", { params })
-        // );
-        return firstValueFrom(this.http.get<Customer[]>("customers"));
+    public async fetchCustomers(
+        params: RetrieveCustomersParams = {},
+    ): Promise<Customer[]> {
+        let httpParams = new HttpParams();
+        httpParams = httpParams.set("pageSize", "9999");
+
+        if (params.pageSize !== undefined) {
+            httpParams = httpParams.set("pageSize", params.pageSize.toString());
+        }
+        if (params.pageNumber !== undefined) {
+            httpParams = httpParams.set(
+                "pageNumber",
+                params.pageNumber.toString(),
+            );
+        }
+        if (params.key !== undefined) {
+            httpParams = httpParams.set("key", params.key);
+        }
+        if (params.name !== undefined) {
+            httpParams = httpParams.set("name", params.name);
+        }
+        if (
+            params.businessUnits !== undefined &&
+            params.businessUnits.length > 0
+        ) {
+            params.businessUnits.forEach((unit) => {
+                httpParams = httpParams.append("businessUnits", unit);
+            });
+        }
+
+        return firstValueFrom(
+            this.http.get<Customer[]>("customers", { params: httpParams }),
+        );
     }
 
     public async createCustomer(
