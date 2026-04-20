@@ -12,6 +12,10 @@ import { GroupPoliciesService } from "../../../group-policies/group-policies.ser
 import { UsersService } from "../../users.service";
 import { User, UserCreateRequest, UserUpdateRequest } from "../../models";
 import { GroupPolicy } from "app/views/group-policies/models";
+import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
+import { CustomersService } from "../../../customers/customers.service";
+import { AuthRole } from "../../../../shared/enums/auth-role.enum";
+import { CustomerBusinessUnit } from "../../../customers/enums";
 
 export type UserOverlayMode = "add" | "edit";
 
@@ -37,6 +41,15 @@ interface UserFormValue {
     templateUrl: "./user-overlay.component.html",
 })
 export class UserOverlayComponent implements OnInit, OnDestroy {
+    private static readonly SPECIAL_GROUP_POLICIES: string[] = [
+        "GP_FULL_ACCESS",
+        "FULL_ACCESS",
+        "GP_LIMITED_ACCESS",
+        "LIMITED_ACCESS",
+        "GP_MARLINK_OPERATORS",
+        "MARLINK_OPERATORS",
+    ];
+
     public isLoading = false;
 
     public readonly mode: UserOverlayMode;
@@ -58,7 +71,9 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         @Inject(MAT_DIALOG_DATA) public data: UserOverlayDialogData,
         private readonly usersService: UsersService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly groupPoliciesService: GroupPoliciesService
+        private readonly groupPoliciesService: GroupPoliciesService,
+        private readonly jwtAuthService: JwtAuthService,
+        private readonly customersService: CustomersService,
     ) {
         this.mode = data.mode;
         this.user = data.user;
@@ -114,13 +129,48 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Loads all available group policies
+     * Loads all available group policies.
+     * For non-Super-Admin users with a Business Unit, filters policies to those
+     * matching BU customers, special global policies, or BU-prefixed policies.
      */
     private async loadGroupPolicies(): Promise<void> {
-        this.allGroupPolicies =
-            await this.groupPoliciesService.fetchGroupPolicies(
-                this.data.tenantId
+        const allPolicies = await this.groupPoliciesService.fetchGroupPolicies(
+            this.data.tenantId,
+        );
+
+        const praUser = this.jwtAuthService.getPraUser();
+
+        if (praUser.role === AuthRole.SUPER_ADMIN || !praUser.businessUnit) {
+            this.allGroupPolicies = allPolicies;
+            return;
+        }
+
+        const businessUnit =
+            praUser.businessUnit as unknown as CustomerBusinessUnit;
+        const customers = await this.customersService.fetchCustomers({
+            businessUnits: [businessUnit],
+        });
+        const customerNames = customers.map((c) => c.name.toLowerCase());
+        const specialPolicies = new Set(
+            UserOverlayComponent.SPECIAL_GROUP_POLICIES,
+        );
+
+        this.allGroupPolicies = allPolicies.filter((policy) => {
+            const upperName = policy.name.toUpperCase();
+
+            if (specialPolicies.has(upperName)) {
+                return true;
+            }
+
+            if (policy.name.startsWith(`${praUser.businessUnit}_`)) {
+                return true;
+            }
+
+            const lowerName = policy.name.toLowerCase();
+            return customerNames.some((customerName) =>
+                lowerName.includes(customerName),
             );
+        });
     }
 
     /**
@@ -134,11 +184,11 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         const userGroupPolicies =
             await this.usersService.fetchUserGroupPolicies(
                 this.data.tenantId,
-                this.user.id
+                this.user.id,
             );
 
         this.selectedGroupPolicies = userGroupPolicies.map(
-            (ugp) => ugp.groupPolicy
+            (ugp) => ugp.groupPolicy,
         );
         this.initialGroupPolicies = [...this.selectedGroupPolicies];
 
@@ -157,7 +207,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
             this.groupPolicyInputCtrl.valueChanges.pipe(
                 startWith(""),
                 map((value) => this.filterGroupPolicies(value || "")),
-                takeUntil(this.destroy$)
+                takeUntil(this.destroy$),
             );
     }
 
@@ -170,7 +220,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         return this.allGroupPolicies.filter(
             (policy) =>
                 policy.name.toLowerCase().includes(filterValue) &&
-                !this.isGroupPolicySelected(policy)
+                !this.isGroupPolicySelected(policy),
         );
     }
 
@@ -211,7 +261,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      */
     public removeGroupPolicy(policy: GroupPolicy): void {
         this.selectedGroupPolicies = this.selectedGroupPolicies.filter(
-            (sel) => sel.id !== policy.id
+            (sel) => sel.id !== policy.id,
         );
     }
 
@@ -265,7 +315,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
 
         const createdUser = await this.usersService.createUser(
             this.data.tenantId,
-            request
+            request,
         );
 
         await this.assignGroupPolicies(createdUser.id);
@@ -291,7 +341,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         await this.usersService.updateUser(
             this.data.tenantId,
             this.user.id,
-            request
+            request,
         );
 
         await this.updateGroupPolicyAssignments(this.user.id);
@@ -302,7 +352,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      */
     private async assignGroupPolicies(userId: number): Promise<void> {
         const groupPolicyIds = this.selectedGroupPolicies.map(
-            (policy) => policy.id
+            (policy) => policy.id,
         );
 
         if (groupPolicyIds.length > 0) {
@@ -310,7 +360,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
                 this.data.tenantId,
                 userId,
                 groupPolicyIds,
-                []
+                [],
             );
         }
     }
@@ -326,7 +376,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
                 this.data.tenantId,
                 userId,
                 toAdd,
-                toRemove
+                toRemove,
             );
         }
     }
@@ -339,10 +389,10 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         toRemove: number[];
     } {
         const initialIds = new Set(
-            this.initialGroupPolicies.map((gp) => gp.id)
+            this.initialGroupPolicies.map((gp) => gp.id),
         );
         const currentIds = new Set(
-            this.selectedGroupPolicies.map((gp) => gp.id)
+            this.selectedGroupPolicies.map((gp) => gp.id),
         );
 
         const toAdd = [...currentIds].filter((id) => !initialIds.has(id));

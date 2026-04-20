@@ -10,6 +10,7 @@ import { SharedMaterialModule } from "../../shared/shared-material.module";
 import { UsersRoutes } from "./users.routing";
 import { UsersService } from "./users.service";
 import { GroupPoliciesService } from "../group-policies/group-policies.service";
+import { CustomersService } from "../customers/customers.service";
 import { UsersComponent } from "./users.component";
 import { UserOverlayComponent } from "./components/user-overlay/user-overlay.component";
 
@@ -28,6 +29,6 @@ const COMPONENTS = [UsersComponent, UserOverlayComponent];
         RouterModule.forChild(UsersRoutes),
     ],
     declarations: COMPONENTS,
-    providers: [UsersService, GroupPoliciesService],
+    providers: [UsersService, GroupPoliciesService, CustomersService],
 })
 export class UsersModule {}
