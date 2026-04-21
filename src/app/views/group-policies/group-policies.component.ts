@@ -8,10 +8,10 @@ import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confir
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
-import { PraDataFilter } from "../../shared/helpers";
 import { BusinessUnit, UserRole } from "../pra-users/enums";
 import { GroupPoliciesService } from "./group-policies.service";
 import { CustomersService } from "../customers/customers.service";
+import { CustomerBusinessUnit } from "../customers/enums";
 import { GroupPolicy } from "./models";
 import { AccessPermissionStatusType } from "./enums";
 import {
@@ -28,6 +28,14 @@ import { AppService } from "app/app.service";
 export class GroupPoliciesComponent implements OnInit, OnDestroy {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
+    private static readonly SPECIAL_GROUP_POLICIES: string[] = [
+        "GP_FULL_ACCESS",
+        "FULL_ACCESS",
+        "GP_LIMITED_ACCESS",
+        "LIMITED_ACCESS",
+        "GP_MARLINK_OPERATORS",
+        "MARLINK_OPERATORS",
+    ];
     private static readonly DISPLAYED_COLUMNS = [
         "name",
         "groupMembersCount",
@@ -61,7 +69,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
@@ -87,7 +95,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
     }
 
     public getAccessStatusLightColor(
-        status: AccessPermissionStatusType
+        status: AccessPermissionStatusType,
     ): "ok" | "error" | "warn" {
         switch (status) {
             case AccessPermissionStatusType.Final:
@@ -144,7 +152,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
     }
 
     public async deleteGroupPolicyHandler(
-        groupPolicy: GroupPolicy
+        groupPolicy: GroupPolicy,
     ): Promise<void> {
         if (!this.currentTenantId) {
             await this.errorDialog.show({
@@ -164,7 +172,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
             try {
                 await this.groupPoliciesService.deleteGroupPolicy(
                     this.currentTenantId,
-                    groupPolicy.id
+                    groupPolicy.id,
                 );
                 this.notificationDialog.show({
                     message: `Group Policy "${groupPolicy.name}" has been deleted.`,
@@ -186,7 +194,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
         const tenantId = this.currentTenantId;
         if (!tenantId) {
             console.warn(
-                "No BeyondTrust instance selected, skipping group policies load"
+                "No BeyondTrust instance selected, skipping group policies load",
             );
             this.isLoading = false;
             return;
@@ -194,29 +202,42 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
 
         this.isLoading = true;
         try {
-            const [groupPolicies, customers] = await Promise.all([
-                this.groupPoliciesService.fetchGroupPolicies(tenantId),
-                this.customersService.fetchCustomers(),
-            ]);
-            const customerBUByKey = new Map(
-                customers.map((c) => [c.name.toLowerCase(), c.businessUnit])
-            );
-            const filteredGroupPolicies = PraDataFilter.filterByBusinessUnit(
-                groupPolicies,
-                this.currentBusinessUnit,
-                [
-                    (groupPolicy) => {
-                        const parts = groupPolicy.name.split("_");
-                        const customerKey = parts[0].toLowerCase();
-                        const customerKey2 = parts[1]?.toLowerCase();
+            const allPolicies =
+                await this.groupPoliciesService.fetchGroupPolicies(tenantId);
 
-                        return (
-                            customerBUByKey.get(customerKey) ||
-                            customerBUByKey.get(customerKey2)
-                        );
-                    },
-                ]
-            );
+            let filteredGroupPolicies: GroupPolicy[];
+
+            if (this.isSuperAdmin || !this.currentBusinessUnit) {
+                filteredGroupPolicies = allPolicies;
+            } else {
+                const businessUnit = this
+                    .currentBusinessUnit as unknown as CustomerBusinessUnit;
+                const customers = await this.customersService.fetchCustomers({
+                    businessUnits: [businessUnit],
+                });
+                const customerNames = customers.map((c) =>
+                    c.name.toLowerCase(),
+                );
+                const specialPolicies = new Set(
+                    GroupPoliciesComponent.SPECIAL_GROUP_POLICIES,
+                );
+
+                filteredGroupPolicies = allPolicies.filter((policy) => {
+                    if (specialPolicies.has(policy.name.toUpperCase())) {
+                        return true;
+                    }
+                    if (
+                        policy.name.startsWith(`${this.currentBusinessUnit}_`)
+                    ) {
+                        return true;
+                    }
+                    const lowerName = policy.name.toLowerCase();
+                    return customerNames.some((customerName) =>
+                        lowerName.includes(customerName),
+                    );
+                });
+            }
+
             this.dataSource.data = filteredGroupPolicies;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
@@ -268,7 +289,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
                 // Check if the user has the SuperAdmin role
                 this.isSuperAdmin = user.role === UserRole.SuperAdmin;
                 this.currentBusinessUnit = user.businessUnit;
-            })
+            }),
         );
 
         // Listen for BeyondTrust instance changes and reload data
@@ -284,7 +305,7 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
                 ) {
                     this.loadPage();
                 }
-            })
+            }),
         );
     }
 }
