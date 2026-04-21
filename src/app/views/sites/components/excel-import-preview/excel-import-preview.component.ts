@@ -12,6 +12,8 @@ import { NestedTreeControl } from "@angular/cdk/tree";
 import { MatTreeNestedDataSource } from "@angular/material/tree";
 import { AppService } from "app/app.service";
 import { BeyondtrustInstance } from "app/views/dashboard/components/beyondtrust-instaces/models";
+import { JwtAuthService } from "app/shared/services/auth/jwt-auth.service";
+import { AuthRole } from "app/shared/enums";
 
 interface PreviewTreeNode {
     label: string;
@@ -64,11 +66,23 @@ export class ExcelImportPreviewComponent implements OnInit {
     public hasChild = (_: number, node: PreviewTreeNode) =>
         !!node.children && node.children.length > 0;
 
-    constructor(private readonly appService: AppService) {}
+    constructor(
+        private readonly appService: AppService,
+        private readonly jwtAuthService: JwtAuthService,
+    ) {}
 
     public async ngOnInit(): Promise<void> {
         await this.appService.initialize();
-        this.instances = this.appService.getInstances();
+        const allInstances = this.appService.getInstances();
+        const user = this.jwtAuthService.getPraUser();
+        this.instances =
+            !user || user.role === AuthRole.SUPER_ADMIN
+                ? allInstances
+                : allInstances.filter(
+                      (i) =>
+                          i.businessUnit === null ||
+                          i.businessUnit === user.businessUnit,
+                  );
         this.selectedInstanceId = this.appService.getSelectedInstanceId();
     }
 
