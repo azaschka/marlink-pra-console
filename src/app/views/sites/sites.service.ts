@@ -1,18 +1,48 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
-import { Site, CreateSiteDtoInput } from "./models";
+import {
+    Site,
+    CreateSiteDtoInput,
+    RetrieveSitesParams,
+    SiteLicenseUsage,
+} from "./models";
 import { Jumpoint } from "../jumpoints/models";
 
 @Injectable()
 export class SitesService {
     constructor(private http: HttpClient) {}
 
-    // TODO: Implement pagination and filtering
-    public async fetchSites(): Promise<Site[]> {
-        // const params = new HttpParams().set("pageSize", "9999");
-        // return firstValueFrom(this.http.get<Site[]>("sites", { params }));
-        return firstValueFrom(this.http.get<Site[]>("sites"));
+    public async fetchSites(params: RetrieveSitesParams = {}): Promise<Site[]> {
+        let httpParams = new HttpParams();
+
+        if (params.pageSize !== undefined) {
+            httpParams = httpParams.set("pageSize", params.pageSize.toString());
+        }
+        if (params.pageNumber !== undefined) {
+            httpParams = httpParams.set(
+                "pageNumber",
+                params.pageNumber.toString(),
+            );
+        }
+        if (params.key !== undefined) {
+            httpParams = httpParams.set("key", params.key);
+        }
+        if (params.name !== undefined) {
+            httpParams = httpParams.set("name", params.name);
+        }
+        if (
+            params.customerKeys !== undefined &&
+            params.customerKeys.length > 0
+        ) {
+            params.customerKeys.forEach((key) => {
+                httpParams = httpParams.append("customerKeys", key);
+            });
+        }
+
+        return firstValueFrom(
+            this.http.get<Site[]>("sites", { params: httpParams }),
+        );
     }
     public async fetchSiteByKey(key: string): Promise<Site | undefined> {
         const params = new HttpParams();
@@ -38,5 +68,11 @@ export class SitesService {
 
     public async deleteSite(id: number): Promise<void> {
         return firstValueFrom(this.http.delete<void>(`sites/${id}`));
+    }
+
+    public async calculateLicenseUsage(id: number): Promise<SiteLicenseUsage> {
+        return firstValueFrom(
+            this.http.post<SiteLicenseUsage>(`license-usages/sites/${id}`, {}),
+        );
     }
 }

@@ -75,6 +75,20 @@
                     </mat-cell>
                 </ng-container>
 
+                <!-- License Usage -->
+                <ng-container matColumnDef="totalLicenseUsage">
+                    <mat-header-cell *matHeaderCellDef>License Usage</mat-header-cell>
+                    <mat-cell *matCellDef="let site">
+                        <ng-container *ngIf="site.licenseUsageLoading">
+                            <mat-progress-spinner [diameter]="18" mode="indeterminate" color="primary"
+                                style="vertical-align: middle;"></mat-progress-spinner>
+                        </ng-container>
+                        <ng-container *ngIf="!site.licenseUsageLoading">
+                            {{ site.totalLicenseUsage !== undefined ? site.totalLicenseUsage : 'n/a' }}
+                        </ng-container>
+                    </mat-cell>
+                </ng-container>
+
                 <!-- Last Modification Date -->
                 <ng-container matColumnDef="lastModificationDate">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</mat-header-cell>

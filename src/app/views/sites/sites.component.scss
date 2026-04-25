@@ -38,6 +38,12 @@
     flex: 1 1 auto;
 }
 
+.mat-column-totalLicenseUsage {
+    flex: 0 0 130px;
+    width: 130px;
+    justify-content: center;
+}
+
 .mat-column-creationDate,
 .mat-column-lastModificationDate {
     flex: 0 0 150px;

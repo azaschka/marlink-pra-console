@@ -15,4 +15,6 @@ export interface Site {
     lastModificationDate?: string;
     jumpPointCodeName?: string;
     customerName?: string;
+    totalLicenseUsage?: number;
+    licenseUsageLoading?: boolean;
 }

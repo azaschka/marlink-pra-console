@@ -1,9 +1,16 @@
-import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import {
+    Component,
+    AfterViewInit,
+    OnDestroy,
+    OnInit,
+    ViewChild,
+} from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
 import { MatDialog } from "@angular/material/dialog";
 import { Subscription } from "rxjs";
+import { debounceTime } from "rxjs/operators";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
@@ -22,7 +29,7 @@ import { AppService } from "app/app.service";
     templateUrl: "./sites.component.html",
     styleUrls: ["./sites.component.scss"],
 })
-export class SitesComponent implements OnInit, OnDestroy {
+export class SitesComponent implements OnInit, AfterViewInit, OnDestroy {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
@@ -30,6 +37,7 @@ export class SitesComponent implements OnInit, OnDestroy {
         "name",
         "customerName",
         "jumpointCodeNames",
+        "totalLicenseUsage",
         "creationDate",
         "lastModificationDate",
         "actions",
@@ -63,7 +71,7 @@ export class SitesComponent implements OnInit, OnDestroy {
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
-        private readonly appService: AppService
+        private readonly appService: AppService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
@@ -79,6 +87,14 @@ export class SitesComponent implements OnInit, OnDestroy {
         await this.loadPage();
     }
 
+    public ngAfterViewInit(): void {
+        this.subscriptionsToClear.add(
+            this.paginator.page
+                .pipe(debounceTime(200))
+                .subscribe(() => this.loadVisibleSiteDetails()),
+        );
+    }
+
     public ngOnDestroy(): void {
         this.subscriptionsToClear.unsubscribe();
     }
@@ -86,6 +102,7 @@ export class SitesComponent implements OnInit, OnDestroy {
     public applyFilter(): void {
         this.dataSource.filter = this.filterValue.trim().toLowerCase();
         this.dataSource.paginator?.firstPage();
+        this.loadVisibleSiteDetails();
     }
 
     public removeFilter(): void {
@@ -147,29 +164,40 @@ export class SitesComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.loaderMode = "indeterminate";
         try {
+            // TODO: Replace with server-side pagination once client-side (pageSize=9999) is removed.
+            // const pageNumber = (this.paginator?.pageIndex ?? 0) + 1;
+            // const pageSize = this.paginator?.pageSize ?? SitesComponent.DEFAULT_PAGE_SIZE;
             const [sites, customers] = await Promise.all([
-                this.sitesService.fetchSites(),
+                this.sitesService.fetchSites(/* { pageNumber, pageSize } */),
                 this.customersService.fetchCustomers(),
             ]);
             this.customers = customers;
+            const customerByKey = new Map(
+                this.customers.map((c) => [c.key, c]),
+            );
             const customerBUByKey = new Map(
-                this.customers.map((c) => [c.key, c.businessUnit])
+                this.customers.map((c) => [c.key, c.businessUnit]),
             );
             const filteredSites = PraDataFilter.filterByBusinessUnit(
                 sites,
                 this.currentBusinessUnit,
-                [(site) => customerBUByKey.get(site.customerKey) ?? undefined]
+                [(site) => customerBUByKey.get(site.customerKey) ?? undefined],
             );
+
+            for (const site of filteredSites) {
+                const customer = customerByKey.get(site.customerKey);
+                site.customerName = customer ? customer.name : "—";
+                site.jumpPointCodeName = undefined;
+                site.totalLicenseUsage = undefined;
+                site.licenseUsageLoading = false;
+            }
 
             this.dataSource.data = filteredSites;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
             this.dataCount = filteredSites.length;
 
-            setTimeout(() => this.loadVisibleJumpointCodeNames(), 10);
-            // this.paginator.page.subscribe(() =>
-            //     this.loadVisibleJumpointCodeNames()
-            // );
+            this.loadVisibleSiteDetails();
         } catch (err: any) {
             await this.errorDialog.show({
                 title: "Error",
@@ -180,43 +208,47 @@ export class SitesComponent implements OnInit, OnDestroy {
         }
     }
 
-    private loadVisibleJumpointCodeNames(): void {
+    private loadVisibleSiteDetails(): void {
         const data = this.dataSource.filteredData || this.dataSource.data;
-        const pageIndex = this.paginator.pageIndex || 0;
-        const pageSize = this.paginator.pageSize || 20;
-        const start = pageIndex * pageSize;
-        const end = start + pageSize;
-        const currentPageItems = data; // data.slice(start, end);
+        // TODO: Activate slice once server-side pagination is in place (pageSize=9999 → all items loaded, slice not needed).
+        // const pageIndex = this.paginator?.pageIndex ?? 0;
+        // const pageSize = this.paginator?.pageSize ?? SitesComponent.DEFAULT_PAGE_SIZE;
+        // const start = pageIndex * pageSize;
+        // const end = start + pageSize;
+        // const currentPageItems = data.slice(start, end);
+        const currentPageItems = data;
 
         for (const site of currentPageItems) {
-            if (
-                site.jumpPointCodeName === undefined &&
-                !site.jumpPointCodeName?.includes("Loading")
-            ) {
+            if (site.jumpPointCodeName === undefined) {
                 site.jumpPointCodeName = "Loading ...";
                 this.sitesService
                     .fetchSiteJumpoints(site.id)
                     .then((res) => {
-                        if (res.length) {
-                            site.jumpPointCodeName = res
-                                .map((j) => j.codeName)
-                                .join(", ");
-                        } else {
-                            site.jumpPointCodeName = "Not Available";
-                        }
+                        site.jumpPointCodeName = res.length
+                            ? res.map((j) => j.codeName).join(", ")
+                            : "Not Available";
                     })
                     .catch(() => {
                         site.jumpPointCodeName = "Not Available";
                     });
             }
 
-            if (site.customerKey) {
-                const customer = this.customers.find(
-                    (c) => c.key === site.customerKey
-                );
-                site.customerName = customer ? customer.name : "—";
-            } else {
-                site.customerName = "—";
+            if (
+                site.totalLicenseUsage === undefined &&
+                !site.licenseUsageLoading
+            ) {
+                site.licenseUsageLoading = true;
+                this.sitesService
+                    .calculateLicenseUsage(site.id)
+                    .then((res) => {
+                        site.totalLicenseUsage = res.totalLicenseUsage;
+                    })
+                    .catch(() => {
+                        site.totalLicenseUsage = undefined;
+                    })
+                    .finally(() => {
+                        site.licenseUsageLoading = false;
+                    });
             }
         }
     }
@@ -229,7 +261,7 @@ export class SitesComponent implements OnInit, OnDestroy {
                 }
 
                 this.currentBusinessUnit = user.businessUnit;
-            })
+            }),
         );
     }
 }
