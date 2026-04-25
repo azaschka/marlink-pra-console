@@ -64,10 +64,6 @@ export class JwtAuthService {
             });
     }
 
-    /*
-        checkTokenIsValid is called inside constructor of
-        shared/components/layouts/admin-layout/admin-layout.component.ts
-    */
     public async checkTokenIsValid(): Promise<void> {
         return await firstValueFrom(this.http.get<PraUser>("auth/profile"))
             .then((res) => {

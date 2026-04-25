@@ -2,9 +2,8 @@ import {
     Component,
     OnInit,
     AfterViewInit,
-    ViewChild,
+    OnDestroy,
     HostListener,
-    ChangeDetectionStrategy,
     ChangeDetectorRef,
 } from "@angular/core";
 import {
@@ -27,10 +26,10 @@ import { AppService } from "../../../../app.service";
     selector: "app-admin-layout",
     templateUrl: "./admin-layout.template.html",
 })
-export class AdminLayoutComponent implements OnInit, AfterViewInit {
-    public isModuleLoading: Boolean = false;
-    private moduleLoaderSub: Subscription;
-    private layoutConfSub: Subscription;
+export class AdminLayoutComponent implements OnInit, AfterViewInit, OnDestroy {
+    public isModuleLoading: boolean = false;
+    private moduleLoaderSub!: Subscription;
+    private layoutConfSub!: Subscription;
     private routerEventSub: Subscription;
 
     public scrollConfig = {};
@@ -44,7 +43,7 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit {
         private layout: LayoutService,
         private cdr: ChangeDetectorRef,
         private jwtAuth: JwtAuthService,
-        private appService: AppService
+        private appService: AppService,
     ) {
         // Close sidenav after route change in mobile
         this.routerEventSub = router.events
@@ -55,18 +54,23 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit {
             });
 
         // Translator init
-        const browserLang: string = translate.getBrowserLang();
+        const browserLang: string = translate.getBrowserLang() ?? "en";
         translate.use(browserLang.match(/en|fr/) ? browserLang : "en");
     }
 
     async ngOnInit() {
+        // Validate JWT token with the server on every full page load/refresh.
+        // This updates the BehaviorSubject with fresh user data and calls signout()
+        // if the token has expired or been revoked.
+        await this.jwtAuth.checkTokenIsValid();
+
         // this.layoutConf = this.layout.layoutConf;
         this.layoutConfSub = this.layout.layoutConf$.subscribe((layoutConf) => {
             this.layoutConf = layoutConf;
             // console.log(this.layoutConf);
 
             this.adminContainerClasses = this.updateAdminContainerClasses(
-                this.layoutConf
+                this.layoutConf,
             );
             this.cdr.markForCheck();
         });
@@ -133,7 +137,7 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit {
         if (this.layoutConf.sidebarStyle === "compact") {
             this.layout.publishLayoutChange(
                 { sidebarStyle: "full" },
-                { transitionClass: true }
+                { transitionClass: true },
             );
         }
     }
@@ -146,7 +150,7 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit {
         ) {
             this.layout.publishLayoutChange(
                 { sidebarStyle: "compact" },
-                { transitionClass: true }
+                { transitionClass: true },
             );
         }
     }
