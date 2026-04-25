@@ -1,9 +1,16 @@
-import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import {
+    Component,
+    AfterViewInit,
+    OnDestroy,
+    OnInit,
+    ViewChild,
+} from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
 import { MatDialog } from "@angular/material/dialog";
 import { Subscription } from "rxjs";
+import { debounceTime } from "rxjs/operators";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
@@ -22,7 +29,7 @@ import { PraDataFilter } from "app/shared/helpers";
     templateUrl: "./customers.component.html",
     styleUrls: ["./customers.component.scss"],
 })
-export class CustomersComponent implements OnInit, OnDestroy {
+export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
@@ -58,7 +65,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
         private readonly customersService: CustomersService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
@@ -69,6 +76,14 @@ export class CustomersComponent implements OnInit, OnDestroy {
         await this.loadPage();
     }
 
+    public ngAfterViewInit(): void {
+        this.subscriptionsToClear.add(
+            this.paginator.page
+                .pipe(debounceTime(200))
+                .subscribe(() => this.loadVisibleLicenseUsages()),
+        );
+    }
+
     public ngOnDestroy(): void {
         this.subscriptionsToClear.unsubscribe();
     }
@@ -76,6 +91,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
     public applyFilter(): void {
         this.dataSource.filter = this.filterValue.trim().toLowerCase();
         this.dataSource.paginator?.firstPage();
+        this.loadVisibleLicenseUsages();
     }
 
     public removeFilter(): void {
@@ -195,11 +211,15 @@ export class CustomersComponent implements OnInit, OnDestroy {
     private async loadPage(): Promise<void> {
         this.isLoading = true;
         try {
-            const items = await this.customersService.fetchCustomers();
+            // TODO: Replace with server-side pagination once client-side (pageSize=9999) is removed.
+            // const pageNumber = (this.paginator?.pageIndex ?? 0) + 1;
+            // const pageSize = this.paginator?.pageSize ?? CustomersComponent.DEFAULT_PAGE_SIZE;
+            const items =
+                await this.customersService.fetchCustomers(/* { pageNumber, pageSize } */);
             const filteredItems = PraDataFilter.filterByBusinessUnit(
                 items,
                 this.currentBusinessUnit,
-                [(c) => c.businessUnit]
+                [(c) => c.businessUnit],
             );
 
             for (const c of filteredItems) {
@@ -212,10 +232,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
             this.dataSource.paginator = this.paginator;
             this.dataCount = filteredItems.length;
 
-            setTimeout(() => this.loadVisibleLicenseUsages(), 10);
-            // this.paginator.page.subscribe(() =>
-            //     this.loadVisibleLicenseUsages()
-            // );
+            this.loadVisibleLicenseUsages();
         } catch (err: any) {
             await this.errorDialog.show({
                 title: "Error",
@@ -226,13 +243,15 @@ export class CustomersComponent implements OnInit, OnDestroy {
         }
     }
 
-    private async loadVisibleLicenseUsages() {
+    private loadVisibleLicenseUsages(): void {
         const data = this.dataSource.filteredData || this.dataSource.data;
-        const pageIndex = this.paginator.pageIndex || 0;
-        const pageSize = this.paginator.pageSize || 20;
-        const start = pageIndex * pageSize;
-        const end = start + pageSize;
-        const currentPageItems = data; // data.slice(start, end);
+        // TODO: Activate slice once server-side pagination is in place (pageSize=9999 → all items loaded, slice not needed).
+        // const pageIndex = this.paginator?.pageIndex ?? 0;
+        // const pageSize = this.paginator?.pageSize ?? CustomersComponent.DEFAULT_PAGE_SIZE;
+        // const start = pageIndex * pageSize;
+        // const end = start + pageSize;
+        // const currentPageItems = data.slice(start, end);
+        const currentPageItems = data;
 
         for (const customer of currentPageItems) {
             if (
@@ -263,7 +282,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
                 }
 
                 this.currentBusinessUnit = user.businessUnit;
-            })
+            }),
         );
     }
 }

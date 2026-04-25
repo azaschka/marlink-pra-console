@@ -17,7 +17,6 @@ export class CustomersService {
         params: RetrieveCustomersParams = {},
     ): Promise<Customer[]> {
         let httpParams = new HttpParams();
-        httpParams = httpParams.set("pageSize", "9999");
 
         if (params.pageSize !== undefined) {
             httpParams = httpParams.set("pageSize", params.pageSize.toString());
