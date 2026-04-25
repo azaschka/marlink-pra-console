@@ -105,7 +105,6 @@ export class BtDiscrepanciesComponent implements OnInit, OnDestroy {
     }
 
     public async ngOnInit(): Promise<void> {
-        this.jwtAuthService.getPraUser();
         this.addListeners();
 
         await this.loadHtmlFormatter();

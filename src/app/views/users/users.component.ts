@@ -56,13 +56,12 @@ export class UsersComponent implements OnInit, OnDestroy {
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
 
     public async ngOnInit(): Promise<void> {
-        this.jwtAuthService.getPraUser();
         this.addListeners();
         await this.loadPage();
     }
@@ -169,7 +168,7 @@ export class UsersComponent implements OnInit, OnDestroy {
                                 (u) =>
                                     u.id === user.id
                                         ? { ...u, isLoginAllowed: false }
-                                        : u
+                                        : u,
                             );
                             this.loadPage();
                         })
@@ -217,7 +216,7 @@ export class UsersComponent implements OnInit, OnDestroy {
                                 (u) =>
                                     u.id === user.id
                                         ? { ...u, isLoginAllowed: true }
-                                        : u
+                                        : u,
                             );
                             this.loadPage();
                         })
@@ -255,7 +254,7 @@ export class UsersComponent implements OnInit, OnDestroy {
             try {
                 await this.usersService.deleteUser(
                     this.currentTenantId,
-                    user.id
+                    user.id,
                 );
                 this.notificationDialog.show({
                     message: `User ${user.publicDisplayName} has been deleted.`,
@@ -278,7 +277,7 @@ export class UsersComponent implements OnInit, OnDestroy {
         const tenantId = this.currentTenantId;
         if (!tenantId) {
             console.warn(
-                "No BeyondTrust instance selected, skipping user load"
+                "No BeyondTrust instance selected, skipping user load",
             );
             this.isLoading = false;
             return;
@@ -307,7 +306,7 @@ export class UsersComponent implements OnInit, OnDestroy {
                 if (!user || user.role === "None") {
                     this.jwtAuthService.checkTokenIsValid();
                 }
-            })
+            }),
         );
 
         // Listen for BeyondTrust instance changes and reload data
@@ -323,7 +322,7 @@ export class UsersComponent implements OnInit, OnDestroy {
                 ) {
                     this.loadPage();
                 }
-            })
+            }),
         );
     }
 }

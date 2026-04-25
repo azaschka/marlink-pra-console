@@ -77,7 +77,6 @@ export class SitesComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     public async ngOnInit(): Promise<void> {
-        this.jwtAuthService.getPraUser();
         this.addListeners();
 
         // Initialize AppService and get tenant ID

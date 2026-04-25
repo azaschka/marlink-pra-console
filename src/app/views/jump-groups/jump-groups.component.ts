@@ -61,13 +61,12 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
 
     public async ngOnInit(): Promise<void> {
-        this.jwtAuthService.getPraUser();
         this.addListeners();
         await this.loadPage();
     }
@@ -111,7 +110,7 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
                         await this.jumpGroupsService.updateJumpGroup(
                             this.currentTenantId!,
                             jumpGroup.id,
-                            result
+                            result,
                         );
                         this.notificationDialog.show({
                             message: "Jump Group successfully updated.",
@@ -148,7 +147,7 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
             try {
                 await this.jumpGroupsService.deleteJumpGroup(
                     this.currentTenantId,
-                    jumpGroup.id
+                    jumpGroup.id,
                 );
                 this.notificationDialog.show({
                     message: `Jump Group "${jumpGroup.name}" has been deleted.`,
@@ -170,7 +169,7 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
         const tenantId = this.currentTenantId;
         if (!tenantId) {
             console.warn(
-                "No BeyondTrust instance selected, skipping jump groups load"
+                "No BeyondTrust instance selected, skipping jump groups load",
             );
             this.isLoading = false;
             return;
@@ -183,7 +182,7 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
                 this.customersService.fetchCustomers(),
             ]);
             const customerBUByKey = new Map(
-                customers.map((c) => [c.name.toLowerCase(), c.businessUnit])
+                customers.map((c) => [c.name.toLowerCase(), c.businessUnit]),
             );
             const filteredJumpGroups = PraDataFilter.filterByBusinessUnit(
                 jumpGroups,
@@ -199,7 +198,7 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
                             customerBUByKey.get(customerKey2)
                         );
                     },
-                ]
+                ],
             );
 
             this.dataSource.data = filteredJumpGroups;
@@ -225,7 +224,7 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
                 // Check if the user has the SuperAdmin role to allow deletion of jump groups
                 this.canDelete = user.role === UserRole.SuperAdmin;
                 this.currentBusinessUnit = user.businessUnit;
-            })
+            }),
         );
 
         // Listen for BeyondTrust instance changes and reload data
@@ -241,7 +240,7 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
                 ) {
                     this.loadPage();
                 }
-            })
+            }),
         );
     }
 }

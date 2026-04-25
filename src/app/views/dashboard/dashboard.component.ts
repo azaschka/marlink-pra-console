@@ -17,7 +17,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     public async ngOnInit(): Promise<void> {
-        this.jwtAuthService.getPraUser();
         this.addListeners();
     }
 
@@ -31,7 +30,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 if (!user || user.role === "None") {
                     this.jwtAuthService.checkTokenIsValid();
                 }
-            })
+            }),
         );
     }
 }

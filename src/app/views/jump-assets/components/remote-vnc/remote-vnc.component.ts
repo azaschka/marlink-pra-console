@@ -86,13 +86,12 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
-        private readonly appService: AppService
+        private readonly appService: AppService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
 
     public async ngOnInit(): Promise<void> {
-        this.jwtAuthService.getPraUser();
         this.addListeners();
 
         // Initialize AppService and get tenant ID
@@ -144,7 +143,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                         await this.jumpAssetsService.copyRemoteVnc(
                             this.currentTenantId!,
                             asset.id,
-                            result
+                            result,
                         );
                         this.notificationDialog.show({
                             message: `Remote VNC "${result.name}" successfully copied to Jump Group ID "${result.jumpGroupId}".`,
@@ -198,7 +197,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                         } as CreateRemoteVncDtoInput;
                         await this.jumpAssetsService.createRemoteVnc(
                             this.currentTenantId!,
-                            body
+                            body,
                         );
                         this.notificationDialog.show({
                             message: `Remote VNC "${result.name}" successfully created.`,
@@ -249,7 +248,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                         await this.jumpAssetsService.updateRemoteVnc(
                             this.currentTenantId!,
                             asset.id,
-                            result
+                            result,
                         );
                         this.notificationDialog.show({
                             message: "Remote VNC successfully updated.",
@@ -287,7 +286,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                     try {
                         await this.jumpAssetsService.deleteRemoteVnc(
                             this.currentTenantId!,
-                            asset.id
+                            asset.id,
                         );
                         this.notificationDialog.show({
                             message: `Remote VNC "${asset.name}" successfully deleted.`,
@@ -306,7 +305,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
     }
 
     private async loadPage(
-        overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
+        overrides: Partial<{ pageNumber: number; pageSize: number }> = {},
     ): Promise<void> {
         if (!this.currentTenantId) {
             this.isLoading = false;
@@ -320,13 +319,13 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
             const [items, jumpGroups, jumpPolicies, jumpoints] =
                 await Promise.all([
                     this.jumpAssetsService.fetchRemoteVncs(
-                        this.currentTenantId
+                        this.currentTenantId,
                     ),
                     this.jumpGroupsService.fetchJumpGroups(
-                        this.currentTenantId
+                        this.currentTenantId,
                     ),
                     this.jumpPoliciesService.fetchJumpPolicies(
-                        this.currentTenantId
+                        this.currentTenantId,
                     ),
                     this.jumpointsService.fetchJumpoints(this.currentTenantId),
                 ]);
@@ -358,7 +357,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                     (j) => j.jumpGroupName,
                     (j) => j.jumpPolicyName,
                     (j) => j.jumpointName,
-                ]
+                ],
             );
 
             // Optional pagination overrides (if the calling location wants it)
@@ -380,7 +379,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                 const maxPageIndex = Math.max(
                     Math.ceil(filteredItems.length / this.paginator.pageSize) -
                         1,
-                    0
+                    0,
                 );
                 if (this.paginator.pageIndex > maxPageIndex) {
                     this.paginator.firstPage();
@@ -460,7 +459,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                     this.jwtAuthService.checkTokenIsValid();
                 }
                 this.currentBusinessUnit = user.businessUnit;
-            })
+            }),
         );
 
         this.subscriptionsToClear.add(
@@ -469,7 +468,7 @@ export class RemoteVncComponent implements OnInit, OnDestroy {
                 if (instanceId) {
                     this.loadPage();
                 }
-            })
+            }),
         );
     }
 }

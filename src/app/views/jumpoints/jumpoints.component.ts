@@ -64,7 +64,6 @@ export class JumpointsComponent implements OnInit, OnDestroy {
     }
 
     public async ngOnInit(): Promise<void> {
-        this.jwtAuthService.getPraUser();
         this.addListeners();
         await this.loadPage();
     }

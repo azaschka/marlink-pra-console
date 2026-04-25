@@ -41,11 +41,10 @@ export class BtBackupsComponent implements OnInit, OnDestroy {
         private readonly jwtAuthService: JwtAuthService,
         private readonly btBackupsService: BtBackupsService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
     ) {}
 
     public async ngOnInit(): Promise<void> {
-        this.jwtAuthService.getPraUser();
         this.addListeners();
         await this.loadPage();
     }
@@ -78,7 +77,7 @@ export class BtBackupsComponent implements OnInit, OnDestroy {
         try {
             const blob = await this.btBackupsService.downloadBackup(
                 1,
-                backup.id
+                backup.id,
             );
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -128,7 +127,7 @@ export class BtBackupsComponent implements OnInit, OnDestroy {
                 if (!user || user.role === "None") {
                     this.jwtAuthService.checkTokenIsValid();
                 }
-            })
+            }),
         );
     }
 }

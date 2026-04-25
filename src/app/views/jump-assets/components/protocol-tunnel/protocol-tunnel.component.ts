@@ -86,13 +86,12 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
-        private readonly appService: AppService
+        private readonly appService: AppService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
 
     public async ngOnInit(): Promise<void> {
-        this.jwtAuthService.getPraUser();
         this.addListeners();
 
         // Initialize AppService and get tenant ID
@@ -117,7 +116,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
     }
 
     public async copyProtocolTunnelHandler(
-        asset: ProtocolTunnelJump
+        asset: ProtocolTunnelJump,
     ): Promise<void> {
         if (!this.currentTenantId) {
             this.errorDialog.show({
@@ -146,7 +145,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                         await this.jumpAssetsService.copyProtocolTunnelJump(
                             this.currentTenantId!,
                             asset.id,
-                            result
+                            result,
                         );
                         this.notificationDialog.show({
                             message: `Protocol Tunnel "${result.name}" successfully copied to Jump Group ID "${result.jumpGroupId}".`,
@@ -204,7 +203,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                         } as CreateProtocolTunnelJumpDtoInput;
                         await this.jumpAssetsService.createProtocolTunnelJump(
                             this.currentTenantId!,
-                            body
+                            body,
                         );
                         this.notificationDialog.show({
                             message: `Protocol Tunnel "${result.name}" successfully created.`,
@@ -222,7 +221,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
     }
 
     public async editProtocolTunnelHandler(
-        asset: ProtocolTunnelJump
+        asset: ProtocolTunnelJump,
     ): Promise<void> {
         if (!this.currentTenantId) {
             this.errorDialog.show({
@@ -256,7 +255,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                         await this.jumpAssetsService.updateProtocolTunnelJump(
                             this.currentTenantId!,
                             asset.id,
-                            result
+                            result,
                         );
                         this.notificationDialog.show({
                             message: "Protocol Tunnel successfully updated.",
@@ -294,7 +293,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                     try {
                         await this.jumpAssetsService.deleteProtocolTunnelJump(
                             this.currentTenantId!,
-                            asset.id
+                            asset.id,
                         );
                         this.notificationDialog.show({
                             message: `Protocol Tunnel "${asset.name}" successfully deleted.`,
@@ -313,7 +312,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
     }
 
     private async loadPage(
-        overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
+        overrides: Partial<{ pageNumber: number; pageSize: number }> = {},
     ): Promise<void> {
         if (!this.currentTenantId) {
             this.isLoading = false;
@@ -327,13 +326,13 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
             const [items, jumpGroups, jumpPolicies, jumpoints] =
                 await Promise.all([
                     this.jumpAssetsService.fetchProtocolTunnelJumps(
-                        this.currentTenantId
+                        this.currentTenantId,
                     ),
                     this.jumpGroupsService.fetchJumpGroups(
-                        this.currentTenantId
+                        this.currentTenantId,
                     ),
                     this.jumpPoliciesService.fetchJumpPolicies(
-                        this.currentTenantId
+                        this.currentTenantId,
                     ),
                     this.jumpointsService.fetchJumpoints(this.currentTenantId),
                 ]);
@@ -365,7 +364,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                     (j) => j.jumpGroupName,
                     (j) => j.jumpPolicyName,
                     (j) => j.jumpointName,
-                ]
+                ],
             );
 
             // Optional pagination overrides (if the calling location wants it)
@@ -387,7 +386,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                 const maxPageIndex = Math.max(
                     Math.ceil(filteredItems.length / this.paginator.pageSize) -
                         1,
-                    0
+                    0,
                 );
                 if (this.paginator.pageIndex > maxPageIndex) {
                     this.paginator.firstPage();
@@ -468,7 +467,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                     this.jwtAuthService.checkTokenIsValid();
                 }
                 this.currentBusinessUnit = user.businessUnit;
-            })
+            }),
         );
 
         this.subscriptionsToClear.add(
@@ -477,7 +476,7 @@ export class ProtocolTunnelComponent implements OnInit, OnDestroy {
                 if (instanceId) {
                     this.loadPage();
                 }
-            })
+            }),
         );
     }
 }

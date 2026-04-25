@@ -85,13 +85,12 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
+        private readonly notificationDialog: NotificationDialogService,
     ) {
         this.subscriptionsToClear = new Subscription();
     }
 
     public async ngOnInit(): Promise<void> {
-        this.jwtAuthService.getPraUser();
         this.addListeners();
         await this.loadPage();
     }
@@ -138,7 +137,7 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
                         await this.jumpAssetsService.copyRemoteRdp(
                             this.currentTenantId,
                             asset.id,
-                            result
+                            result,
                         );
                         this.notificationDialog.show({
                             message: `Remote RDP "${result.name}" successfully copied to Jump Group ID "${result.jumpGroupId}".`,
@@ -190,7 +189,7 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
 
                         await this.jumpAssetsService.createRemoteRdp(
                             this.currentTenantId,
-                            body
+                            body,
                         );
                         this.notificationDialog.show({
                             message: `Remote RDP "${result.name}" successfully created.`,
@@ -240,7 +239,7 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
                         await this.jumpAssetsService.updateRemoteRdp(
                             this.currentTenantId,
                             asset.id,
-                            result
+                            result,
                         );
                         this.notificationDialog.show({
                             message: `Remote RDP "${result.name}" successfully updated.`,
@@ -279,7 +278,7 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
                     try {
                         await this.jumpAssetsService.deleteRemoteRdp(
                             this.currentTenantId,
-                            asset.id
+                            asset.id,
                         );
                         this.notificationDialog.show({
                             message: `Remote RDP "${asset.name}" successfully deleted.`,
@@ -298,7 +297,7 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
     }
 
     private async loadPage(
-        overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
+        overrides: Partial<{ pageNumber: number; pageSize: number }> = {},
     ): Promise<void> {
         if (!this.currentTenantId) {
             return;
@@ -311,13 +310,13 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
             const [items, jumpGroups, jumpPolicies, jumpoints] =
                 await Promise.all([
                     this.jumpAssetsService.fetchRemoteRdps(
-                        this.currentTenantId
+                        this.currentTenantId,
                     ),
                     this.jumpGroupsService.fetchJumpGroups(
-                        this.currentTenantId
+                        this.currentTenantId,
                     ),
                     this.jumpPoliciesService.fetchJumpPolicies(
-                        this.currentTenantId
+                        this.currentTenantId,
                     ),
                     this.jumpointsService.fetchJumpoints(this.currentTenantId),
                 ]);
@@ -349,7 +348,7 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
                     (j) => j.jumpGroupName,
                     (j) => j.jumpPolicyName,
                     (j) => j.jumpointName,
-                ]
+                ],
             );
 
             // Optional pagination overrides (if the calling location wants it)
@@ -371,7 +370,7 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
                 const maxPageIndex = Math.max(
                     Math.ceil(filteredItems.length / this.paginator.pageSize) -
                         1,
-                    0
+                    0,
                 );
                 if (this.paginator.pageIndex > maxPageIndex) {
                     this.paginator.firstPage();
@@ -451,7 +450,7 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
                     this.jwtAuthService.checkTokenIsValid();
                 }
                 this.currentBusinessUnit = user.businessUnit;
-            })
+            }),
         );
 
         this.subscriptionsToClear.add(
@@ -461,8 +460,8 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
                     if (instanceId) {
                         await this.loadPage();
                     }
-                }
-            )
+                },
+            ),
         );
     }
 }
