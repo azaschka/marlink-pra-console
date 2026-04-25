@@ -1,20 +1,20 @@
-import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
-import { Subscription } from "rxjs";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { BtBackupsService } from "./bt-backups.service";
 import { BtBackup } from "./models";
+import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
 
 @Component({
     selector: "app-bt-backups",
     templateUrl: "./bt-backups.component.html",
     styleUrls: ["./bt-backups.component.scss"],
 })
-export class BtBackupsComponent implements OnInit, OnDestroy {
+export class BtBackupsComponent extends PraBaseComponent implements OnInit {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
@@ -35,22 +35,17 @@ export class BtBackupsComponent implements OnInit, OnDestroy {
     public loaderMode: "indeterminate" | "buffer" = "indeterminate";
     public dataCount = 0;
 
-    private readonly subscriptionsToClear = new Subscription();
-
     constructor(
-        private readonly jwtAuthService: JwtAuthService,
+        jwtAuthService: JwtAuthService,
         private readonly btBackupsService: BtBackupsService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
-    ) {}
-
-    public async ngOnInit(): Promise<void> {
-        this.addListeners();
-        await this.loadPage();
+    ) {
+        super(jwtAuthService);
     }
 
-    public ngOnDestroy(): void {
-        this.subscriptionsToClear.unsubscribe();
+    public async ngOnInit(): Promise<void> {
+        await this.loadPage();
     }
 
     public async triggerManualBackupHandler(): Promise<void> {
@@ -119,15 +114,5 @@ export class BtBackupsComponent implements OnInit, OnDestroy {
         } finally {
             this.isLoading = false;
         }
-    }
-
-    private addListeners(): void {
-        this.subscriptionsToClear.add(
-            this.jwtAuthService.praUser.subscribe((user) => {
-                if (!user || user.role === "None") {
-                    this.jwtAuthService.checkTokenIsValid();
-                }
-            }),
-        );
     }
 }

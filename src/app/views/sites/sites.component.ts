@@ -1,15 +1,8 @@
-import {
-    Component,
-    AfterViewInit,
-    OnDestroy,
-    OnInit,
-    ViewChild,
-} from "@angular/core";
+import { Component, AfterViewInit, OnInit, ViewChild } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
 import { MatDialog } from "@angular/material/dialog";
-import { Subscription } from "rxjs";
 import { debounceTime } from "rxjs/operators";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
@@ -20,16 +13,19 @@ import { Site } from "./models";
 import { ImportExcelOverlayComponent } from "./components/import-excel-overlay/import-excel-overlay.component";
 import { Customer } from "../customers/models";
 import { CustomersService } from "../customers/customers.service";
-import { BusinessUnit } from "../pra-users/enums";
 import { PraDataFilter } from "app/shared/helpers";
 import { AppService } from "app/app.service";
+import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
 
 @Component({
     selector: "app-sites",
     templateUrl: "./sites.component.html",
     styleUrls: ["./sites.component.scss"],
 })
-export class SitesComponent implements OnInit, AfterViewInit, OnDestroy {
+export class SitesComponent
+    extends PraBaseComponent
+    implements OnInit, AfterViewInit
+{
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
@@ -57,15 +53,11 @@ export class SitesComponent implements OnInit, AfterViewInit, OnDestroy {
     public dataCount = 0;
 
     private customers: Customer[] = [];
-
-    private currentBusinessUnit: BusinessUnit | null | undefined;
     private currentTenantId: number | null = null;
-
-    private readonly subscriptionsToClear: Subscription;
 
     constructor(
         private readonly dialog: MatDialog,
-        private readonly jwtAuthService: JwtAuthService,
+        jwtAuthService: JwtAuthService,
         private readonly sitesService: SitesService,
         private readonly customersService: CustomersService,
         private readonly confirmDialog: ConfirmDialogService,
@@ -73,12 +65,10 @@ export class SitesComponent implements OnInit, AfterViewInit, OnDestroy {
         private readonly notificationDialog: NotificationDialogService,
         private readonly appService: AppService,
     ) {
-        this.subscriptionsToClear = new Subscription();
+        super(jwtAuthService);
     }
 
     public async ngOnInit(): Promise<void> {
-        this.addListeners();
-
         // Initialize AppService and get tenant ID
         await this.appService.initialize();
         this.currentTenantId = this.appService.getSelectedInstanceId();
@@ -92,10 +82,6 @@ export class SitesComponent implements OnInit, AfterViewInit, OnDestroy {
                 .pipe(debounceTime(200))
                 .subscribe(() => this.loadVisibleSiteDetails()),
         );
-    }
-
-    public ngOnDestroy(): void {
-        this.subscriptionsToClear.unsubscribe();
     }
 
     public applyFilter(): void {
@@ -250,17 +236,5 @@ export class SitesComponent implements OnInit, AfterViewInit, OnDestroy {
                     });
             }
         }
-    }
-
-    private addListeners(): void {
-        this.subscriptionsToClear.add(
-            this.jwtAuthService.praUser.subscribe((user) => {
-                if (!user || user.role === "None") {
-                    this.jwtAuthService.checkTokenIsValid();
-                }
-
-                this.currentBusinessUnit = user.businessUnit;
-            }),
-        );
     }
 }

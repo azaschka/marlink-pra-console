@@ -1,16 +1,8 @@
-import {
-    Component,
-    OnInit,
-    ViewChild,
-    OnDestroy,
-    Inject,
-    LOCALE_ID,
-} from "@angular/core";
+import { Component, OnInit, ViewChild, Inject, LOCALE_ID } from "@angular/core";
 import { formatDate } from "@angular/common";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatPaginator, PageEvent } from "@angular/material/paginator";
 import { MatSort } from "@angular/material/sort";
-import { Subscription } from "rxjs";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
@@ -19,6 +11,8 @@ import { LogsService } from "./logs.service";
 import { egretAnimations } from "../../shared/animations/egret-animations";
 import { Log, RetrieveLogsParams } from "./models";
 import { AuthRole } from "../../shared/enums";
+import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
+import { PraUser } from "app/shared/models";
 
 @Component({
     selector: "app-views-logs",
@@ -26,7 +20,7 @@ import { AuthRole } from "../../shared/enums";
     styleUrls: ["./logs.component.scss"],
     animations: egretAnimations,
 })
-export class LogsComponent implements OnInit, OnDestroy {
+export class LogsComponent extends PraBaseComponent implements OnInit {
     private static readonly DEFAULT_PAGE_SIZE = 25;
     private static readonly PAGE_SIZE_OPTIONS = [25, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
@@ -51,24 +45,19 @@ export class LogsComponent implements OnInit, OnDestroy {
     public canExport = false;
     public dataCount = 0;
 
-    private subscriptionsToClear = new Subscription();
-
     constructor(
         @Inject(LOCALE_ID) private locale: string,
-        private readonly jwtAuthService: JwtAuthService,
+        jwtAuthService: JwtAuthService,
         private readonly logsService: LogsService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly notificationDialog: NotificationDialogService
-    ) {}
-
-    public async ngOnInit(): Promise<void> {
-        this.attachAuthListener();
-        await this.loadPage();
+        private readonly notificationDialog: NotificationDialogService,
+    ) {
+        super(jwtAuthService);
     }
 
-    public ngOnDestroy(): void {
-        this.subscriptionsToClear.unsubscribe();
+    public async ngOnInit(): Promise<void> {
+        await this.loadPage();
     }
 
     public applyFilter(): void {
@@ -121,6 +110,10 @@ export class LogsComponent implements OnInit, OnDestroy {
         return !!log.payload && log.payload.includes('"errorMessage"');
     }
 
+    protected override onUserChanged(user: PraUser): void {
+        this.canExport = user.role === AuthRole.SUPER_ADMIN;
+    }
+
     private async loadPage(overrides: Partial<RetrieveLogsParams> = {}) {
         this.isLoading = true;
         try {
@@ -143,16 +136,5 @@ export class LogsComponent implements OnInit, OnDestroy {
         } finally {
             this.isLoading = false;
         }
-    }
-
-    private attachAuthListener(): void {
-        this.subscriptionsToClear.add(
-            this.jwtAuthService.praUser.subscribe((user) => {
-                if (!user) return;
-                this.canExport = user.role === AuthRole.SUPER_ADMIN;
-                if (user.role === "None")
-                    this.jwtAuthService.checkTokenIsValid();
-            })
-        );
     }
 }

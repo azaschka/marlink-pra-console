@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
 import { MatDialog } from "@angular/material/dialog";
-import { Subscription } from "rxjs";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
+import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
@@ -21,7 +21,7 @@ import { AppService } from "app/app.service";
     templateUrl: "./users.component.html",
     styleUrls: ["./users.component.scss"],
 })
-export class UsersComponent implements OnInit, OnDestroy {
+export class UsersComponent extends PraBaseComponent implements OnInit {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
@@ -46,28 +46,23 @@ export class UsersComponent implements OnInit, OnDestroy {
     public filterValue = "";
     public dataCount = 0;
 
-    private readonly subscriptionsToClear: Subscription;
     private currentTenantId: number | null = null;
 
     constructor(
         private readonly dialog: MatDialog,
-        private readonly jwtAuthService: JwtAuthService,
+        jwtAuthService: JwtAuthService,
         private readonly usersService: UsersService,
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
     ) {
-        this.subscriptionsToClear = new Subscription();
+        super(jwtAuthService);
     }
 
     public async ngOnInit(): Promise<void> {
         this.addListeners();
         await this.loadPage();
-    }
-
-    public ngOnDestroy(): void {
-        this.subscriptionsToClear.unsubscribe();
     }
 
     public applyFilter(): void {
@@ -301,14 +296,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
 
     private addListeners(): void {
-        this.subscriptionsToClear.add(
-            this.jwtAuthService.praUser.subscribe((user) => {
-                if (!user || user.role === "None") {
-                    this.jwtAuthService.checkTokenIsValid();
-                }
-            }),
-        );
-
         // Listen for BeyondTrust instance changes and reload data
         this.subscriptionsToClear.add(
             this.appService.selectedInstanceId$.subscribe((instanceId) => {

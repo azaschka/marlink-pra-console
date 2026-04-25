@@ -1,14 +1,13 @@
-import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
 import { MatDialog } from "@angular/material/dialog";
-import { Subscription } from "rxjs";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
-import { BusinessUnit, UserRole } from "../pra-users/enums";
+import { UserRole } from "../pra-users/enums";
 import { GroupPoliciesService } from "./group-policies.service";
 import { CustomersService } from "../customers/customers.service";
 import { CustomerBusinessUnit } from "../customers/enums";
@@ -19,13 +18,15 @@ import {
     GroupPolicyOverlayDialogData,
 } from "./components/group-policy-overlay/group-policy-overlay.component";
 import { AppService } from "app/app.service";
+import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
+import { PraUser } from "app/shared/models";
 
 @Component({
     selector: "app-group-policies",
     templateUrl: "./group-policies.component.html",
     styleUrls: ["./group-policies.component.scss"],
 })
-export class GroupPoliciesComponent implements OnInit, OnDestroy {
+export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly SPECIAL_GROUP_POLICIES: string[] = [
@@ -56,14 +57,11 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
     public dataCount = 0;
     public isSuperAdmin = false;
 
-    private currentBusinessUnit: BusinessUnit | null | undefined;
     private currentTenantId: number | null = null;
-
-    private readonly subscriptionsToClear: Subscription;
 
     constructor(
         private readonly dialog: MatDialog,
-        private readonly jwtAuthService: JwtAuthService,
+        jwtAuthService: JwtAuthService,
         private readonly groupPoliciesService: GroupPoliciesService,
         private readonly customersService: CustomersService,
         private readonly appService: AppService,
@@ -71,16 +69,12 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
     ) {
-        this.subscriptionsToClear = new Subscription();
+        super(jwtAuthService);
     }
 
     public async ngOnInit(): Promise<void> {
         this.addListeners();
         await this.loadPage();
-    }
-
-    public ngOnDestroy(): void {
-        this.subscriptionsToClear.unsubscribe();
     }
 
     public applyFilter(): void {
@@ -189,6 +183,28 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
         }
     }
 
+    protected override onUserChanged(user: PraUser): void {
+        this.isSuperAdmin = user.role === UserRole.SuperAdmin;
+    }
+
+    private addListeners(): void {
+        // Listen for BeyondTrust instance changes and reload data
+        this.subscriptionsToClear.add(
+            this.appService.selectedInstanceId$.subscribe((instanceId) => {
+                const previousTenantId = this.currentTenantId;
+                this.currentTenantId = instanceId;
+
+                // Reload data if tenant changed (and not initial load)
+                if (
+                    previousTenantId !== null &&
+                    previousTenantId !== instanceId
+                ) {
+                    this.loadPage();
+                }
+            }),
+        );
+    }
+
     private async loadPage(): Promise<void> {
         const tenantId = this.currentTenantId;
         if (!tenantId) {
@@ -277,34 +293,5 @@ export class GroupPoliciesComponent implements OnInit, OnDestroy {
                     groupPolicy.groupMembersCount = 0;
                 });
         }
-    }
-
-    private addListeners(): void {
-        this.subscriptionsToClear.add(
-            this.jwtAuthService.praUser.subscribe((user) => {
-                if (!user || user.role === "None") {
-                    this.jwtAuthService.checkTokenIsValid();
-                }
-                // Check if the user has the SuperAdmin role
-                this.isSuperAdmin = user.role === UserRole.SuperAdmin;
-                this.currentBusinessUnit = user.businessUnit;
-            }),
-        );
-
-        // Listen for BeyondTrust instance changes and reload data
-        this.subscriptionsToClear.add(
-            this.appService.selectedInstanceId$.subscribe((instanceId) => {
-                const previousTenantId = this.currentTenantId;
-                this.currentTenantId = instanceId;
-
-                // Reload data if tenant changed (and not initial load)
-                if (
-                    previousTenantId !== null &&
-                    previousTenantId !== instanceId
-                ) {
-                    this.loadPage();
-                }
-            }),
-        );
     }
 }

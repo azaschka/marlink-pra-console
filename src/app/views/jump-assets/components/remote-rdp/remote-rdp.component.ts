@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
 import { MatDialog } from "@angular/material/dialog";
-import { Subscription } from "rxjs";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
+import { PraBaseComponent } from "../../../../shared/components/pra-base/pra-base.component";
 import { ConfirmDialogService } from "../../../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../../../shared/dialogs/notification-dialog/notification-dialog.service";
@@ -28,7 +28,7 @@ import { JumpointsService } from "../../../jumpoints/jumpoints.service";
 import { JumpGroup } from "../../../jump-groups/models";
 import { JumpPolicy } from "../../../jump-policies/models";
 import { Jumpoint } from "../../../jumpoints/models";
-import { BusinessUnit } from "../../../pra-users/enums";
+
 import {
     JumpAssetCreateDialogData,
     JumpAssetCreateOverlayComponent,
@@ -41,7 +41,7 @@ import { AppService } from "../../../../app.service";
     templateUrl: "./remote-rdp.component.html",
     styleUrls: ["./remote-rdp.component.scss"],
 })
-export class RemoteRdpComponent implements OnInit, OnDestroy {
+export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
@@ -70,14 +70,11 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
     private jumpPolicies: JumpPolicy[] = [];
     private jumpoints: Jumpoint[] = [];
 
-    private currentBusinessUnit: BusinessUnit | null | undefined;
     private currentTenantId: number | null = null;
-
-    private readonly subscriptionsToClear: Subscription;
 
     constructor(
         private readonly dialog: MatDialog,
-        private readonly jwtAuthService: JwtAuthService,
+        jwtAuthService: JwtAuthService,
         private readonly jumpAssetsService: JumpAssetsService,
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
@@ -87,16 +84,12 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
     ) {
-        this.subscriptionsToClear = new Subscription();
+        super(jwtAuthService);
     }
 
     public async ngOnInit(): Promise<void> {
         this.addListeners();
         await this.loadPage();
-    }
-
-    public ngOnDestroy(): void {
-        this.subscriptionsToClear.unsubscribe();
     }
 
     public applyFilter(): void {
@@ -444,15 +437,6 @@ export class RemoteRdpComponent implements OnInit, OnDestroy {
     // }
 
     private addListeners(): void {
-        this.subscriptionsToClear.add(
-            this.jwtAuthService.praUser.subscribe((user) => {
-                if (!user || user.role === "None") {
-                    this.jwtAuthService.checkTokenIsValid();
-                }
-                this.currentBusinessUnit = user.businessUnit;
-            }),
-        );
-
         this.subscriptionsToClear.add(
             this.appService.selectedInstanceId$.subscribe(
                 async (instanceId) => {

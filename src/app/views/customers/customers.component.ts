@@ -1,35 +1,31 @@
-import {
-    Component,
-    AfterViewInit,
-    OnDestroy,
-    OnInit,
-    ViewChild,
-} from "@angular/core";
+import { Component, AfterViewInit, OnInit, ViewChild } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
 import { MatDialog } from "@angular/material/dialog";
-import { Subscription } from "rxjs";
 import { debounceTime } from "rxjs/operators";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { CustomersService } from "./customers.service";
-import { BusinessUnit } from "../pra-users/enums";
 import { Customer } from "./models";
 import {
     CustomerOverlayComponent,
     CustomerOverlayDialogData,
 } from "./components/customer-overlay/customer-overlay.component";
 import { PraDataFilter } from "app/shared/helpers";
+import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
 
 @Component({
     selector: "app-customers",
     templateUrl: "./customers.component.html",
     styleUrls: ["./customers.component.scss"],
 })
-export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
+export class CustomersComponent
+    extends PraBaseComponent
+    implements OnInit, AfterViewInit
+{
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
@@ -55,23 +51,18 @@ export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
     public filterValue = "";
     public dataCount = 0;
 
-    private currentBusinessUnit: BusinessUnit | null | undefined;
-
-    private readonly subscriptionsToClear: Subscription;
-
     constructor(
         private readonly dialog: MatDialog,
-        private readonly jwtAuthService: JwtAuthService,
+        jwtAuthService: JwtAuthService,
         private readonly customersService: CustomersService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
     ) {
-        this.subscriptionsToClear = new Subscription();
+        super(jwtAuthService);
     }
 
     public async ngOnInit(): Promise<void> {
-        this.addListeners();
         await this.loadPage();
     }
 
@@ -81,10 +72,6 @@ export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
                 .pipe(debounceTime(200))
                 .subscribe(() => this.loadVisibleLicenseUsages()),
         );
-    }
-
-    public ngOnDestroy(): void {
-        this.subscriptionsToClear.unsubscribe();
     }
 
     public applyFilter(): void {
@@ -271,17 +258,5 @@ export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
                     });
             }
         }
-    }
-
-    private addListeners(): void {
-        this.subscriptionsToClear.add(
-            this.jwtAuthService.praUser.subscribe((user) => {
-                if (!user || user.role === "None") {
-                    this.jwtAuthService.checkTokenIsValid();
-                }
-
-                this.currentBusinessUnit = user.businessUnit;
-            }),
-        );
     }
 }

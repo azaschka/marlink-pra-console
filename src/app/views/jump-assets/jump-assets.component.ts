@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from "@angular/core";
-import { Subscription } from "rxjs";
+import { Component } from "@angular/core";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { egretAnimations } from "../../shared/animations/egret-animations";
+import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
 
 @Component({
     selector: "app-views-jump-assets",
@@ -9,28 +9,8 @@ import { egretAnimations } from "../../shared/animations/egret-animations";
     styleUrls: ["./jump-assets.component.scss"],
     animations: egretAnimations,
 })
-export class JumpAssetsComponent implements OnInit, OnDestroy {
-    private readonly subscriptionsToClear: Subscription;
-
-    constructor(private readonly jwtAuthService: JwtAuthService) {
-        this.subscriptionsToClear = new Subscription();
-    }
-
-    public async ngOnInit(): Promise<void> {
-        this.addListeners();
-    }
-
-    public ngOnDestroy(): void {
-        this.subscriptionsToClear.unsubscribe();
-    }
-
-    private addListeners(): void {
-        this.subscriptionsToClear.add(
-            this.jwtAuthService.praUser.subscribe((user) => {
-                if (!user || user.role === "None") {
-                    this.jwtAuthService.checkTokenIsValid();
-                }
-            }),
-        );
+export class JumpAssetsComponent extends PraBaseComponent {
+    constructor(jwtAuthService: JwtAuthService) {
+        super(jwtAuthService);
     }
 }

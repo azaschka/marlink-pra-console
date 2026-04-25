@@ -1,28 +1,29 @@
-import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
 import { MatDialog } from "@angular/material/dialog";
-import { Subscription } from "rxjs";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { PraUsersService } from "./pra-users.service";
 import { PraUser } from "./models";
-import { BusinessUnit, BusinessUnitLabels, UserRole } from "./enums";
+import { BusinessUnitLabels, UserRole } from "./enums";
 import {
     PraUserOverlayComponent,
     PraUserOverlayDialogData,
 } from "./components/pra-user-overlay/pra-user-overlay.component";
 import { PraDataFilter } from "../../shared/helpers";
+import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
+import { PraUser as AuthPraUser } from "app/shared/models";
 
 @Component({
     selector: "app-pra-users",
     templateUrl: "./pra-users.component.html",
     styleUrls: ["./pra-users.component.scss"],
 })
-export class PraUsersComponent implements OnInit, OnDestroy {
+export class PraUsersComponent extends PraBaseComponent implements OnInit {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
@@ -50,28 +51,20 @@ export class PraUsersComponent implements OnInit, OnDestroy {
     public dataCount = 0;
 
     private isAdmin = false;
-    private currentBusinessUnit: BusinessUnit | null | undefined;
-
-    private readonly subscriptionsToClear: Subscription;
 
     constructor(
         private readonly dialog: MatDialog,
-        private readonly jwtAuthService: JwtAuthService,
+        jwtAuthService: JwtAuthService,
         private readonly praUsersService: PraUsersService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
     ) {
-        this.subscriptionsToClear = new Subscription();
+        super(jwtAuthService);
     }
 
     public async ngOnInit(): Promise<void> {
-        this.addListeners();
         await this.loadPage();
-    }
-
-    public ngOnDestroy(): void {
-        this.subscriptionsToClear.unsubscribe();
     }
 
     public applyFilter(): void {
@@ -147,6 +140,10 @@ export class PraUsersComponent implements OnInit, OnDestroy {
         }
     }
 
+    protected override onUserChanged(user: AuthPraUser): void {
+        this.isAdmin = user.role === UserRole.Admin;
+    }
+
     private async loadPage(): Promise<void> {
         this.isLoading = true;
         try {
@@ -172,18 +169,5 @@ export class PraUsersComponent implements OnInit, OnDestroy {
         } finally {
             this.isLoading = false;
         }
-    }
-
-    private addListeners(): void {
-        this.subscriptionsToClear.add(
-            this.jwtAuthService.praUser.subscribe((user) => {
-                if (!user || user.role === "None") {
-                    this.jwtAuthService.checkTokenIsValid();
-                }
-
-                this.isAdmin = user.role === UserRole.Admin;
-                this.currentBusinessUnit = user.businessUnit;
-            }),
-        );
     }
 }

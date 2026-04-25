@@ -1,15 +1,14 @@
-import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
-import { Subscription } from "rxjs";
 import { PraDataFilter } from "../../shared/helpers";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
-import { BusinessUnit, UserRole } from "../pra-users/enums";
+import { UserRole } from "../pra-users/enums";
 import { JumpGroupsService } from "./jump-groups.service";
 import { CustomersService } from "../customers/customers.service";
 import { JumpGroup } from "./models";
@@ -19,13 +18,15 @@ import {
 } from "./components/jump-group-update-overlay/jump-group-update-overlay.component";
 import { JumpAssetUpdateRequest } from "../jump-assets/models";
 import { AppService } from "app/app.service";
+import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
+import { PraUser } from "app/shared/models";
 
 @Component({
     selector: "app-jump-groups",
     templateUrl: "./jump-groups.component.html",
     styleUrls: ["./jump-groups.component.scss"],
 })
-export class JumpGroupsComponent implements OnInit, OnDestroy {
+export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
     private static readonly DISPLAYED_COLUMNS = [
@@ -48,14 +49,11 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
     public dataCount = 0;
     public canDelete = false;
 
-    private currentBusinessUnit: BusinessUnit | null | undefined;
     private currentTenantId: number | null = null;
-
-    private readonly subscriptionsToClear: Subscription;
 
     constructor(
         private readonly dialog: MatDialog,
-        private readonly jwtAuthService: JwtAuthService,
+        jwtAuthService: JwtAuthService,
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly customersService: CustomersService,
         private readonly appService: AppService,
@@ -63,16 +61,12 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
     ) {
-        this.subscriptionsToClear = new Subscription();
+        super(jwtAuthService);
     }
 
     public async ngOnInit(): Promise<void> {
         this.addListeners();
         await this.loadPage();
-    }
-
-    public ngOnDestroy(): void {
-        this.subscriptionsToClear.unsubscribe();
     }
 
     public applyFilter(): void {
@@ -165,6 +159,10 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
         }
     }
 
+    protected override onUserChanged(user: PraUser): void {
+        this.canDelete = user.role === UserRole.SuperAdmin;
+    }
+
     private async loadPage(): Promise<void> {
         const tenantId = this.currentTenantId;
         if (!tenantId) {
@@ -216,17 +214,6 @@ export class JumpGroupsComponent implements OnInit, OnDestroy {
     }
 
     private addListeners(): void {
-        this.subscriptionsToClear.add(
-            this.jwtAuthService.praUser.subscribe((user) => {
-                if (!user || user.role === "None") {
-                    this.jwtAuthService.checkTokenIsValid();
-                }
-                // Check if the user has the SuperAdmin role to allow deletion of jump groups
-                this.canDelete = user.role === UserRole.SuperAdmin;
-                this.currentBusinessUnit = user.businessUnit;
-            }),
-        );
-
         // Listen for BeyondTrust instance changes and reload data
         this.subscriptionsToClear.add(
             this.appService.selectedInstanceId$.subscribe((instanceId) => {
