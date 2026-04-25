@@ -69,6 +69,8 @@ export class JumpClientInstallersComponent
     }
 
     public async ngOnInit(): Promise<void> {
+        await this.appService.initialize();
+        this.currentTenantId = this.appService.getSelectedInstanceId();
         this.addListeners();
         await this.loadPage();
     }

@@ -92,6 +92,8 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
     }
 
     public async ngOnInit(): Promise<void> {
+        await this.appService.initialize();
+        this.currentTenantId = this.appService.getSelectedInstanceId();
         this.addListeners();
         await this.loadPage();
     }
