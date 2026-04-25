@@ -91,6 +91,10 @@ export class ProtocolTunnelComponent
         super(jwtAuthService);
     }
 
+    protected override onBusinessUnitChanged(): void {
+        void this.loadPage();
+    }
+
     public async ngOnInit(): Promise<void> {
         this.addListeners();
 

@@ -68,6 +68,10 @@ export class SitesComponent
         super(jwtAuthService);
     }
 
+    protected override onBusinessUnitChanged(): void {
+        void this.loadPage();
+    }
+
     public async ngOnInit(): Promise<void> {
         // Initialize AppService and get tenant ID
         await this.appService.initialize();

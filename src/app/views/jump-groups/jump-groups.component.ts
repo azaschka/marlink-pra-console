@@ -163,6 +163,10 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
         this.canDelete = user.role === UserRole.SuperAdmin;
     }
 
+    protected override onBusinessUnitChanged(): void {
+        void this.loadPage();
+    }
+
     private async loadPage(): Promise<void> {
         const tenantId = this.currentTenantId;
         if (!tenantId) {

@@ -1,5 +1,6 @@
 import { Directive, OnDestroy } from "@angular/core";
 import { Subscription } from "rxjs";
+import { distinctUntilChanged, map, skip } from "rxjs/operators";
 
 import { JwtAuthService } from "../../services/auth/jwt-auth.service";
 import { PraUser } from "../../models";
@@ -74,10 +75,26 @@ import { BusinessUnit } from "../../../views/pra-users/enums";
  * }
  * ```
  *
+ * ### Reactive reloads on businessUnit change
+ *
+ * Override `onBusinessUnitChanged()` in any component whose data must be
+ * re-fetched when the authenticated user's business unit changes mid-session
+ * (e.g. after a server-side role update validated by `checkTokenIsValid`).
+ *
+ * ```typescript
+ * protected override onBusinessUnitChanged(): void {
+ *   void this.loadPage();  // void — hook is synchronous, loadPage is async
+ * }
+ * ```
+ *
+ * The hook fires only when the businessUnit value **actually changes** after
+ * the initial render (`skip(1)` skips the synchronous BehaviorSubject emit
+ * that sets up the first load, `distinctUntilChanged` prevents spurious
+ * triggers when only other user fields change).
+ *
  * ### Note on Angular DI
  *
- * No `@Directive()` decorator is needed on this abstract class.  Angular
- * resolves constructor parameters via the concrete `@Component()` subclass.
+ * `@Directive()` is required by Angular Ivy for abstract base classes.
  * Each subclass must declare `jwtAuthService: JwtAuthService` (without an
  * access modifier) as a constructor parameter and pass it to `super()`.
  */
@@ -99,11 +116,35 @@ export abstract class PraBaseComponent implements OnDestroy {
     protected readonly subscriptionsToClear = new Subscription();
 
     constructor(protected readonly jwtAuthService: JwtAuthService) {
+        // Primary subscription: keeps currentBusinessUnit in sync and calls
+        // onUserChanged() on every emission (including the initial one).
+        // Because praUser is a BehaviorSubject this fires synchronously in the
+        // constructor, so currentBusinessUnit is already correct when ngOnInit
+        // runs and calls loadPage().
         this.subscriptionsToClear.add(
             this.jwtAuthService.praUser.subscribe((user) => {
                 this.currentBusinessUnit = user?.businessUnit;
                 this.onUserChanged(user);
             }),
+        );
+
+        // Secondary subscription: calls onBusinessUnitChanged() whenever the
+        // businessUnit value changes *after* the initial render.
+        //   skip(1)              — ignores the synchronous BehaviorSubject emit
+        //                          already handled by the primary subscription
+        //   map(businessUnit)    — project to the value we actually care about
+        //   distinctUntilChanged — only propagate real changes, not re-emissions
+        //                          caused by unrelated user-object updates
+        this.subscriptionsToClear.add(
+            this.jwtAuthService.praUser
+                .pipe(
+                    skip(1),
+                    map((user) => user?.businessUnit),
+                    distinctUntilChanged(),
+                )
+                .subscribe(() => {
+                    this.onBusinessUnitChanged();
+                }),
         );
     }
 
@@ -112,12 +153,30 @@ export abstract class PraBaseComponent implements OnDestroy {
      * `currentBusinessUnit` has already been updated.
      *
      * Override this in subclasses to derive additional state from the
-     * authenticated user without having to set up a second subscription.
+     * authenticated user without having to set up a second subscription
+     * (e.g. role-based flags such as `isSuperAdmin`, `isAdmin`, `canExport`).
      *
      * The default implementation is a no-op.
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     protected onUserChanged(_user: PraUser): void {}
+
+    /**
+     * Called when `currentBusinessUnit` changes **after** the initial render.
+     *
+     * Override this in components whose data depends on the business unit so
+     * that the view stays in sync if the server returns an updated user profile
+     * mid-session (e.g. after a role change validated by `checkTokenIsValid`).
+     *
+     * ```typescript
+     * protected override onBusinessUnitChanged(): void {
+     *   void this.loadPage();
+     * }
+     * ```
+     *
+     * The default implementation is a no-op.
+     */
+    protected onBusinessUnitChanged(): void {}
 
     public ngOnDestroy(): void {
         this.subscriptionsToClear.unsubscribe();

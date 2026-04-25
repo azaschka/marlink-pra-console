@@ -62,6 +62,10 @@ export class CustomersComponent
         super(jwtAuthService);
     }
 
+    protected override onBusinessUnitChanged(): void {
+        void this.loadPage();
+    }
+
     public async ngOnInit(): Promise<void> {
         await this.loadPage();
     }

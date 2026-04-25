@@ -60,6 +60,10 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
         super(jwtAuthService);
     }
 
+    protected override onBusinessUnitChanged(): void {
+        void this.loadPage();
+    }
+
     public async ngOnInit(): Promise<void> {
         this.addListeners();
         await this.loadPage();

@@ -144,6 +144,10 @@ export class PraUsersComponent extends PraBaseComponent implements OnInit {
         this.isAdmin = user.role === UserRole.Admin;
     }
 
+    protected override onBusinessUnitChanged(): void {
+        void this.loadPage();
+    }
+
     private async loadPage(): Promise<void> {
         this.isLoading = true;
         try {

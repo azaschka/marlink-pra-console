@@ -187,6 +187,10 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
         this.isSuperAdmin = user.role === UserRole.SuperAdmin;
     }
 
+    protected override onBusinessUnitChanged(): void {
+        void this.loadPage();
+    }
+
     private addListeners(): void {
         // Listen for BeyondTrust instance changes and reload data
         this.subscriptionsToClear.add(
