@@ -123,7 +123,7 @@ export class JumpClientsComponent extends PraBaseComponent implements OnInit {
                             message: `Jump Client "${result.name}" successfully copied to Jump Group ID "${result.jumpGroupId}".`,
                         });
                         await this.loadPage();
-                    } catch (error) {
+                    } catch (error: any) {
                         this.isLoading = false;
                         this.errorDialog.show({
                             title: "Error",
