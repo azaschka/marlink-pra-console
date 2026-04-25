@@ -59,11 +59,6 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     async ngOnInit() {
-        // Validate JWT token with the server on every full page load/refresh.
-        // This updates the BehaviorSubject with fresh user data and calls signout()
-        // if the token has expired or been revoked.
-        await this.jwtAuth.checkTokenIsValid();
-
         // this.layoutConf = this.layout.layoutConf;
         this.layoutConfSub = this.layout.layoutConf$.subscribe((layoutConf) => {
             this.layoutConf = layoutConf;

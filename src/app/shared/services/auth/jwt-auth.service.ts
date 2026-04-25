@@ -76,6 +76,38 @@ export class JwtAuthService {
             });
     }
 
+    /**
+     * Intended exclusively for use by APP_INITIALIZER.
+     * Validates the stored JWT token with the server and refreshes the user
+     * profile in the BehaviorSubject before the app renders any component.
+     *
+     * Key difference from checkTokenIsValid():
+     * - Skips the call entirely when no token is stored (unauthenticated start)
+     * - On server rejection does NOT call signout() / router.navigateByUrl().
+     *   The router has not started its initial navigation yet at APP_INITIALIZER
+     *   time, so queuing a navigation here can interfere with the initial URL
+     *   processing. The AuthGuard handles the redirect to login instead.
+     */
+    public async initAuth(): Promise<void> {
+        if (!this.getJwtToken()) {
+            // No token stored — user is not logged in, nothing to validate.
+            return;
+        }
+        try {
+            const user = await firstValueFrom(
+                this.http.get<PraUser>("auth/profile"),
+            );
+            this.userProfile.next(user);
+            this.saveUserObjectToLocalStorage(user);
+        } catch {
+            // Token was rejected by the server (expired, revoked, or invalid).
+            // Clear stale session state without navigating — AuthGuard will
+            // redirect to the login page when the initial navigation runs.
+            this.userProfile.next(JwtAuthService.ANONYMOUS_USER);
+            this.ls.clear();
+        }
+    }
+
     public signout(): void {
         this.userProfile.next(JwtAuthService.ANONYMOUS_USER);
         this.ls.clear();

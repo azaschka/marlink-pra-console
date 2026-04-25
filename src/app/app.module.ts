@@ -1,4 +1,4 @@
-import { NgModule, ErrorHandler } from "@angular/core";
+import { APP_INITIALIZER, NgModule, ErrorHandler } from "@angular/core";
 import {
     HttpClient,
     HttpClientModule,
@@ -21,6 +21,15 @@ import { ErrorHandlerService } from "./shared/services/error-handler.service";
 
 // Interceptors
 import { ApiInterceptor } from "./shared/interceptors/api.interceptor";
+
+// Auth
+import { JwtAuthService } from "./shared/services/auth/jwt-auth.service";
+
+export function initializeAuth(
+    jwtAuthService: JwtAuthService,
+): () => Promise<void> {
+    return () => jwtAuthService.initAuth();
+}
 
 import { AppRoutes } from "./app.routing";
 import { AppComponent } from "./app.component";
@@ -57,6 +66,12 @@ export function HttpLoaderFactory(httpClient: HttpClient) {
         {
             provide: HTTP_INTERCEPTORS,
             useClass: ApiInterceptor,
+            multi: true,
+        },
+        {
+            provide: APP_INITIALIZER,
+            useFactory: initializeAuth,
+            deps: [JwtAuthService],
             multi: true,
         },
     ],
