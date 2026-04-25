@@ -19,16 +19,19 @@ export class AuthGuard implements CanActivate {
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot,
     ): boolean {
-        if (this.jwtAuthService.isLoggedIn()) {
+        if (
+            this.jwtAuthService.isLoggedIn() &&
+            !this.jwtAuthService.isTokenExpired()
+        ) {
             return true;
-        } else {
-            this.router.navigate([AppRoute.SignIn], {
-                queryParams: {
-                    return: state.url,
-                },
-            });
-
-            return false;
         }
+
+        this.router.navigate([AppRoute.SignIn], {
+            queryParams: {
+                return: state.url,
+            },
+        });
+
+        return false;
     }
 }
