@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Router, ActivatedRoute } from "@angular/router";
-import { BehaviorSubject, firstValueFrom, Observable, Subject } from "rxjs";
+import { BehaviorSubject, firstValueFrom, Observable } from "rxjs";
 
 // Services
 import { LocalStoreService } from "../local-store.service";
@@ -77,6 +77,7 @@ export class JwtAuthService {
     }
 
     public signout(): void {
+        this.userProfile.next(JwtAuthService.ANONYMOUS_USER);
         this.ls.clear();
 
         void this.router.navigateByUrl(AppRoute.SignIn);
