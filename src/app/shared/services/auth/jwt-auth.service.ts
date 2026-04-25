@@ -17,6 +17,14 @@ export class JwtAuthService {
     private static readonly PRA_JWT_TOKEN_KEY = "PRA_JWT_TOKEN";
     private static readonly PRA_USER_PROFILE_KEY = "PRA_USER_PROFILE";
 
+    private static readonly ANONYMOUS_USER: PraUser = {
+        username: "anonymous",
+        displayName: "Anonymous",
+        role: "None",
+        businessUnit: undefined,
+        canManagePraUsers: undefined,
+    };
+
     public praUser: Observable<PraUser>;
     public return: string;
 
@@ -28,17 +36,15 @@ export class JwtAuthService {
         private readonly router: Router,
         private readonly route: ActivatedRoute,
     ) {
-        this.route.queryParams.subscribe(
-            (params) => (this.return = params["return"] || "/"),
+        const storedUser = this.ls.getItem(JwtAuthService.PRA_USER_PROFILE_KEY);
+        this.userProfile = new BehaviorSubject<PraUser>(
+            storedUser ?? JwtAuthService.ANONYMOUS_USER,
         );
-        this.userProfile = new BehaviorSubject<PraUser>({
-            username: "anonymous",
-            displayName: "Anonymous",
-            role: "None",
-            businessUnit: undefined,
-            canManagePraUsers: undefined,
-        });
         this.praUser = this.userProfile.asObservable();
+        this.return = AppRoute.Customers;
+        this.route.queryParams.subscribe(
+            (params) => (this.return = params["return"] || AppRoute.Customers),
+        );
     }
 
     public async login(username: string, password: string): Promise<void> {
