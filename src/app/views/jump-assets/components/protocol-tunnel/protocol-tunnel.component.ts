@@ -462,12 +462,21 @@ export class ProtocolTunnelComponent
 
     private addListeners(): void {
         this.subscriptionsToClear.add(
-            this.appService.selectedInstanceId$.subscribe((instanceId) => {
-                this.currentTenantId = instanceId;
-                if (instanceId) {
-                    this.loadPage();
-                }
-            }),
+            this.appService.selectedInstanceId$.subscribe(
+                async (instanceId) => {
+                    const previousTenantId = this.currentTenantId;
+                    this.currentTenantId = instanceId;
+                    // Prevent double-loading on component init: selectedInstanceId$
+                    // is a BehaviorSubject that emits immediately on subscribe.
+                    // Only reload when the instance actually changes mid-session.
+                    if (
+                        previousTenantId !== null &&
+                        previousTenantId !== instanceId
+                    ) {
+                        await this.loadPage();
+                    }
+                },
+            ),
         );
     }
 }
