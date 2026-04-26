@@ -97,12 +97,9 @@ export class ShellJumpComponent extends PraBaseComponent implements OnInit {
     }
 
     public async ngOnInit(): Promise<void> {
-        this.addListeners();
-
-        // Initialize AppService and get tenant ID
         await this.appService.initialize();
         this.currentTenantId = this.appService.getSelectedInstanceId();
-
+        this.addListeners();
         await this.loadPage();
     }
 
