@@ -37,21 +37,21 @@ export class UsersService {
             this.http.get<User[]>("users", {
                 params,
                 ...this.createHeaders(tenantId),
-            })
+            }),
         );
     }
 
     public async createUser(
         tenantId: number,
-        body: UserCreateRequest
+        body: UserCreateRequest,
     ): Promise<User> {
         try {
             return await firstValueFrom(
                 this.http.post<User>(
                     "users",
                     body,
-                    this.createHeaders(tenantId)
-                )
+                    this.createHeaders(tenantId),
+                ),
             );
         } catch (error) {
             if (error && error instanceof HttpErrorResponse) {
@@ -69,34 +69,32 @@ export class UsersService {
     public async updateUser(
         tenantId: number,
         id: number,
-        body: UserUpdateRequest
+        body: UserUpdateRequest,
     ): Promise<User> {
         return firstValueFrom(
             this.http.patch<User>(
                 `users/${id}`,
                 body,
-                this.createHeaders(tenantId)
-            )
+                this.createHeaders(tenantId),
+            ),
         );
     }
 
     public async deleteUser(tenantId: number, id: number): Promise<void> {
         return firstValueFrom(
-            this.http.delete<void>(`users/${id}`, this.createHeaders(tenantId))
+            this.http.delete<void>(`users/${id}`, this.createHeaders(tenantId)),
         );
     }
 
     public async fetchUserGroupPolicies(
         tenantId: number,
-        userId: number
+        userId: number,
     ): Promise<UserGroupPolicy[]> {
-        const params = new HttpParams().set("pageSize", "9999");
         try {
             const response = await firstValueFrom(
                 this.http.get<any>(`users/${userId}/group-policies`, {
-                    params,
                     ...this.createHeaders(tenantId),
-                })
+                }),
             );
 
             // Check if response is a paged result or direct array
@@ -112,7 +110,7 @@ export class UsersService {
             } else {
                 console.error("Unexpected response structure:", response);
                 throw new Error(
-                    "Unexpected API response structure for user group policies"
+                    "Unexpected API response structure for user group policies",
                 );
             }
         } catch (error) {
@@ -121,7 +119,7 @@ export class UsersService {
                 // Return empty array for 403 (permission denied) - user can still edit basic info
                 if (error.status === 403) {
                     console.warn(
-                        "Insufficient permissions to load user group policies. Continuing without group policy data."
+                        "Insufficient permissions to load user group policies. Continuing without group policy data.",
                     );
                     return [];
                 }
@@ -139,7 +137,7 @@ export class UsersService {
         tenantId: number,
         userId: number,
         toAdd: number[] = [],
-        toRemove: number[] = []
+        toRemove: number[] = [],
     ): Promise<void> {
         const body: UserUpdateGroupPoliciesRequest = {
             groupPolicyIdsToAdd: toAdd,
@@ -149,8 +147,8 @@ export class UsersService {
             this.http.patch<void>(
                 `users/${userId}/group-policies`,
                 body,
-                this.createHeaders(tenantId)
-            )
+                this.createHeaders(tenantId),
+            ),
         );
     }
 }

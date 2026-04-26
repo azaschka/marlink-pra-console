@@ -15,7 +15,7 @@ import {
 import { UsersService } from "./users.service";
 import { User } from "./models";
 import { AppService } from "app/app.service";
-import { GroupPoliciesService } from "../group-policies/group-policies.service";
+
 import { CustomersService } from "../customers/customers.service";
 import { CustomerBusinessUnit } from "../customers/enums";
 import { UserRole } from "../pra-users/enums";
@@ -73,7 +73,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
         private readonly dialog: MatDialog,
         jwtAuthService: JwtAuthService,
         private readonly usersService: UsersService,
-        private readonly groupPoliciesService: GroupPoliciesService,
+
         private readonly customersService: CustomersService,
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
@@ -324,20 +324,20 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
      * All users are displayed without any filtering.
      *
      * ## BU Admin (has a `currentBusinessUnit`)
-     * Uses an inverted GP→Members lookup to avoid N+1 HTTP requests:
+     * Uses a batched User→GPs lookup (N+1 pattern) because the inverse
+     * GP→Members endpoint only returns *directly* assigned members and misses
+     * users who inherit a policy via group/directory assignment.
      *
-     * 1. Fetch customers for the admin's BU            → O(1) call
-     * 2. Fetch all users                               → O(1) call
-     * 3. Fetch all group policies                      → O(1) call
-     * 4. Client-side: partition GPs into
-     *    - `superuserGPs`  — names in SUPERUSER_GROUP_POLICIES
-     *    - `buRelevantGPs` — BU-prefix match OR customer-name match
-     * 5. Fetch GP members for both sets in parallel    → O(M_gp) calls
-     *    (M_gp = number of GPs in the BU, typically << number of users)
-     * 6. Build `includedUserIds` and `excludedUserIds` sets
-     * 7. Filter: included AND NOT excluded
-     *
-     * This trades O(N_users) API calls for O(M_gps) calls.
+     * 1. Fetch all users                               → O(1) call
+     * 2. Fetch customers for the admin's BU            → O(1) call
+     * 3. For each user, fetch their group policies     → O(N) calls
+     *    processed in parallel batches of BATCH_SIZE to avoid overwhelming
+     *    the API (364 users / 50 per batch ≈ 7 sequential rounds).
+     * 4. Per-user decision:
+     *    a. EXCLUDE if any GP name is in SUPERUSER_GROUP_POLICIES
+     *    b. INCLUDE if any GP name starts with the BU prefix (e.g. "MT_")
+     *    c. INCLUDE if any GP name contains a customer name from the BU
+     *    d. EXCLUDE (hide) otherwise — BU cannot be determined
      */
     private async loadPage(): Promise<void> {
         const tenantId = this.currentTenantId;
@@ -362,77 +362,65 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
                 const businessUnit = this
                     .currentBusinessUnit as unknown as CustomerBusinessUnit;
 
-                // Steps 1–3: three independent calls in parallel.
-                const [customers, allGroupPolicies] = await Promise.all([
-                    this.customersService.fetchCustomers({
-                        businessUnits: [businessUnit],
-                    }),
-                    this.groupPoliciesService.fetchGroupPolicies(tenantId),
-                ]);
+                const customers = await this.customersService.fetchCustomers({
+                    businessUnits: [businessUnit],
+                });
 
                 const customerNames = customers.map((c) =>
                     c.name.toLowerCase(),
                 );
                 const superuserSet = UsersComponent.SUPERUSER_GROUP_POLICIES;
+                const buPrefix = `${this.currentBusinessUnit}_`;
 
-                // Step 4: partition GPs client-side.
-                const superuserGPs = allGroupPolicies.filter((gp) =>
-                    superuserSet.has(gp.name.toUpperCase()),
-                );
+                /**
+                 * Fetches a single user's group policies and returns whether
+                 * that user should be visible to the current BU Admin.
+                 */
+                const matchesBU = async (user: User): Promise<boolean> => {
+                    const policies = await this.usersService
+                        .fetchUserGroupPolicies(tenantId, user.id)
+                        .catch(() => []);
 
-                const buRelevantGPs = allGroupPolicies.filter((gp) => {
-                    // Never include superuser policies in the "BU-relevant" set.
-                    if (superuserSet.has(gp.name.toUpperCase())) return false;
+                    const policyNames = policies.map(
+                        (p) => p.groupPolicy?.name ?? "",
+                    );
 
-                    // Match by BU prefix, e.g. "OA_..."
-                    if (gp.name.startsWith(`${this.currentBusinessUnit}_`)) {
+                    // (a) Global superuser → always hide from BU Admin.
+                    if (
+                        policyNames.some((name) =>
+                            superuserSet.has(name.toUpperCase()),
+                        )
+                    ) {
+                        return false;
+                    }
+
+                    // (b) BU prefix match, e.g. "MT_..."
+                    if (policyNames.some((name) => name.startsWith(buPrefix))) {
                         return true;
                     }
 
-                    // Match by customer name substring, e.g. "ADMINISTRATORS_GANI_INC"
-                    const lowerName = gp.name.toLowerCase();
-                    return customerNames.some((customerName) =>
-                        lowerName.includes(customerName),
+                    // (c) Customer name substring match,
+                    //     e.g. "ADMINISTRATORS_GANI_INC" contains "gani_inc"
+                    return policyNames.some((name) => {
+                        const lower = name.toLowerCase();
+                        return customerNames.some((cn) => lower.includes(cn));
+                    });
+                };
+
+                // Process users in parallel batches to balance throughput
+                // against API load.
+                const BATCH_SIZE = 50;
+                const matchResults: boolean[] = [];
+
+                for (let i = 0; i < allUsers.length; i += BATCH_SIZE) {
+                    const batch = allUsers.slice(i, i + BATCH_SIZE);
+                    const batchResults = await Promise.all(
+                        batch.map((u) => matchesBU(u)),
                     );
-                });
+                    matchResults.push(...batchResults);
+                }
 
-                // Step 5: fetch GP members for both sets in parallel.
-                // Failures per-GP are caught individually so one broken GP
-                // cannot abort the whole page load.
-                const fetchMembers = (gpId: number) =>
-                    this.groupPoliciesService
-                        .fetchGroupPolicyMembers(tenantId, gpId)
-                        .catch((err) => {
-                            console.warn(
-                                `Could not fetch members for GP ${gpId}:`,
-                                err,
-                            );
-                            return [];
-                        });
-
-                const [superuserMemberArrays, buMemberArrays] =
-                    await Promise.all([
-                        Promise.all(
-                            superuserGPs.map((gp) => fetchMembers(gp.id)),
-                        ),
-                        Promise.all(
-                            buRelevantGPs.map((gp) => fetchMembers(gp.id)),
-                        ),
-                    ]);
-
-                // Step 6: build lookup sets.
-                const excludedUserIds = new Set<number>(
-                    superuserMemberArrays.flat().map((m) => m.userId),
-                );
-                const includedUserIds = new Set<number>(
-                    buMemberArrays.flat().map((m) => m.userId),
-                );
-
-                // Step 7: apply filter.
-                filteredUsers = allUsers.filter(
-                    (u) =>
-                        includedUserIds.has(u.id) && !excludedUserIds.has(u.id),
-                );
+                filteredUsers = allUsers.filter((_, i) => matchResults[i]);
             }
 
             this.dataSource.data = filteredUsers;
