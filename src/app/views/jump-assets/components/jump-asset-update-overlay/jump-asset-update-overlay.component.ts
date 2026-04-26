@@ -5,9 +5,13 @@ import { JumpGroupsService } from "../../../jump-groups/jump-groups.service";
 import { JumpPoliciesService } from "../../../jump-policies/jump-policies.service";
 import { JumpGroup } from "../../../jump-groups/models";
 import { JumpPolicy } from "../../../jump-policies/models";
-import { Observable, of, startWith, map } from "rxjs";
+import { Observable, of, startWith, map, firstValueFrom } from "rxjs";
 import { JumpAssetUpdateRequest } from "../../models";
 import { StringSanitizer } from "app/shared/helpers";
+import { CustomersService } from "../../../customers/customers.service";
+import { CustomerBusinessUnit } from "../../../customers/enums";
+import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
+import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
 
 export interface JumpAssetUpdateDialogData {
     assetType:
@@ -51,7 +55,9 @@ export class JumpAssetUpdateOverlayComponent implements OnInit {
         public dialogRef: MatDialogRef<JumpAssetUpdateOverlayComponent>,
         @Inject(MAT_DIALOG_DATA) public data: JumpAssetUpdateDialogData,
         private readonly jumpGroupsService: JumpGroupsService,
-        private readonly jumpPoliciesService: JumpPoliciesService
+        private readonly jumpPoliciesService: JumpPoliciesService,
+        private readonly customersService: CustomersService,
+        private readonly jwtAuthService: JwtAuthService,
     ) {
         this.form = new FormGroup({
             name: new FormControl<string>(data.currentName, [
@@ -63,14 +69,14 @@ export class JumpAssetUpdateOverlayComponent implements OnInit {
             ]),
             port: new FormControl<number | null>(
                 data.currentPort ?? null,
-                [] // Validators kommen dynamisch im ngOnInit, je nach Asset-Typ
+                [], // Validators kommen dynamisch im ngOnInit, je nach Asset-Typ
             ),
             jumpGroup: new FormControl<JumpGroup | null>(null, [
                 Validators.required,
             ]),
             jumpPolicy: new FormControl<JumpPolicy | null>(null),
             mustVerifyCertificate: new FormControl<boolean>(
-                data.currentMustVerifyCertificate || false
+                data.currentMustVerifyCertificate || false,
             ),
         });
     }
@@ -79,19 +85,50 @@ export class JumpAssetUpdateOverlayComponent implements OnInit {
         this.isLoading = true;
         try {
             const tenantId = this.data.tenantId;
-            this.jumpGroups = await this.jumpGroupsService.fetchJumpGroups(
-                tenantId
-            );
-            this.jumpPolicies =
-                await this.jumpPoliciesService.fetchJumpPolicies(tenantId);
+            const user = await firstValueFrom(this.jwtAuthService.praUser);
+            const businessUnit = user?.businessUnit;
+
+            // Load core lists in parallel; optionally also load customers
+            const [allJumpGroups, allJumpPolicies, customers] =
+                await Promise.all([
+                    this.jumpGroupsService.fetchJumpGroups(tenantId),
+                    this.jumpPoliciesService.fetchJumpPolicies(tenantId),
+                    businessUnit
+                        ? this.customersService.fetchCustomers({
+                              businessUnits: [
+                                  businessUnit as unknown as CustomerBusinessUnit,
+                              ],
+                              pageSize: 9999,
+                          })
+                        : Promise.resolve([]),
+                ]);
+
+            if (businessUnit) {
+                // BU Admin — filter by customer name prefix
+                const customerNames = customers.map((c) => c.name);
+                this.jumpGroups = PraDataFilter.filterByCustomerPrefix(
+                    allJumpGroups,
+                    customerNames,
+                    (g) => g.name,
+                );
+                this.jumpPolicies = PraDataFilter.filterByCustomerPrefix(
+                    allJumpPolicies,
+                    customerNames,
+                    (p) => p.codeName,
+                );
+            } else {
+                // SuperAdmin — no filtering
+                this.jumpGroups = allJumpGroups;
+                this.jumpPolicies = allJumpPolicies;
+            }
 
             const currentJumpGroup =
                 this.jumpGroups.find(
-                    (g) => g.id === this.data.currentJumpGroupId
+                    (g) => g.id === this.data.currentJumpGroupId,
                 ) || null;
             const currentJumpPolicy = this.data.currentJumpPolicyId
                 ? this.jumpPolicies.find(
-                      (p) => p.id === this.data.currentJumpPolicyId
+                      (p) => p.id === this.data.currentJumpPolicyId,
                   ) || null
                 : null;
 
@@ -107,13 +144,13 @@ export class JumpAssetUpdateOverlayComponent implements OnInit {
                 .get("jumpGroup")!
                 .valueChanges.pipe(
                     startWith(currentJumpGroup),
-                    map((val) => this.filterJumpGroups(val))
+                    map((val) => this.filterJumpGroups(val)),
                 );
             this.filteredJumpPolicies$ = this.form
                 .get("jumpPolicy")!
                 .valueChanges.pipe(
                     startWith(currentJumpPolicy),
-                    map((val) => this.filterJumpPolicies(val))
+                    map((val) => this.filterJumpPolicies(val)),
                 );
 
             this.setVerifyCertificateValidators();
@@ -203,10 +240,10 @@ export class JumpAssetUpdateOverlayComponent implements OnInit {
                 ?.setValidators([
                     Validators.required,
                     Validators.min(
-                        JumpAssetUpdateOverlayComponent.MINIMUM_PORT_NUMBER
+                        JumpAssetUpdateOverlayComponent.MINIMUM_PORT_NUMBER,
                     ),
                     Validators.max(
-                        JumpAssetUpdateOverlayComponent.MAXIMUM_PORT_NUMBER
+                        JumpAssetUpdateOverlayComponent.MAXIMUM_PORT_NUMBER,
                     ),
                 ]);
             // Default Port, falls noch nicht gesetzt:
@@ -217,7 +254,7 @@ export class JumpAssetUpdateOverlayComponent implements OnInit {
                         this.data.currentPort ||
                             (this.data.assetType === "remoteVnc"
                                 ? JumpAssetUpdateOverlayComponent.DEFAULT_REMOTE_VNC_PORT
-                                : JumpAssetUpdateOverlayComponent.DEFAULT_SHELL_JUMP_PORT)
+                                : JumpAssetUpdateOverlayComponent.DEFAULT_SHELL_JUMP_PORT),
                     );
             }
         } else {
@@ -245,23 +282,23 @@ export class JumpAssetUpdateOverlayComponent implements OnInit {
         const filter =
             typeof value === "string"
                 ? value.toLowerCase()
-                : value?.name?.toLowerCase() ?? "";
+                : (value?.name?.toLowerCase() ?? "");
 
         return this.jumpGroups.filter((g) =>
-            g.name.toLowerCase().includes(filter)
+            g.name.toLowerCase().includes(filter),
         );
     }
 
     private filterJumpPolicies(
-        value: string | JumpPolicy | null
+        value: string | JumpPolicy | null,
     ): JumpPolicy[] {
         const filter =
             typeof value === "string"
                 ? value.toLowerCase()
-                : value?.displayName?.toLowerCase() ?? "";
+                : (value?.displayName?.toLowerCase() ?? "");
 
         return this.jumpPolicies.filter((p) =>
-            p.displayName.toLowerCase().includes(filter)
+            p.displayName.toLowerCase().includes(filter),
         );
     }
 

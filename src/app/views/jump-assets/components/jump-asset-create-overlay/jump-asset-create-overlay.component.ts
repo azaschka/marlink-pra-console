@@ -1,8 +1,8 @@
 import { Component, Inject, OnInit, OnDestroy } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { FormGroup, FormControl, Validators } from "@angular/forms";
-import { Observable, of, Subject, combineLatest } from "rxjs";
-import { map, startWith, takeUntil, catchError } from "rxjs/operators";
+import { Observable, of, Subject, firstValueFrom } from "rxjs";
+import { map, startWith, takeUntil } from "rxjs/operators";
 import { StringSanitizer } from "../../../../shared/helpers";
 import { Jumpoint } from "../../../jumpoints/models";
 import { JumpointsService } from "../../../jumpoints/jumpoints.service";
@@ -11,6 +11,10 @@ import { JumpPoliciesService } from "../../../jump-policies/jump-policies.servic
 import { JumpGroup } from "../../../jump-groups/models";
 import { JumpPolicy } from "../../../jump-policies/models";
 import { JumpAssetCreateRequest } from "../../models";
+import { CustomersService } from "../../../customers/customers.service";
+import { CustomerBusinessUnit } from "../../../customers/enums";
+import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
+import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
 
 export type JumpAssetType =
     | "remoteRdp"
@@ -75,7 +79,9 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
         @Inject(MAT_DIALOG_DATA) public data: JumpAssetCreateDialogData,
         private readonly jumpointsService: JumpointsService,
         private readonly jumpGroupsService: JumpGroupsService,
-        private readonly jumpPoliciesService: JumpPoliciesService
+        private readonly jumpPoliciesService: JumpPoliciesService,
+        private readonly customersService: CustomersService,
+        private readonly jwtAuthService: JwtAuthService,
     ) {}
 
     ngOnInit(): void {
@@ -116,40 +122,73 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
         this.setDynamicValidators();
     }
 
-    /** Load all required data using observables */
-    private loadData(): void {
+    /** Load all required data and apply BU-based filtering for non-SuperAdmins */
+    private async loadData(): Promise<void> {
         this.isLoading = true;
         this.loadError = null;
 
         const tenantId = this.data.tenantId;
+        const user = await firstValueFrom(this.jwtAuthService.praUser);
+        const businessUnit = user?.businessUnit;
 
-        combineLatest([
+        // Build the array of observables — always load the three core lists
+        const sources: [
+            Promise<Jumpoint[]>,
+            Promise<JumpGroup[]>,
+            Promise<JumpPolicy[]>,
+        ] = [
             this.jumpointsService.fetchJumpoints(tenantId),
             this.jumpGroupsService.fetchJumpGroups(tenantId),
             this.jumpPoliciesService.fetchJumpPolicies(tenantId),
-        ])
-            .pipe(
-                takeUntil(this.destroy$),
-                catchError((error) => {
-                    console.error("Failed to load jump asset data:", error);
-                    this.loadError =
-                        "Failed to load required data. Please try again.";
-                    this.isLoading = false;
-                    return of([[], [], []] as [
-                        Jumpoint[],
-                        JumpGroup[],
-                        JumpPolicy[]
-                    ]);
-                })
-            )
-            .subscribe({
-                next: ([jumpoints, jumpGroups, jumpPolicies]) => {
+        ];
+
+        // If the user has a BU (i.e. is a BU Admin), also load customers for
+        // that BU so we can filter JumpGroups and JumpPolicies by customer prefix.
+        const customersPromise = businessUnit
+            ? this.customersService.fetchCustomers({
+                  businessUnits: [
+                      businessUnit as unknown as CustomerBusinessUnit,
+                  ],
+                  pageSize: 9999,
+              })
+            : Promise.resolve([]);
+
+        Promise.all([...sources, customersPromise])
+            .then(([jumpoints, jumpGroups, jumpPolicies, customers]) => {
+                if (businessUnit) {
+                    // BU Admin — apply filtering
+                    const customerNames = customers.map((c) => c.name);
+
+                    this.jumpoints = PraDataFilter.filterByBusinessUnit(
+                        jumpoints,
+                        businessUnit,
+                        [(j) => j.codeName],
+                    );
+                    this.jumpGroups = PraDataFilter.filterByCustomerPrefix(
+                        jumpGroups,
+                        customerNames,
+                        (g) => g.name,
+                    );
+                    this.jumpPolicies = PraDataFilter.filterByCustomerPrefix(
+                        jumpPolicies,
+                        customerNames,
+                        (p) => p.codeName,
+                    );
+                } else {
+                    // SuperAdmin — no filtering
                     this.jumpoints = jumpoints;
                     this.jumpGroups = jumpGroups;
                     this.jumpPolicies = jumpPolicies;
-                    this.setupAutocompleteFilters();
-                    this.isLoading = false;
-                },
+                }
+
+                this.setupAutocompleteFilters();
+                this.isLoading = false;
+            })
+            .catch((error) => {
+                console.error("Failed to load jump asset data:", error);
+                this.loadError =
+                    "Failed to load required data. Please try again.";
+                this.isLoading = false;
             });
     }
 
@@ -162,21 +201,21 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
         this.filteredJumpoints$ = jumpointControl.valueChanges.pipe(
             startWith(jumpointControl.value),
             map((value) => this.filterItems(value, this.jumpoints, "name")),
-            takeUntil(this.destroy$)
+            takeUntil(this.destroy$),
         );
 
         this.filteredJumpGroups$ = jumpGroupControl.valueChanges.pipe(
             startWith(jumpGroupControl.value),
             map((value) => this.filterItems(value, this.jumpGroups, "name")),
-            takeUntil(this.destroy$)
+            takeUntil(this.destroy$),
         );
 
         this.filteredJumpPolicies$ = jumpPolicyControl.valueChanges.pipe(
             startWith(jumpPolicyControl.value),
             map((value) =>
-                this.filterItems(value, this.jumpPolicies, "displayName")
+                this.filterItems(value, this.jumpPolicies, "displayName"),
             ),
-            takeUntil(this.destroy$)
+            takeUntil(this.destroy$),
         );
     }
 
@@ -184,17 +223,17 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
     private filterItems<T>(
         value: string | T | null,
         items: T[],
-        propertyName: keyof T
+        propertyName: keyof T,
     ): T[] {
         const filterValue =
             typeof value === "string"
                 ? value.toLowerCase()
                 : value
-                ? String(value[propertyName]).toLowerCase()
-                : "";
+                  ? String(value[propertyName]).toLowerCase()
+                  : "";
 
         return items.filter((item) =>
-            String(item[propertyName]).toLowerCase().includes(filterValue)
+            String(item[propertyName]).toLowerCase().includes(filterValue),
         );
     }
 
