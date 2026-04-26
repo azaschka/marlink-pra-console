@@ -151,7 +151,7 @@ export class ProtocolTunnelComponent
                             message: `Protocol Tunnel "${result.name}" successfully copied to Jump Group ID "${result.jumpGroupId}".`,
                         });
                         await this.loadPage();
-                    } catch (error) {
+                    } catch (error: any) {
                         this.isLoading = false;
                         this.errorDialog.show({
                             title: "Error",
@@ -209,11 +209,14 @@ export class ProtocolTunnelComponent
                             message: `Protocol Tunnel "${result.name}" successfully created.`,
                         });
                         await this.loadPage();
-                    } catch (error) {
+                    } catch (error: unknown) {
                         this.isLoading = false;
                         this.errorDialog.show({
                             title: "Error",
-                            message: error?.message ?? "Unexpected error",
+                            message:
+                                (error instanceof Error
+                                    ? error.message
+                                    : String(error)) ?? "Unexpected error",
                         });
                     }
                 }
@@ -337,6 +340,11 @@ export class ProtocolTunnelComponent
                     this.jumpointsService.fetchJumpoints(this.currentTenantId),
                 ]);
 
+            // Build lookup maps for O(1) enrichment (instead of Array.find per item)
+            const jumpGroupMap = new Map(jumpGroups.map((g) => [g.id, g]));
+            const jumpPolicyMap = new Map(jumpPolicies.map((p) => [p.id, p]));
+            const jumpointMap = new Map(jumpoints.map((j) => [j.id, j]));
+
             // Store lookup tables (if needed later)
             this.jumpGroups = jumpGroups;
             this.jumpPolicies = jumpPolicies;
@@ -345,26 +353,20 @@ export class ProtocolTunnelComponent
             // Enrich items directly
             const enriched = items.map((item) => ({
                 ...item,
-                jumpGroupName:
-                    jumpGroups.find((g) => g.id === item.jumpGroupId)?.name ??
-                    "—",
-                jumpPolicyName:
-                    jumpPolicies.find((p) => p.id === item.jumpPolicyId)
-                        ?.displayName ?? "—",
-                jumpointName:
-                    jumpoints.find((j) => j.id === item.jumpointId)?.name ??
-                    "—",
+                jumpGroupName: jumpGroupMap.get(item.jumpGroupId)?.name ?? "—",
+                jumpPolicyName: item.jumpPolicyId
+                    ? (jumpPolicyMap.get(item.jumpPolicyId)?.displayName ?? "—")
+                    : "—",
+                jumpointName: jumpointMap.get(item.jumpointId)?.name ?? "—",
+                jumpointCodeName: jumpointMap.get(item.jumpointId)?.codeName,
             }));
 
-            // Apply business unit filter
+            // Filter by jumpoint codeName — SuperAdmins see all, BU Admins
+            // see only assets whose jumpoint codeName carries their BU prefix.
             const filteredItems = PraDataFilter.filterByBusinessUnit(
                 enriched,
                 this.currentBusinessUnit,
-                [
-                    (j) => j.jumpGroupName,
-                    (j) => j.jumpPolicyName,
-                    (j) => j.jumpointName,
-                ],
+                [(j) => j.jumpointCodeName],
             );
 
             // Optional pagination overrides (if the calling location wants it)

@@ -146,7 +146,8 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
                         this.isLoading = false;
                         this.errorDialog.show({
                             title: "Error",
-                            message: error?.message ?? "Unexpected error",
+                            message:
+                                (error as any)?.message ?? "Unexpected error",
                         });
                     }
                 }
@@ -180,7 +181,7 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
                         const body: CreateRemoteRdpDtoInput = {
                             name: result.name,
                             tag: result.tag,
-                            hostname: result.hostname,
+                            hostname: result.hostname ?? "",
                             jumpGroupId: result.jumpGroupId!,
                             jumpointId: result.jumpointId!,
                             jumpPolicyId: result.jumpPolicyId ?? 0,
@@ -198,7 +199,8 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
                         this.isLoading = false;
                         this.errorDialog.show({
                             title: "Error",
-                            message: error?.message ?? "Unexpected error",
+                            message:
+                                (error as any)?.message ?? "Unexpected error",
                         });
                     }
                 }
@@ -320,6 +322,11 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
                     this.jumpointsService.fetchJumpoints(this.currentTenantId),
                 ]);
 
+            // Build lookup maps for O(1) enrichment (instead of Array.find per item)
+            const jumpGroupMap = new Map(jumpGroups.map((g) => [g.id, g]));
+            const jumpPolicyMap = new Map(jumpPolicies.map((p) => [p.id, p]));
+            const jumpointMap = new Map(jumpoints.map((j) => [j.id, j]));
+
             // Store lookup tables (if needed later)
             this.jumpGroups = jumpGroups;
             this.jumpPolicies = jumpPolicies;
@@ -328,26 +335,20 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
             // Enrich items directly
             const enriched = items.map((item) => ({
                 ...item,
-                jumpGroupName:
-                    jumpGroups.find((g) => g.id === item.jumpGroupId)?.name ??
-                    "—",
-                jumpPolicyName:
-                    jumpPolicies.find((p) => p.id === item.jumpPolicyId)
-                        ?.displayName ?? "—",
-                jumpointName:
-                    jumpoints.find((j) => j.id === item.jumpointId)?.name ??
-                    "—",
+                jumpGroupName: jumpGroupMap.get(item.jumpGroupId)?.name ?? "—",
+                jumpPolicyName: item.jumpPolicyId
+                    ? (jumpPolicyMap.get(item.jumpPolicyId)?.displayName ?? "—")
+                    : "—",
+                jumpointName: jumpointMap.get(item.jumpointId)?.name ?? "—",
+                jumpointCodeName: jumpointMap.get(item.jumpointId)?.codeName,
             }));
 
-            // Apply business unit filter
+            // Filter by jumpoint codeName — SuperAdmins see all, BU Admins
+            // see only assets whose jumpoint codeName carries their BU prefix.
             const filteredItems = PraDataFilter.filterByBusinessUnit(
                 enriched,
                 this.currentBusinessUnit,
-                [
-                    (j) => j.jumpGroupName,
-                    (j) => j.jumpPolicyName,
-                    (j) => j.jumpointName,
-                ],
+                [(j) => j.jumpointCodeName],
             );
 
             // Optional pagination overrides (if the calling location wants it)
@@ -384,63 +385,6 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
             this.isLoading = false;
         }
     }
-
-    // private async loadPage(
-    //     overrides: Partial<{ pageNumber: number; pageSize: number }> = {}
-    // ): Promise<void> {
-    //     this.isLoading = true;
-    //     try {
-    //         const items = await this.jumpAssetsService.fetchRemoteRdps();
-    //         this.jumpGroups = await this.jumpGroupsService.fetchJumpGroups();
-    //         this.jumpPolicies =
-    //             await this.jumpPoliciesService.fetchJumpPolicies();
-    //         this.jumpoints = await this.jumpointsService.fetchJumpoints();
-
-    //         this.dataSource.data = items;
-    //         this.dataSource.sort = this.sort;
-    //         this.dataSource.paginator = this.paginator;
-    //         this.dataCount = items.length;
-
-    //         setTimeout(() => this.loadVisibleData(), 10);
-    //         // this.paginator.page.subscribe(() =>
-    //         //     this.loadVisibleLicenseUsages()
-    //         // );
-    //     } catch (err: any) {
-    //         this.errorDialog.show({
-    //             title: "Error",
-    //             message: err?.message ?? "Unexpected error",
-    //         });
-    //     } finally {
-    //         this.isLoading = false;
-    //     }
-    // }
-
-    // private async loadVisibleData(): Promise<void> {
-    //     const data = this.dataSource.filteredData || this.dataSource.data;
-    //     const pageIndex = this.paginator.pageIndex || 0;
-    //     const pageSize = this.paginator.pageSize || 20;
-    //     const start = pageIndex * pageSize;
-    //     const end = start + pageSize;
-    //     const currentPageItems = data; // data.slice(start, end);
-
-    //     for (const item of currentPageItems) {
-    //         if (item.jumpGroupId) {
-    //             item.jumpGroupName =
-    //                 this.jumpGroups.find((g) => g.id === item.jumpGroupId)
-    //                     ?.name || "—";
-    //         }
-    //         if (item.jumpPolicyId) {
-    //             item.jumpPolicyName =
-    //                 this.jumpPolicies.find((p) => p.id === item.jumpPolicyId)
-    //                     ?.displayName || "—";
-    //         }
-    //         if (item.jumpointId) {
-    //             item.jumpointName =
-    //                 this.jumpoints.find((j) => j.id === item.jumpointId)
-    //                     ?.name || "—";
-    //         }
-    //     }
-    // }
 
     private addListeners(): void {
         this.subscriptionsToClear.add(
