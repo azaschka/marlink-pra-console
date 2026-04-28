@@ -10,12 +10,11 @@ import { SharedModule } from "../../shared/shared.module";
 import { JumpGroupsService } from "./jump-groups.service";
 import { JumpGroupsComponent } from "./jump-groups.component";
 import { JumpGroupsRoutes } from "./jump-groups.routing";
-import { CustomersService } from "../customers/customers.service";
 import { JumpGroupUpdateOverlayComponent } from "./components/jump-group-update-overlay/jump-group-update-overlay.component";
 
 const COMPONENTS = [JumpGroupsComponent, JumpGroupUpdateOverlayComponent];
 
-const SERVICES = [JumpGroupsService, CustomersService];
+const SERVICES = [JumpGroupsService];
 
 @NgModule({
     imports: [

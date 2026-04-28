@@ -11,7 +11,7 @@ import { NotificationDialogService } from "../../../../shared/dialogs/notificati
 import { PraDataFilter } from "../../../../shared/helpers";
 import { JumpAssetsService } from "../../jump-assets.service";
 import { AppService } from "app/app.service";
-import { CustomersService } from "../../../customers/customers.service";
+import { CustomerCacheService } from "../../../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JumpAssetCopyOverlayComponent } from "../jump-asset-copy-overlay/jump-asset-copy-overlay.component";
 import {
@@ -86,7 +86,7 @@ export class ShellJumpComponent extends PraBaseComponent implements OnInit {
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
         private readonly jumpointsService: JumpointsService,
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
@@ -337,12 +337,11 @@ export class ShellJumpComponent extends PraBaseComponent implements OnInit {
                     ),
                     this.jumpointsService.fetchJumpoints(this.currentTenantId),
                     this.currentBusinessUnit
-                        ? this.customersService.fetchCustomers({
+                        ? this.customerCacheService.fetchCustomers({
                               businessUnits: [
                                   this
                                       .currentBusinessUnit as unknown as CustomerBusinessUnit,
                               ],
-                              pageSize: 9999,
                           })
                         : Promise.resolve([]),
                 ]);

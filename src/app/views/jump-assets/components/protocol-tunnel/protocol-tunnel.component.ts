@@ -9,7 +9,7 @@ import { ConfirmDialogService } from "../../../../shared/dialogs/confirm-dialog/
 import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { PraDataFilter } from "../../../../shared/helpers";
-import { CustomersService } from "../../../customers/customers.service";
+import { CustomerCacheService } from "../../../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JumpAssetsService } from "../../jump-assets.service";
 import { AppService } from "app/app.service";
@@ -85,7 +85,7 @@ export class ProtocolTunnelComponent
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
         private readonly jumpointsService: JumpointsService,
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
@@ -340,12 +340,11 @@ export class ProtocolTunnelComponent
                     ),
                     this.jumpointsService.fetchJumpoints(this.currentTenantId),
                     this.currentBusinessUnit
-                        ? this.customersService.fetchCustomers({
+                        ? this.customerCacheService.fetchCustomers({
                               businessUnits: [
                                   this
                                       .currentBusinessUnit as unknown as CustomerBusinessUnit,
                               ],
-                              pageSize: 9999,
                           })
                         : Promise.resolve([]),
                 ]);

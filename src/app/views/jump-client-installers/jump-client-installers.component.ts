@@ -24,7 +24,7 @@ import { JumpClientInstallerCreateOverlayComponent } from "./components/jump-cli
 import { JumpGroupsService } from "../jump-groups/jump-groups.service";
 import { JumpPoliciesService } from "../jump-policies/jump-policies.service";
 import { AppService } from "../../app.service";
-import { CustomersService } from "../customers/customers.service";
+import { CustomerCacheService } from "../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../customers/enums";
 
 @Component({
@@ -71,7 +71,7 @@ export class JumpClientInstallersComponent
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
     ) {
         super(jwtAuthService);
     }
@@ -226,12 +226,11 @@ export class JumpClientInstallersComponent
                         this.currentTenantId,
                     ),
                     this.currentBusinessUnit
-                        ? this.customersService.fetchCustomers({
+                        ? this.customerCacheService.fetchCustomers({
                               businessUnits: [
                                   this
                                       .currentBusinessUnit as unknown as CustomerBusinessUnit,
                               ],
-                              pageSize: 9999,
                           })
                         : Promise.resolve([]),
                 ]);

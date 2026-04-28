@@ -8,7 +8,7 @@ import { CsvModule } from "@ctrl/ngx-csv";
 import { SharedModule } from "../../shared/shared.module";
 import { SharedMaterialModule } from "../../shared/shared-material.module";
 import { CustomersRoutes } from "./customers.routing";
-import { CustomersService } from "./customers.service";
+
 import { CustomersComponent } from "./customers.component";
 import { CustomerOverlayComponent } from "./components/customer-overlay/customer-overlay.component";
 
@@ -27,6 +27,6 @@ const COMPONENTS = [CustomersComponent, CustomerOverlayComponent];
         RouterModule.forChild(CustomersRoutes),
     ],
     declarations: COMPONENTS,
-    providers: [CustomersService],
+    providers: [],
 })
 export class CustomersModule {}

@@ -6,7 +6,7 @@ import { map, startWith, takeUntil } from "rxjs/operators";
 import { JumpGroupsService } from "../../../jump-groups/jump-groups.service";
 import { JumpAssetCopyRequest } from "../../models";
 import { JumpGroup } from "../../../jump-groups/models";
-import { CustomersService } from "../../../customers/customers.service";
+import { CustomerCacheService } from "../../../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
@@ -64,7 +64,7 @@ export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
         public dialogRef: MatDialogRef<JumpAssetCopyOverlayComponent>,
         @Inject(MAT_DIALOG_DATA) public data: CopyJumpAssetDialogData,
         private readonly jumpGroupsService: JumpGroupsService,
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly jwtAuthService: JwtAuthService,
     ) {
         this.form = new FormGroup<CopyForm>({
@@ -89,11 +89,10 @@ export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
             const [allJumpGroups, customers] = await Promise.all([
                 this.jumpGroupsService.fetchJumpGroups(tenantId),
                 businessUnit
-                    ? this.customersService.fetchCustomers({
+                    ? this.customerCacheService.fetchCustomers({
                           businessUnits: [
                               businessUnit as unknown as CustomerBusinessUnit,
                           ],
-                          pageSize: 9999,
                       })
                     : Promise.resolve([]),
             ]);

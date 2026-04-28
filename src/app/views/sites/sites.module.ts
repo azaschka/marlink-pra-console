@@ -10,7 +10,6 @@ import { SharedMaterialModule } from "../../shared/shared-material.module";
 import { SitesRoutes } from "./sites.routing";
 import { SitesService } from "./sites.service";
 import { SiteImportWorkflowService } from "./workflows/site-import-workflow";
-import { CustomersService } from "../customers/customers.service";
 import { JumpAssetsService } from "../jump-assets/jump-assets.service";
 import { JumpGroupsService } from "../jump-groups/jump-groups.service";
 import { JumpPoliciesService } from "../jump-policies/jump-policies.service";
@@ -34,7 +33,6 @@ const COMPONENTS = [
 const SERVICES = [
     SitesService,
     SiteImportWorkflowService,
-    CustomersService,
     JumpAssetsService,
     JumpGroupsService,
     JumpPoliciesService,

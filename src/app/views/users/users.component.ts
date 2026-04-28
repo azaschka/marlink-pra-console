@@ -16,7 +16,7 @@ import { UsersService } from "./users.service";
 import { User } from "./models";
 import { AppService } from "app/app.service";
 
-import { CustomersService } from "../customers/customers.service";
+import { CustomerCacheService } from "../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../customers/enums";
 import { UserRole } from "../pra-users/enums";
 import { PraUser } from "app/shared/models";
@@ -74,7 +74,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
         jwtAuthService: JwtAuthService,
         private readonly usersService: UsersService,
 
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
@@ -129,24 +129,26 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
             return;
         }
 
-        this.dialog
-            .open(UserOverlayComponent, {
-                data: {
-                    mode: "add",
-                    tenantId: this.currentTenantId,
-                } as UserOverlayDialogData,
-                disableClose: true,
-                width: "720px",
-            })
-            .afterClosed()
-            .subscribe((created: boolean) => {
-                if (created) {
-                    this.notificationDialog.show({
-                        message: "User has been created successfully.",
-                    });
-                    this.loadPage();
-                }
-            });
+        this.subscriptionsToClear.add(
+            this.dialog
+                .open(UserOverlayComponent, {
+                    data: {
+                        mode: "add",
+                        tenantId: this.currentTenantId,
+                    } as UserOverlayDialogData,
+                    disableClose: true,
+                    width: "720px",
+                })
+                .afterClosed()
+                .subscribe((created: boolean) => {
+                    if (created) {
+                        this.notificationDialog.show({
+                            message: "User has been created successfully.",
+                        });
+                        void this.loadPage();
+                    }
+                }),
+        );
     }
 
     public editUserHandler(user: User): void {
@@ -158,28 +160,30 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
             return;
         }
 
-        this.dialog
-            .open(UserOverlayComponent, {
-                data: {
-                    mode: "edit",
-                    user,
-                    tenantId: this.currentTenantId,
-                } as UserOverlayDialogData,
-                disableClose: true,
-                width: "720px",
-            })
-            .afterClosed()
-            .subscribe((updated: boolean) => {
-                if (updated) {
-                    this.notificationDialog.show({
-                        message: `User "${user.publicDisplayName}" updated successfully.`,
-                    });
-                    this.loadPage();
-                }
-            });
+        this.subscriptionsToClear.add(
+            this.dialog
+                .open(UserOverlayComponent, {
+                    data: {
+                        mode: "edit",
+                        user,
+                        tenantId: this.currentTenantId,
+                    } as UserOverlayDialogData,
+                    disableClose: true,
+                    width: "720px",
+                })
+                .afterClosed()
+                .subscribe((updated: boolean) => {
+                    if (updated) {
+                        this.notificationDialog.show({
+                            message: `User "${user.publicDisplayName}" updated successfully.`,
+                        });
+                        void this.loadPage();
+                    }
+                }),
+        );
     }
 
-    public deactivateUserHandler(user: User): void {
+    public async deactivateUserHandler(user: User): Promise<void> {
         if (!this.currentTenantId) {
             this.errorDialog.show({
                 title: "No Instance Selected",
@@ -188,46 +192,37 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
             return;
         }
 
-        this.confirmDialog
-            .show({
-                title: "Deactivate User",
-                message: `Are you sure you want to deactivate user:<br><strong>${user.publicDisplayName}</strong>?`,
-            })
-            .then((confirmed) => {
-                if (confirmed) {
-                    this.isLoading = true;
-                    this.usersService
-                        .updateUser(this.currentTenantId!, user.id, {
-                            isLoginAllowed: false,
-                        })
-                        .then(() => {
-                            this.notificationDialog.show({
-                                message: `User ${user.publicDisplayName} has been deactivated.`,
-                            });
-                            this.dataSource.data = this.dataSource.data.map(
-                                (u) =>
-                                    u.id === user.id
-                                        ? { ...u, isLoginAllowed: false }
-                                        : u,
-                            );
-                            this.loadPage();
-                        })
-                        .catch((err: any) => {
-                            this.errorDialog.show({
-                                title: "Deactivate User Failed",
-                                message:
-                                    err?.message ||
-                                    "The user could not be deactivated. Please try again later.",
-                            });
-                        })
-                        .finally(() => {
-                            this.isLoading = false;
-                        });
-                }
+        const confirmed = await this.confirmDialog.show({
+            title: "Deactivate User",
+            message: `Are you sure you want to deactivate user:<br><strong>${user.publicDisplayName}</strong>?`,
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
+        this.isLoading = true;
+        try {
+            await this.usersService.updateUser(this.currentTenantId, user.id, {
+                isLoginAllowed: false,
             });
+            this.notificationDialog.show({
+                message: `User ${user.publicDisplayName} has been deactivated.`,
+            });
+            await this.loadPage();
+        } catch (err: any) {
+            this.errorDialog.show({
+                title: "Deactivate User Failed",
+                message:
+                    err?.message ||
+                    "The user could not be deactivated. Please try again later.",
+            });
+        } finally {
+            this.isLoading = false;
+        }
     }
 
-    public reactivateUserHandler(user: User): void {
+    public async reactivateUserHandler(user: User): Promise<void> {
         if (!this.currentTenantId) {
             this.errorDialog.show({
                 title: "No Instance Selected",
@@ -236,43 +231,34 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
             return;
         }
 
-        this.confirmDialog
-            .show({
-                title: "Reactivate User",
-                message: `Are you sure you want to reactivate user:<br><strong>${user.publicDisplayName}</strong>?`,
-            })
-            .then((confirmed) => {
-                if (confirmed) {
-                    this.isLoading = true;
-                    this.usersService
-                        .updateUser(this.currentTenantId!, user.id, {
-                            isLoginAllowed: true,
-                        })
-                        .then(() => {
-                            this.notificationDialog.show({
-                                message: `User ${user.publicDisplayName} has been reactivated.`,
-                            });
-                            this.dataSource.data = this.dataSource.data.map(
-                                (u) =>
-                                    u.id === user.id
-                                        ? { ...u, isLoginAllowed: true }
-                                        : u,
-                            );
-                            this.loadPage();
-                        })
-                        .catch((err: any) => {
-                            this.errorDialog.show({
-                                title: "Reactivate User Failed",
-                                message:
-                                    err?.message ||
-                                    "The user could not be reactivated. Please try again later.",
-                            });
-                        })
-                        .finally(() => {
-                            this.isLoading = false;
-                        });
-                }
+        const confirmed = await this.confirmDialog.show({
+            title: "Reactivate User",
+            message: `Are you sure you want to reactivate user:<br><strong>${user.publicDisplayName}</strong>?`,
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
+        this.isLoading = true;
+        try {
+            await this.usersService.updateUser(this.currentTenantId, user.id, {
+                isLoginAllowed: true,
             });
+            this.notificationDialog.show({
+                message: `User ${user.publicDisplayName} has been reactivated.`,
+            });
+            await this.loadPage();
+        } catch (err: any) {
+            this.errorDialog.show({
+                title: "Reactivate User Failed",
+                message:
+                    err?.message ||
+                    "The user could not be reactivated. Please try again later.",
+            });
+        } finally {
+            this.isLoading = false;
+        }
     }
 
     public async deleteUserHandler(user: User): Promise<void> {
@@ -362,9 +348,10 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
                 const businessUnit = this
                     .currentBusinessUnit as unknown as CustomerBusinessUnit;
 
-                const customers = await this.customersService.fetchCustomers({
-                    businessUnits: [businessUnit],
-                });
+                const customers =
+                    await this.customerCacheService.fetchCustomers({
+                        businessUnits: [businessUnit],
+                    });
 
                 const customerNames = customers.map((c) =>
                     c.name.toLowerCase(),

@@ -10,7 +10,7 @@ import { NotificationDialogService } from "../../shared/dialogs/notification-dia
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { UserRole } from "../pra-users/enums";
 import { JumpGroupsService } from "./jump-groups.service";
-import { CustomersService } from "../customers/customers.service";
+import { CustomerCacheService } from "../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../customers/enums";
 import { JumpGroup } from "./models";
 import { JumpGroupUpdateRequest } from "./models/jump-group-update-request.model";
@@ -56,7 +56,7 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
         private readonly dialog: MatDialog,
         jwtAuthService: JwtAuthService,
         private readonly jumpGroupsService: JumpGroupsService,
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
@@ -185,12 +185,11 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
             const [jumpGroups, customers] = await Promise.all([
                 this.jumpGroupsService.fetchJumpGroups(tenantId),
                 this.currentBusinessUnit
-                    ? this.customersService.fetchCustomers({
+                    ? this.customerCacheService.fetchCustomers({
                           businessUnits: [
                               this
                                   .currentBusinessUnit as unknown as CustomerBusinessUnit,
                           ],
-                          pageSize: 9999,
                       })
                     : Promise.resolve([]),
             ]);

@@ -13,7 +13,7 @@ import { JumpGroup } from "../../../jump-groups/models";
 import { JumpPolicy } from "../../../jump-policies/models";
 import { SessionPolicy } from "../../../session-policies/models";
 import { JumpAssetCreateRequest } from "../../models";
-import { CustomersService } from "../../../customers/customers.service";
+import { CustomerCacheService } from "../../../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
@@ -86,7 +86,7 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
         private readonly sessionPoliciesService: SessionPoliciesService,
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly jwtAuthService: JwtAuthService,
     ) {}
 
@@ -140,11 +140,10 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
 
         // Optionally load customers for BU-based filtering of jump groups / policies
         const customersPromise = businessUnit
-            ? this.customersService.fetchCustomers({
+            ? this.customerCacheService.fetchCustomers({
                   businessUnits: [
                       businessUnit as unknown as CustomerBusinessUnit,
                   ],
-                  pageSize: 9999,
               })
             : Promise.resolve([]);
 

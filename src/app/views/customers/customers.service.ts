@@ -9,7 +9,7 @@ import {
     RetrieveCustomersParams,
 } from "./models";
 
-@Injectable()
+@Injectable({ providedIn: "root" })
 export class CustomersService {
     constructor(private readonly http: HttpClient) {}
 

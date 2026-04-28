@@ -14,7 +14,6 @@ import { JumpClientInstallerDownloadOverlayComponent } from "./components/jump-c
 import { JumpClientInstallerCreateOverlayComponent } from "./components/jump-client-installer-create-overlay/jump-client-installer-create-overlay.component";
 import { JumpGroupsService } from "../jump-groups/jump-groups.service";
 import { JumpPoliciesService } from "../jump-policies/jump-policies.service";
-import { CustomersService } from "../customers/customers.service";
 import { SessionPoliciesService } from "../session-policies/session-policies.service";
 
 const COMPONENTS = [
@@ -27,7 +26,6 @@ const SERVICES = [
     JumpClientInstallersService,
     JumpGroupsService,
     JumpPoliciesService,
-    CustomersService,
     SessionPoliciesService,
 ];
 

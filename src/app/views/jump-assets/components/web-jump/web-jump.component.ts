@@ -26,7 +26,7 @@ import {
 import { JumpPoliciesService } from "../../../jump-policies/jump-policies.service";
 import { JumpGroupsService } from "../../../jump-groups/jump-groups.service";
 import { JumpointsService } from "../../../jumpoints/jumpoints.service";
-import { CustomersService } from "../../../customers/customers.service";
+import { CustomerCacheService } from "../../../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JumpGroup } from "../../../jump-groups/models";
 import { JumpPolicy } from "../../../jump-policies/models";
@@ -81,7 +81,7 @@ export class WebJumpComponent extends PraBaseComponent implements OnInit {
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
         private readonly jumpointsService: JumpointsService,
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
@@ -329,12 +329,11 @@ export class WebJumpComponent extends PraBaseComponent implements OnInit {
                     ),
                     this.jumpointsService.fetchJumpoints(this.currentTenantId),
                     this.currentBusinessUnit
-                        ? this.customersService.fetchCustomers({
+                        ? this.customerCacheService.fetchCustomers({
                               businessUnits: [
                                   this
                                       .currentBusinessUnit as unknown as CustomerBusinessUnit,
                               ],
-                              pageSize: 9999,
                           })
                         : Promise.resolve([]),
                 ]);

@@ -12,7 +12,7 @@ import { SitesService } from "./sites.service";
 import { Site } from "./models";
 import { ImportExcelOverlayComponent } from "./components/import-excel-overlay/import-excel-overlay.component";
 import { Customer } from "../customers/models";
-import { CustomersService } from "../customers/customers.service";
+import { CustomerCacheService } from "../customers/customer-cache.service";
 import { PraDataFilter } from "app/shared/helpers";
 import { AppService } from "app/app.service";
 import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
@@ -59,7 +59,7 @@ export class SitesComponent
         private readonly dialog: MatDialog,
         jwtAuthService: JwtAuthService,
         private readonly sitesService: SitesService,
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
@@ -158,7 +158,7 @@ export class SitesComponent
             // const pageSize = this.paginator?.pageSize ?? SitesComponent.DEFAULT_PAGE_SIZE;
             const [sites, customers] = await Promise.all([
                 this.sitesService.fetchSites(/* { pageNumber, pageSize } */),
-                this.customersService.fetchCustomers(),
+                this.customerCacheService.fetchCustomers(),
             ]);
             this.customers = customers;
             const customerByKey = new Map(

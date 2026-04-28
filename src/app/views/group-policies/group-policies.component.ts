@@ -9,7 +9,7 @@ import { NotificationDialogService } from "../../shared/dialogs/notification-dia
 import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { UserRole } from "../pra-users/enums";
 import { GroupPoliciesService } from "./group-policies.service";
-import { CustomersService } from "../customers/customers.service";
+import { CustomerCacheService } from "../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../customers/enums";
 import { GroupPolicy } from "./models";
 import { AccessPermissionStatusType } from "./enums";
@@ -63,7 +63,7 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
         private readonly dialog: MatDialog,
         jwtAuthService: JwtAuthService,
         private readonly groupPoliciesService: GroupPoliciesService,
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly appService: AppService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
@@ -233,9 +233,10 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
             } else {
                 const businessUnit = this
                     .currentBusinessUnit as unknown as CustomerBusinessUnit;
-                const customers = await this.customersService.fetchCustomers({
-                    businessUnits: [businessUnit],
-                });
+                const customers =
+                    await this.customerCacheService.fetchCustomers({
+                        businessUnits: [businessUnit],
+                    });
                 const customerNames = customers.map((c) =>
                     c.name.toLowerCase(),
                 );

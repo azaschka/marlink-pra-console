@@ -9,6 +9,7 @@ import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confir
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { CustomersService } from "./customers.service";
+import { CustomerCacheService } from "./customer-cache.service";
 import { Customer } from "./models";
 import {
     CustomerOverlayComponent,
@@ -55,6 +56,7 @@ export class CustomersComponent
         private readonly dialog: MatDialog,
         jwtAuthService: JwtAuthService,
         private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
@@ -101,6 +103,7 @@ export class CustomersComponent
                     this.notificationDialog.show({
                         message: "Customer has been created successfully.",
                     });
+                    this.customerCacheService.invalidate();
                     this.loadPage();
                 }
             });
@@ -118,6 +121,7 @@ export class CustomersComponent
                     this.notificationDialog.show({
                         message: `Customer "${customer.name}" updated successfully.`,
                     });
+                    this.customerCacheService.invalidate();
                     this.loadPage();
                 }
             });
@@ -135,6 +139,7 @@ export class CustomersComponent
                 this.notificationDialog.show({
                     message: `Customer ${customer.name} has been deleted.`,
                 });
+                this.customerCacheService.invalidate();
                 await this.loadPage();
             } catch (err: any) {
                 this.errorDialog.show({
@@ -160,6 +165,7 @@ export class CustomersComponent
                 this.notificationDialog.show({
                     message: `Customer "${customer.name}" has been deactivated.`,
                 });
+                this.customerCacheService.invalidate();
                 await this.loadPage();
             } catch (err: any) {
                 this.errorDialog.show({
@@ -185,6 +191,7 @@ export class CustomersComponent
                 this.notificationDialog.show({
                     message: `Customer "${customer.name}" has been reactivated.`,
                 });
+                this.customerCacheService.invalidate();
                 await this.loadPage();
             } catch (err: any) {
                 this.errorDialog.show({
@@ -204,8 +211,7 @@ export class CustomersComponent
             // TODO: Replace with server-side pagination once client-side (pageSize=9999) is removed.
             // const pageNumber = (this.paginator?.pageIndex ?? 0) + 1;
             // const pageSize = this.paginator?.pageSize ?? CustomersComponent.DEFAULT_PAGE_SIZE;
-            const items =
-                await this.customersService.fetchCustomers(/* { pageNumber, pageSize } */);
+            const items = await this.customerCacheService.fetchCustomers();
             const filteredItems = PraDataFilter.filterByBusinessUnit(
                 items,
                 this.currentBusinessUnit,

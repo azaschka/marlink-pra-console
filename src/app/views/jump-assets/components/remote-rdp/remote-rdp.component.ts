@@ -35,7 +35,7 @@ import {
 } from "../jump-asset-create-overlay/jump-asset-create-overlay.component";
 import { JumpGroupType } from "../../enums";
 import { AppService } from "../../../../app.service";
-import { CustomersService } from "../../../customers/customers.service";
+import { CustomerCacheService } from "../../../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 
 @Component({
@@ -82,7 +82,7 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
         private readonly jumpPoliciesService: JumpPoliciesService,
         private readonly jumpointsService: JumpointsService,
         private readonly appService: AppService,
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
@@ -327,12 +327,11 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
                     ),
                     this.jumpointsService.fetchJumpoints(this.currentTenantId),
                     this.currentBusinessUnit
-                        ? this.customersService.fetchCustomers({
+                        ? this.customerCacheService.fetchCustomers({
                               businessUnits: [
                                   this
                                       .currentBusinessUnit as unknown as CustomerBusinessUnit,
                               ],
-                              pageSize: 9999,
                           })
                         : Promise.resolve([]),
                 ]);

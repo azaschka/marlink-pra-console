@@ -13,7 +13,7 @@ import { UsersService } from "../../users.service";
 import { User, UserCreateRequest, UserUpdateRequest } from "../../models";
 import { GroupPolicy } from "app/views/group-policies/models";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
-import { CustomersService } from "../../../customers/customers.service";
+import { CustomerCacheService } from "../../../customers/customer-cache.service";
 import { AuthRole } from "../../../../shared/enums/auth-role.enum";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 
@@ -73,7 +73,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         private readonly errorDialog: ErrorDialogService,
         private readonly groupPoliciesService: GroupPoliciesService,
         private readonly jwtAuthService: JwtAuthService,
-        private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
     ) {
         this.mode = data.mode;
         this.user = data.user;
@@ -147,7 +147,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
 
         const businessUnit =
             praUser.businessUnit as unknown as CustomerBusinessUnit;
-        const customers = await this.customersService.fetchCustomers({
+        const customers = await this.customerCacheService.fetchCustomers({
             businessUnits: [businessUnit],
         });
         const customerNames = customers.map((c) => c.name.toLowerCase());
