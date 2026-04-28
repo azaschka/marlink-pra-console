@@ -11,9 +11,7 @@ import { SitesRoutes } from "./sites.routing";
 import { SitesService } from "./sites.service";
 import { SiteImportWorkflowService } from "./workflows/site-import-workflow";
 import { JumpAssetsService } from "../jump-assets/jump-assets.service";
-import { JumpGroupsService } from "../jump-groups/jump-groups.service";
-import { JumpPoliciesService } from "../jump-policies/jump-policies.service";
-import { JumpointsService } from "../jumpoints/jumpoints.service";
+
 import { ImportExcelOverlayComponent } from "./components/import-excel-overlay/import-excel-overlay.component";
 import { ExcelImportDragDropComponent } from "./components/excel-import-dragdrop/excel-import-dragdrop.component";
 import { ExcelImportPreviewComponent } from "./components/excel-import-preview/excel-import-preview.component";
@@ -30,14 +28,7 @@ const COMPONENTS = [
     ExcelImportResultComponent,
 ];
 
-const SERVICES = [
-    SitesService,
-    SiteImportWorkflowService,
-    JumpAssetsService,
-    JumpGroupsService,
-    JumpPoliciesService,
-    JumpointsService,
-];
+const SERVICES = [SitesService, SiteImportWorkflowService, JumpAssetsService];
 
 @NgModule({
     imports: [

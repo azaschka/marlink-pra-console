@@ -7,14 +7,14 @@ import { TranslateModule } from "@ngx-translate/core";
 import { CsvModule } from "@ctrl/ngx-csv";
 import { SharedMaterialModule } from "../../shared/shared-material.module";
 import { SharedModule } from "../../shared/shared.module";
-import { JumpGroupsService } from "./jump-groups.service";
+
 import { JumpGroupsComponent } from "./jump-groups.component";
 import { JumpGroupsRoutes } from "./jump-groups.routing";
 import { JumpGroupUpdateOverlayComponent } from "./components/jump-group-update-overlay/jump-group-update-overlay.component";
 
 const COMPONENTS = [JumpGroupsComponent, JumpGroupUpdateOverlayComponent];
 
-const SERVICES = [JumpGroupsService];
+const SERVICES = [];
 
 @NgModule({
     imports: [

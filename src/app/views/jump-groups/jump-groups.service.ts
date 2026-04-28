@@ -1,12 +1,24 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
+import { distinctUntilChanged, skip } from "rxjs/operators";
 import { JumpGroup } from "./models/jump-group.model";
 import { JumpGroupUpdateRequest } from "./models";
+import { TenantCache } from "../../shared/helpers/tenant-cache";
+import { AppService } from "../../app.service";
 
-@Injectable()
+@Injectable({ providedIn: "root" })
 export class JumpGroupsService {
-    constructor(private readonly http: HttpClient) {}
+    private readonly cache = new TenantCache<JumpGroup[]>();
+
+    constructor(
+        appService: AppService,
+        private readonly http: HttpClient,
+    ) {
+        appService.selectedInstanceId$
+            .pipe(distinctUntilChanged(), skip(1))
+            .subscribe(() => this.cache.invalidate());
+    }
 
     /**
      * Creates HTTP headers with X-Tenant-Id set to the BeyondTrust instance ID
@@ -21,36 +33,41 @@ export class JumpGroupsService {
         };
     }
 
-    public async fetchJumpGroups(tenantId: number): Promise<JumpGroup[]> {
-        const params = new HttpParams().set("pageSize", "9999");
-        return firstValueFrom(
-            this.http.get<JumpGroup[]>("jump-groups", {
-                params,
-                ...this.createHeaders(tenantId),
-            })
-        );
+    public fetchJumpGroups(tenantId: number): Promise<JumpGroup[]> {
+        return this.cache.get(tenantId, () => {
+            const params = new HttpParams().set("pageSize", "9999");
+            return firstValueFrom(
+                this.http.get<JumpGroup[]>("jump-groups", {
+                    params,
+                    ...this.createHeaders(tenantId),
+                }),
+            );
+        });
     }
 
     public async updateJumpGroup(
         tenantId: number,
         id: number,
-        body: JumpGroupUpdateRequest
+        body: JumpGroupUpdateRequest,
     ): Promise<JumpGroup> {
-        return firstValueFrom(
+        const result = await firstValueFrom(
             this.http.patch<JumpGroup>(
                 `jump-groups/${id}`,
                 body,
-                this.createHeaders(tenantId)
-            )
+                this.createHeaders(tenantId),
+            ),
         );
+        this.cache.invalidate(tenantId);
+        return result;
     }
 
     public async deleteJumpGroup(tenantId: number, id: number): Promise<void> {
-        return firstValueFrom(
+        await firstValueFrom(
             this.http.delete<void>(
                 `jump-groups/${id}`,
-                this.createHeaders(tenantId)
-            )
+                this.createHeaders(tenantId),
+            ),
         );
+        this.cache.invalidate(tenantId);
     }
 }

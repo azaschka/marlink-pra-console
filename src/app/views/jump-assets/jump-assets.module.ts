@@ -10,10 +10,6 @@ import { JumpAssetsRoutes } from "./jump-assets.routing";
 
 // Services
 import { JumpAssetsService } from "./jump-assets.service";
-import { JumpGroupsService } from "../jump-groups/jump-groups.service";
-import { JumpPoliciesService } from "../jump-policies/jump-policies.service";
-import { JumpointsService } from "../jumpoints/jumpoints.service";
-import { SessionPoliciesService } from "../session-policies/session-policies.service";
 
 // Components
 import { JumpAssetsComponent } from "./jump-assets.component";
@@ -40,13 +36,7 @@ const COMPONENTS = [
     JumpClientsComponent,
 ];
 
-const SERVICES = [
-    JumpAssetsService,
-    JumpGroupsService,
-    JumpPoliciesService,
-    SessionPoliciesService,
-    JumpointsService,
-];
+const SERVICES = [JumpAssetsService];
 
 @NgModule({
     imports: [

@@ -7,7 +7,7 @@ import { TranslateModule } from "@ngx-translate/core";
 import { CsvModule } from "@ctrl/ngx-csv";
 import { SharedMaterialModule } from "../../shared/shared-material.module";
 import { SharedModule } from "../../shared/shared.module";
-import { JumpointsService } from "./jumpoints.service";
+
 import { JumpointsComponent } from "./jumpoints.component";
 import { JumpointsRoutes } from "./jumpoints.routes";
 import { JumpointInstallerDownloadOverlayComponent } from "./components/jumpoint-installer-download-overlay/jumpoint-installer-download-overlay.component";
@@ -17,7 +17,7 @@ const COMPONENTS = [
     JumpointInstallerDownloadOverlayComponent,
 ];
 
-const SERVICES = [JumpointsService];
+const SERVICES = [];
 
 @NgModule({
     imports: [

@@ -8,14 +8,14 @@ import { CsvModule } from "@ctrl/ngx-csv";
 import { SharedModule } from "../../shared/shared.module";
 import { SharedMaterialModule } from "../../shared/shared-material.module";
 import { GroupPoliciesRoutes } from "./group-policies.routing";
-import { GroupPoliciesService } from "./group-policies.service";
+
 import { UsersService } from "../users/users.service";
 import { GroupPoliciesComponent } from "./group-policies.component";
 import { GroupPolicyOverlayComponent } from "./components/group-policy-overlay/group-policy-overlay.component";
 
 const COMPONENTS = [GroupPoliciesComponent, GroupPolicyOverlayComponent];
 
-const SERVICES = [GroupPoliciesService, UsersService];
+const SERVICES = [UsersService];
 
 @NgModule({
     imports: [

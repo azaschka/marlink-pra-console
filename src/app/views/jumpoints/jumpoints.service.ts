@@ -1,11 +1,23 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpEvent, HttpParams } from "@angular/common/http";
 import { firstValueFrom, Observable } from "rxjs";
+import { distinctUntilChanged, skip } from "rxjs/operators";
+import { AppService } from "../../app.service";
+import { TenantCache } from "../../shared/helpers/tenant-cache";
 import { Jumpoint } from "./models";
 
-@Injectable()
+@Injectable({ providedIn: "root" })
 export class JumpointsService {
-    constructor(private readonly http: HttpClient) {}
+    private readonly cache = new TenantCache<Jumpoint[]>();
+
+    constructor(
+        private readonly http: HttpClient,
+        appService: AppService,
+    ) {
+        appService.selectedInstanceId$
+            .pipe(distinctUntilChanged(), skip(1))
+            .subscribe(() => this.cache.invalidate());
+    }
 
     /**
      * Creates HTTP headers with X-Tenant-Id set to the BeyondTrust instance ID
@@ -20,28 +32,31 @@ export class JumpointsService {
         };
     }
 
-    public async fetchJumpoints(tenantId: number): Promise<Jumpoint[]> {
-        const params = new HttpParams().set("pageSize", "9999");
-        return firstValueFrom(
-            this.http.get<Jumpoint[]>("jumpoints", {
-                params,
-                ...this.createHeaders(tenantId),
-            })
-        );
+    public fetchJumpoints(tenantId: number): Promise<Jumpoint[]> {
+        return this.cache.get(tenantId, () => {
+            const params = new HttpParams().set("pageSize", "9999");
+            return firstValueFrom(
+                this.http.get<Jumpoint[]>("jumpoints", {
+                    params,
+                    ...this.createHeaders(tenantId),
+                }),
+            );
+        });
     }
 
     public async deleteJumpoint(tenantId: number, id: number): Promise<void> {
-        return firstValueFrom(
+        await firstValueFrom(
             this.http.delete<void>(
                 `jumpoints/${id}`,
-                this.createHeaders(tenantId)
-            )
+                this.createHeaders(tenantId),
+            ),
         );
+        this.cache.invalidate(tenantId);
     }
 
     public downloadJumpointInstaller(
         tenantId: number,
-        jumpointId: number
+        jumpointId: number,
     ): Observable<HttpEvent<Blob>> {
         const url = `jumpoints/${jumpointId}/installer`;
         return this.http.get(url, {

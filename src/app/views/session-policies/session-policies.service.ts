@@ -1,11 +1,23 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
+import { distinctUntilChanged, skip } from "rxjs/operators";
 import { SessionPolicy, RetrieveSessionPoliciesParams } from "./models";
+import { AppService } from "../../app.service";
+import { TenantCache } from "../../shared/helpers/tenant-cache";
 
-@Injectable()
+@Injectable({ providedIn: "root" })
 export class SessionPoliciesService {
-    constructor(private readonly http: HttpClient) {}
+    private readonly cache = new TenantCache<SessionPolicy[]>();
+
+    constructor(
+        appService: AppService,
+        private readonly http: HttpClient,
+    ) {
+        appService.selectedInstanceId$
+            .pipe(distinctUntilChanged(), skip(1))
+            .subscribe(() => this.cache.invalidate());
+    }
 
     private createHeaders(tenantId: number) {
         return {
@@ -19,37 +31,50 @@ export class SessionPoliciesService {
         tenantId: number,
         params: RetrieveSessionPoliciesParams = {},
     ): Promise<SessionPolicy[]> {
-        let httpParams = new HttpParams().set(
-            "pageSize",
-            (params.pageSize ?? 9999).toString(),
-        );
+        const cacheKey =
+            Object.keys(params).length === 0
+                ? tenantId
+                : `${tenantId}::${JSON.stringify(
+                      Object.fromEntries(
+                          Object.entries(params).sort(([a], [b]) =>
+                              a.localeCompare(b),
+                          ),
+                      ),
+                  )}`;
 
-        if (params.pageNumber !== undefined) {
-            httpParams = httpParams.set(
-                "pageNumber",
-                params.pageNumber.toString(),
+        return this.cache.get(cacheKey, () => {
+            let httpParams = new HttpParams().set(
+                "pageSize",
+                (params.pageSize ?? 9999).toString(),
             );
-        }
-        if (params.displayName !== undefined) {
-            httpParams = httpParams.set("displayName", params.displayName);
-        }
-        if (params.codeName !== undefined) {
-            httpParams = httpParams.set("codeName", params.codeName);
-        }
-        if (
-            params.codeNamePatterns !== undefined &&
-            params.codeNamePatterns.length > 0
-        ) {
-            params.codeNamePatterns.forEach((pattern) => {
-                httpParams = httpParams.append("codeNamePatterns", pattern);
-            });
-        }
 
-        return firstValueFrom(
-            this.http.get<SessionPolicy[]>("session-policies", {
-                params: httpParams,
-                ...this.createHeaders(tenantId),
-            }),
-        );
+            if (params.pageNumber !== undefined) {
+                httpParams = httpParams.set(
+                    "pageNumber",
+                    params.pageNumber.toString(),
+                );
+            }
+            if (params.displayName !== undefined) {
+                httpParams = httpParams.set("displayName", params.displayName);
+            }
+            if (params.codeName !== undefined) {
+                httpParams = httpParams.set("codeName", params.codeName);
+            }
+            if (
+                params.codeNamePatterns !== undefined &&
+                params.codeNamePatterns.length > 0
+            ) {
+                params.codeNamePatterns.forEach((pattern) => {
+                    httpParams = httpParams.append("codeNamePatterns", pattern);
+                });
+            }
+
+            return firstValueFrom(
+                this.http.get<SessionPolicy[]>("session-policies", {
+                    params: httpParams,
+                    ...this.createHeaders(tenantId),
+                }),
+            );
+        });
     }
 }
