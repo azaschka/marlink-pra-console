@@ -11,12 +11,13 @@ import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { UserRole } from "../pra-users/enums";
 import { JumpGroupsService } from "./jump-groups.service";
 import { CustomersService } from "../customers/customers.service";
+import { CustomerBusinessUnit } from "../customers/enums";
 import { JumpGroup } from "./models";
+import { JumpGroupUpdateRequest } from "./models/jump-group-update-request.model";
 import {
     JumpGroupUpdateDialogData,
     JumpGroupUpdateOverlayComponent,
 } from "./components/jump-group-update-overlay/jump-group-update-overlay.component";
-import { JumpAssetUpdateRequest } from "../jump-assets/models";
 import { AppService } from "app/app.service";
 import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
 import { PraUser } from "app/shared/models";
@@ -99,7 +100,7 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
 
         dialogRef
             .afterClosed()
-            .subscribe(async (result: JumpAssetUpdateRequest | null) => {
+            .subscribe(async (result: JumpGroupUpdateRequest | null) => {
                 if (result) {
                     this.isLoading = true;
                     try {
@@ -156,6 +157,7 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
                         err?.message ||
                         "The jump group could not be deleted. Please try again later.",
                 });
+            } finally {
                 this.isLoading = false;
             }
         }
@@ -172,43 +174,59 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
     private async loadPage(): Promise<void> {
         const tenantId = this.currentTenantId;
         if (!tenantId) {
-            console.warn(
-                "No BeyondTrust instance selected, skipping jump groups load",
-            );
             this.isLoading = false;
             return;
         }
 
         this.isLoading = true;
         try {
+            // Load jump groups and (for BU Admins) customers in parallel.
+            // SuperAdmins skip the customers fetch entirely.
             const [jumpGroups, customers] = await Promise.all([
                 this.jumpGroupsService.fetchJumpGroups(tenantId),
-                this.customersService.fetchCustomers(),
+                this.currentBusinessUnit
+                    ? this.customersService.fetchCustomers({
+                          businessUnits: [
+                              this
+                                  .currentBusinessUnit as unknown as CustomerBusinessUnit,
+                          ],
+                          pageSize: 9999,
+                      })
+                    : Promise.resolve([]),
             ]);
-            const customerBUByKey = new Map(
-                customers.map((c) => [c.name.toLowerCase(), c.businessUnit]),
-            );
-            const filteredJumpGroups = PraDataFilter.filterByBusinessUnit(
-                jumpGroups,
-                this.currentBusinessUnit,
-                [
-                    (group) => {
-                        const parts = group.name.split("_");
-                        const customerKey = parts[0].toLowerCase();
-                        const customerKey2 = parts[1]?.toLowerCase();
 
-                        return (
-                            customerBUByKey.get(customerKey) ||
-                            customerBUByKey.get(customerKey2)
-                        );
-                    },
-                ],
-            );
+            // BU Admins: keep only jump groups whose codeName starts with a
+            // customer-name prefix that belongs to the current BU.
+            // Jump group codeName follows {customer_name}_{support_team_name}
+            // (always lowercase); filterByCustomerPrefix normalises both sides
+            // to uppercase so casing differences are handled automatically.
+            // Jump groups with no codeName are excluded for BU Admins.
+            // SuperAdmins (currentBusinessUnit is null/undefined): no filtering.
+            const filteredJumpGroups = this.currentBusinessUnit
+                ? PraDataFilter.filterByCustomerPrefix(
+                      jumpGroups,
+                      customers.map((c) => c.name),
+                      (g) => g.codeName,
+                  )
+                : jumpGroups;
 
             this.dataSource.data = filteredJumpGroups;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
             this.dataCount = filteredJumpGroups.length;
+
+            // Ensure paginator does not point to a page that no longer exists
+            if (this.paginator) {
+                const maxPageIndex = Math.max(
+                    Math.ceil(
+                        filteredJumpGroups.length / this.paginator.pageSize,
+                    ) - 1,
+                    0,
+                );
+                if (this.paginator.pageIndex > maxPageIndex) {
+                    this.paginator.firstPage();
+                }
+            }
         } catch (err: any) {
             await this.errorDialog.show({
                 title: "Error",
@@ -231,7 +249,7 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
                     previousTenantId !== null &&
                     previousTenantId !== instanceId
                 ) {
-                    this.loadPage();
+                    void this.loadPage();
                 }
             }),
         );

@@ -1,10 +1,14 @@
-import { Component, Inject, OnInit } from "@angular/core";
+import { Component, Inject } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
-import { FormGroup, FormControl, Validators } from "@angular/forms";
+import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { JumpGroupUpdateRequest } from "../../models/jump-group-update-request.model";
 
 export interface JumpGroupUpdateDialogData {
     currentName: string;
+}
+
+interface UpdateForm {
+    name: FormControl<string>;
 }
 
 @Component({
@@ -13,28 +17,31 @@ export interface JumpGroupUpdateDialogData {
 })
 export class JumpGroupUpdateOverlayComponent {
     public isLoading = false;
-    public form: FormGroup;
+    public form: FormGroup<UpdateForm>;
 
     constructor(
         public dialogRef: MatDialogRef<JumpGroupUpdateOverlayComponent>,
-        @Inject(MAT_DIALOG_DATA) public data: JumpGroupUpdateDialogData
+        @Inject(MAT_DIALOG_DATA) public data: JumpGroupUpdateDialogData,
     ) {
-        this.form = new FormGroup({
-            name: new FormControl<string>(data.currentName, [
-                Validators.required,
-            ]),
+        this.form = new FormGroup<UpdateForm>({
+            name: new FormControl<string>(data.currentName, {
+                nonNullable: true,
+                validators: [Validators.required],
+            }),
         });
     }
 
-    public submit() {
-        if (this.form.invalid) return;
-        const { name } = this.form.value;
-        this.dialogRef.close({
-            name: name?.trim(),
-        } as JumpGroupUpdateRequest);
+    public submit(): void {
+        if (this.form.invalid) {
+            this.form.markAllAsTouched();
+            return;
+        }
+
+        const { name } = this.form.getRawValue();
+        this.dialogRef.close({ name: name.trim() } as JumpGroupUpdateRequest);
     }
 
-    public cancel() {
+    public cancel(): void {
         this.dialogRef.close(null);
     }
 }
