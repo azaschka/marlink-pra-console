@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
+import { MatDialog } from "@angular/material/dialog";
 
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
@@ -10,15 +11,21 @@ import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { PraDataFilter } from "../../shared/helpers/pra-data-filter";
 import { JumpClientInstallersService } from "./jump-client-installers.service";
 import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
-import { JumpClientInstaller, JumpClientInstallerKeyInfo } from "./models";
+import {
+    CreateJumpClientInstallerDtoInput,
+    JumpClientInstaller,
+    JumpClientInstallerKeyInfo,
+} from "./models";
 import {
     JumpClientInstallerDownloadDialogData,
     JumpClientInstallerDownloadOverlayComponent,
 } from "./components/jump-client-installer-download-overlay/jump-client-installer-download-overlay.component";
-import { MatDialog } from "@angular/material/dialog";
+import { JumpClientInstallerCreateOverlayComponent } from "./components/jump-client-installer-create-overlay/jump-client-installer-create-overlay.component";
 import { JumpGroupsService } from "../jump-groups/jump-groups.service";
 import { JumpPoliciesService } from "../jump-policies/jump-policies.service";
 import { AppService } from "../../app.service";
+import { CustomersService } from "../customers/customers.service";
+import { CustomerBusinessUnit } from "../customers/enums";
 
 @Component({
     selector: "app-jump-client-installers",
@@ -64,8 +71,13 @@ export class JumpClientInstallersComponent
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
+        private readonly customersService: CustomersService,
     ) {
         super(jwtAuthService);
+    }
+
+    protected override onBusinessUnitChanged(): void {
+        void this.loadPage();
     }
 
     public async ngOnInit(): Promise<void> {
@@ -89,6 +101,54 @@ export class JumpClientInstallersComponent
         jumpClientInstaller: JumpClientInstaller,
     ): boolean {
         return !jumpClientInstaller.keyInfo;
+    }
+
+    public addJumpClientInstallerHandler(): void {
+        if (!this.currentTenantId) {
+            this.errorDialog.show({
+                title: "No BeyondTrust Instance Selected",
+                message:
+                    "Please select a BeyondTrust instance before adding a Jump Client Installer.",
+            });
+            return;
+        }
+
+        const dialogRef = this.dialog.open(
+            JumpClientInstallerCreateOverlayComponent,
+            {
+                width: "480px",
+                data: { tenantId: this.currentTenantId },
+                disableClose: true,
+            },
+        );
+
+        dialogRef
+            .afterClosed()
+            .subscribe(
+                async (result: CreateJumpClientInstallerDtoInput | null) => {
+                    if (result && this.currentTenantId) {
+                        this.isLoading = true;
+                        try {
+                            await this.jumpClientInstallerService.createJumpClientInstaller(
+                                this.currentTenantId,
+                                result,
+                            );
+                            this.notificationDialog.show({
+                                message: `Jump Client Installer "${result.name ?? "New Installer"}" has been created.`,
+                            });
+                            await this.loadPage();
+                        } catch (err: any) {
+                            this.errorDialog.show({
+                                title: "Create Jump Client Installer Failed",
+                                message:
+                                    err?.message ??
+                                    "The jump client installer could not be created. Please try again later.",
+                            });
+                            this.isLoading = false;
+                        }
+                    }
+                },
+            );
     }
 
     public downloadJumpClientInstallerHandler(
@@ -155,26 +215,61 @@ export class JumpClientInstallersComponent
         this.isLoading = true;
         try {
             // Load all necessary data in parallel
-            const [items, jumpGroups, jumpPolicies] = await Promise.all([
-                this.jumpClientInstallerService.fetchJumpClientInstallers(
-                    this.currentTenantId,
-                ),
-                this.jumpGroupsService.fetchJumpGroups(this.currentTenantId),
-                this.jumpPoliciesService.fetchJumpPolicies(
-                    this.currentTenantId,
-                ),
-            ]);
+            const [items, jumpGroups, jumpPolicies, customers] =
+                await Promise.all([
+                    this.jumpClientInstallerService.fetchJumpClientInstallers(
+                        this.currentTenantId,
+                    ),
+                    this.jumpGroupsService.fetchJumpGroups(
+                        this.currentTenantId,
+                    ),
+                    this.jumpPoliciesService.fetchJumpPolicies(
+                        this.currentTenantId,
+                    ),
+                    this.currentBusinessUnit
+                        ? this.customersService.fetchCustomers({
+                              businessUnits: [
+                                  this
+                                      .currentBusinessUnit as unknown as CustomerBusinessUnit,
+                              ],
+                              pageSize: 9999,
+                          })
+                        : Promise.resolve([]),
+                ]);
 
-            // Enrich items directly
+            // Build lookup maps for O(1) enrichment (instead of Array.find per item)
+            const jumpGroupMap = new Map(jumpGroups.map((g) => [g.id, g]));
+            const jumpPolicyMap = new Map(jumpPolicies.map((p) => [p.id, p]));
+
+            // Enrich items with display names
             const enriched = items.map((item) => ({
                 ...item,
-                jumpGroupName:
-                    jumpGroups.find((g) => g.id === item.jumpGroupId)?.name ??
-                    "–",
-                jumpPolicyName:
-                    jumpPolicies.find((p) => p.id === item.jumpPolicyId)
-                        ?.displayName ?? "–",
+                jumpGroupName: jumpGroupMap.get(item.jumpGroupId)?.name ?? "–",
+                jumpPolicyName: item.jumpPolicyId
+                    ? (jumpPolicyMap.get(item.jumpPolicyId)?.displayName ?? "–")
+                    : "–",
             }));
+
+            // BU Admins: filter items to only those in allowed jump groups.
+            // Jump group codeName follows {customer_name}_{support_team_name} (lowercase).
+            // filterByCustomerPrefix normalises to uppercase for case-insensitive matching.
+            // SuperAdmins (currentBusinessUnit is null/undefined): no filtering.
+            const allowedJumpGroupIds = this.currentBusinessUnit
+                ? new Set(
+                      PraDataFilter.filterByCustomerPrefix(
+                          jumpGroups,
+                          customers.map((c) => c.name),
+                          (g) => g.codeName,
+                      ).map((g) => g.id),
+                  )
+                : null;
+
+            const filteredItems = allowedJumpGroupIds
+                ? PraDataFilter.filterByAllowedJumpGroupIds(
+                      enriched,
+                      allowedJumpGroupIds,
+                  )
+                : enriched;
 
             // Optional pagination overrides (if the calling location wants it)
             if (overrides.pageNumber !== undefined && this.paginator) {
@@ -185,15 +280,16 @@ export class JumpClientInstallersComponent
             }
 
             // Provide MatTableDataSource
-            this.dataSource.data = enriched;
+            this.dataSource.data = filteredItems;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
-            this.dataCount = enriched.length;
+            this.dataCount = filteredItems.length;
 
             // Ensure paginator is on a valid page
             if (this.paginator) {
                 const maxPageIndex = Math.max(
-                    Math.ceil(enriched.length / this.paginator.pageSize) - 1,
+                    Math.ceil(filteredItems.length / this.paginator.pageSize) -
+                        1,
                     0,
                 );
                 if (this.paginator.pageIndex > maxPageIndex) {
