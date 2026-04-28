@@ -10,7 +10,7 @@ import { JumpGroup } from "../../../jump-groups/models";
 import { JumpPolicy } from "../../../jump-policies/models";
 import { SessionPolicy } from "../../../session-policies/models";
 import { CreateJumpClientInstallerDtoInput } from "../../models";
-import { JumpClientGroupType } from "../../enums";
+import { JumpClientConnectionType, JumpClientGroupType } from "../../enums";
 import { CustomersService } from "../../../customers/customers.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
@@ -215,12 +215,24 @@ export class JumpClientInstallerCreateOverlayComponent
         const trimmedTag = formValue.tag.trim();
 
         const request: CreateJumpClientInstallerDtoInput = {
+            // User-provided fields (form values — never overridden by defaults)
             name: formValue.name.trim(),
             tag: trimmedTag || undefined,
             jumpGroupId: formValue.jumpGroup!.id,
             jumpGroupType: JumpClientGroupType.Shared,
             jumpPolicyId: formValue.jumpPolicy?.id ?? undefined,
             sessionPolicyId: formValue.sessionPolicy?.id ?? null,
+            // Defaults aligned with site-import-workflow.ts (fields not exposed in the form)
+            connectionType: JumpClientConnectionType.Active,
+            validDurationInMinutes: 20160, // 14 days
+            shouldElevateInstall: true,
+            shouldElevatePrompt: true,
+            canOverrideJumpGroup: false,
+            canOverrideJumpPolicy: false,
+            canOverrideName: false,
+            canOverrideTag: false,
+            canOverrideComments: false,
+            canOverrideSessionPolicy: false,
         };
 
         this.dialogRef.close(request);

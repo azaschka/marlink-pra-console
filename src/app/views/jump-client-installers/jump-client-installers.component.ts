@@ -116,7 +116,6 @@ export class JumpClientInstallersComponent
         const dialogRef = this.dialog.open(
             JumpClientInstallerCreateOverlayComponent,
             {
-                width: "480px",
                 data: { tenantId: this.currentTenantId },
                 disableClose: true,
             },
