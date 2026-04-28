@@ -60,7 +60,7 @@ export class GroupPolicyOverlayComponent implements OnInit {
                 {
                     userId: user.id,
                     securityProviderId: user.securityProviderId!,
-                    distinguishedName: user["distinguishedName"], // Optional, je nach user
+                    distinguishedName: (user as any)["distinguishedName"], // Optional, je nach user
                     groupName: undefined,
                 }
             );

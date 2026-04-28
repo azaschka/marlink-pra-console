@@ -59,11 +59,13 @@ export class JumpointInstallerDownloadOverlayComponent {
                             const fileName = this.extractFileName(
                                 ev.headers.get("content-disposition")
                             );
-                            this.saveBlob(ev.body, fileName);
-                            this.notificationDialog.show({
-                                message: `Successfully downloaded Jumpoint Installer (${fileName}).`,
-                            });
-                            this.dialogRef.close(true);
+                            if (ev.body) {
+                                this.saveBlob(ev.body, fileName);
+                                this.notificationDialog.show({
+                                    message: `Successfully downloaded Jumpoint Installer (${fileName}).`,
+                                });
+                                this.dialogRef.close(true);
+                            }
                             break;
                     }
                 },

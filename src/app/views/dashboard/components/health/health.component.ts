@@ -63,7 +63,7 @@ export class HealthComponent implements OnInit, OnDestroy {
 
             // Process each service
             Object.keys(HealthComponent.SERVICE_NAMES).forEach((key) => {
-                const serviceStatus = response.details[key]?.status || "down";
+                const serviceStatus = (response.details as Record<string, any>)[key]?.status || "down";
                 const isDown = serviceStatus === "down" || !this.isHealthy;
 
                 items.push({
