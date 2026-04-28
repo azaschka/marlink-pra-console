@@ -22,6 +22,9 @@ import {
 import { JumpPoliciesService } from "../../../jump-policies/jump-policies.service";
 import { JumpGroupsService } from "../../../jump-groups/jump-groups.service";
 import { AppService } from "../../../../app.service";
+import { PraDataFilter } from "../../../../shared/helpers";
+import { CustomersService } from "../../../customers/customers.service";
+import { CustomerBusinessUnit } from "../../../customers/enums";
 
 @Component({
     selector: "app-jump-clients",
@@ -64,6 +67,7 @@ export class JumpClientsComponent extends PraBaseComponent implements OnInit {
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
+        private readonly customersService: CustomersService,
     ) {
         super(jwtAuthService);
     }
@@ -237,13 +241,27 @@ export class JumpClientsComponent extends PraBaseComponent implements OnInit {
 
         try {
             // Load all necessary data in parallel
-            const [items, jumpGroups, jumpPolicies] = await Promise.all([
-                this.jumpAssetsService.fetchJumpClients(this.currentTenantId),
-                this.jumpGroupsService.fetchJumpGroups(this.currentTenantId),
-                this.jumpPoliciesService.fetchJumpPolicies(
-                    this.currentTenantId,
-                ),
-            ]);
+            const [items, jumpGroups, jumpPolicies, customers] =
+                await Promise.all([
+                    this.jumpAssetsService.fetchJumpClients(
+                        this.currentTenantId,
+                    ),
+                    this.jumpGroupsService.fetchJumpGroups(
+                        this.currentTenantId,
+                    ),
+                    this.jumpPoliciesService.fetchJumpPolicies(
+                        this.currentTenantId,
+                    ),
+                    this.currentBusinessUnit
+                        ? this.customersService.fetchCustomers({
+                              businessUnits: [
+                                  this
+                                      .currentBusinessUnit as unknown as CustomerBusinessUnit,
+                              ],
+                              pageSize: 9999,
+                          })
+                        : Promise.resolve([]),
+                ]);
 
             // Build lookup maps for O(1) enrichment (instead of Array.find per item)
             const jumpGroupMap = new Map(jumpGroups.map((g) => [g.id, g]));
@@ -258,6 +276,27 @@ export class JumpClientsComponent extends PraBaseComponent implements OnInit {
                     : "—",
             }));
 
+            // BU Admins: filter items to only those in allowed jump groups.
+            // Jump group codeName follows {customer_name}_{support_team_name} (lowercase).
+            // filterByCustomerPrefix normalises to uppercase for case-insensitive matching.
+            // SuperAdmins (currentBusinessUnit is null/undefined): no filtering.
+            const allowedJumpGroupIds = this.currentBusinessUnit
+                ? new Set(
+                      PraDataFilter.filterByCustomerPrefix(
+                          jumpGroups,
+                          customers.map((c) => c.name),
+                          (g) => g.codeName,
+                      ).map((g) => g.id),
+                  )
+                : null;
+
+            const filteredItems = allowedJumpGroupIds
+                ? PraDataFilter.filterByAllowedJumpGroupIds(
+                      enriched,
+                      allowedJumpGroupIds,
+                  )
+                : enriched;
+
             // Optional pagination overrides
             if (overrides.pageNumber !== undefined && this.paginator) {
                 this.paginator.pageIndex = overrides.pageNumber;
@@ -267,15 +306,16 @@ export class JumpClientsComponent extends PraBaseComponent implements OnInit {
             }
 
             // Provide MatTableDataSource
-            this.dataSource.data = enriched;
+            this.dataSource.data = filteredItems;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
-            this.dataCount = enriched.length;
+            this.dataCount = filteredItems.length;
 
             // Ensure paginator is on a valid page
             if (this.paginator) {
                 const maxPageIndex = Math.max(
-                    Math.ceil(enriched.length / this.paginator.pageSize) - 1,
+                    Math.ceil(filteredItems.length / this.paginator.pageSize) -
+                        1,
                     0,
                 );
                 if (this.paginator.pageIndex > maxPageIndex) {

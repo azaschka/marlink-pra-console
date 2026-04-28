@@ -35,6 +35,8 @@ import {
 } from "../jump-asset-create-overlay/jump-asset-create-overlay.component";
 import { JumpGroupType } from "../../enums";
 import { AppService } from "../../../../app.service";
+import { CustomersService } from "../../../customers/customers.service";
+import { CustomerBusinessUnit } from "../../../customers/enums";
 
 @Component({
     selector: "app-remote-rdp",
@@ -80,6 +82,7 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
         private readonly jumpPoliciesService: JumpPoliciesService,
         private readonly jumpointsService: JumpointsService,
         private readonly appService: AppService,
+        private readonly customersService: CustomersService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
@@ -303,6 +306,7 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
         overrides: Partial<{ pageNumber: number; pageSize: number }> = {},
     ): Promise<void> {
         if (!this.currentTenantId) {
+            this.isLoading = false;
             return;
         }
 
@@ -310,7 +314,7 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
 
         try {
             // Load all necessary data in parallel
-            const [items, jumpGroups, jumpPolicies, jumpoints] =
+            const [items, jumpGroups, jumpPolicies, jumpoints, customers] =
                 await Promise.all([
                     this.jumpAssetsService.fetchRemoteRdps(
                         this.currentTenantId,
@@ -322,6 +326,15 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
                         this.currentTenantId,
                     ),
                     this.jumpointsService.fetchJumpoints(this.currentTenantId),
+                    this.currentBusinessUnit
+                        ? this.customersService.fetchCustomers({
+                              businessUnits: [
+                                  this
+                                      .currentBusinessUnit as unknown as CustomerBusinessUnit,
+                              ],
+                              pageSize: 9999,
+                          })
+                        : Promise.resolve([]),
                 ]);
 
             // Build lookup maps for O(1) enrichment (instead of Array.find per item)
@@ -345,13 +358,27 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
                 jumpointCodeName: jumpointMap.get(item.jumpointId)?.codeName,
             }));
 
-            // Filter by jumpoint codeName — SuperAdmins see all, BU Admins
-            // see only assets whose jumpoint codeName carries their BU prefix.
-            const filteredItems = PraDataFilter.filterByBusinessUnit(
-                enriched,
-                this.currentBusinessUnit,
-                [(j) => j.jumpointCodeName],
-            );
+            // BU Admins: filter items to only those in allowed jump groups.
+            // Jump group codeName follows {customer_name}_{support_team_name} (lowercase).
+            // filterByCustomerPrefix normalises to uppercase for case-insensitive matching.
+            // Items whose jump group has no codeName or no longer exists are excluded.
+            // SuperAdmins (currentBusinessUnit is null/undefined): no filtering.
+            const allowedJumpGroupIds = this.currentBusinessUnit
+                ? new Set(
+                      PraDataFilter.filterByCustomerPrefix(
+                          jumpGroups,
+                          customers.map((c) => c.name),
+                          (g) => g.codeName,
+                      ).map((g) => g.id),
+                  )
+                : null;
+
+            const filteredItems = allowedJumpGroupIds
+                ? PraDataFilter.filterByAllowedJumpGroupIds(
+                      enriched,
+                      allowedJumpGroupIds,
+                  )
+                : enriched;
 
             // Optional pagination overrides (if the calling location wants it)
             if (overrides.pageNumber !== undefined && this.paginator) {

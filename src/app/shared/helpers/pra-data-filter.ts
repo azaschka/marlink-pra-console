@@ -67,4 +67,26 @@ export class PraDataFilter {
             return prefixes.some((prefix) => value.startsWith(prefix));
         });
     }
+
+    /**
+     * Filters items to only those whose `jumpGroupId` is present in the
+     * provided set of allowed IDs.
+     *
+     * Use this in combination with `filterByCustomerPrefix` on jump groups
+     * (picking `codeName`) to restrict the list view to the jump groups a
+     * BU Admin is allowed to see.
+     *
+     * Jump group `codeName` follows the pattern
+     * `{customer_name}_{support_team_name}` (always lowercase). Because
+     * `filterByCustomerPrefix` normalises both sides to uppercase before
+     * comparing, the casing difference is handled automatically.
+     *
+     * @param items      Array of items that carry a `jumpGroupId` property.
+     * @param allowedIds Set of permitted jump group IDs.
+     */
+    public static filterByAllowedJumpGroupIds<
+        T extends { jumpGroupId: number },
+    >(items: T[], allowedIds: Set<number>): T[] {
+        return items.filter((item) => allowedIds.has(item.jumpGroupId));
+    }
 }

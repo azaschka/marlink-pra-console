@@ -9,6 +9,8 @@ import { ConfirmDialogService } from "../../../../shared/dialogs/confirm-dialog/
 import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../../../shared/dialogs/notification-dialog/notification-dialog.service";
 import { PraDataFilter } from "../../../../shared/helpers";
+import { CustomersService } from "../../../customers/customers.service";
+import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JumpAssetsService } from "../../jump-assets.service";
 import { AppService } from "app/app.service";
 import { JumpAssetCopyOverlayComponent } from "../jump-asset-copy-overlay/jump-asset-copy-overlay.component";
@@ -83,6 +85,7 @@ export class ProtocolTunnelComponent
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
         private readonly jumpointsService: JumpointsService,
+        private readonly customersService: CustomersService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
@@ -324,7 +327,7 @@ export class ProtocolTunnelComponent
 
         try {
             // Load all necessary data in parallel
-            const [items, jumpGroups, jumpPolicies, jumpoints] =
+            const [items, jumpGroups, jumpPolicies, jumpoints, customers] =
                 await Promise.all([
                     this.jumpAssetsService.fetchProtocolTunnelJumps(
                         this.currentTenantId,
@@ -336,6 +339,15 @@ export class ProtocolTunnelComponent
                         this.currentTenantId,
                     ),
                     this.jumpointsService.fetchJumpoints(this.currentTenantId),
+                    this.currentBusinessUnit
+                        ? this.customersService.fetchCustomers({
+                              businessUnits: [
+                                  this
+                                      .currentBusinessUnit as unknown as CustomerBusinessUnit,
+                              ],
+                              pageSize: 9999,
+                          })
+                        : Promise.resolve([]),
                 ]);
 
             // Build lookup maps for O(1) enrichment (instead of Array.find per item)
@@ -359,13 +371,26 @@ export class ProtocolTunnelComponent
                 jumpointCodeName: jumpointMap.get(item.jumpointId)?.codeName,
             }));
 
-            // Filter by jumpoint codeName — SuperAdmins see all, BU Admins
-            // see only assets whose jumpoint codeName carries their BU prefix.
-            const filteredItems = PraDataFilter.filterByBusinessUnit(
-                enriched,
-                this.currentBusinessUnit,
-                [(j) => j.jumpointCodeName],
-            );
+            // BU Admins: filter items to only those in allowed jump groups.
+            // Jump group codeName follows {customer_name}_{support_team_name} (lowercase).
+            // filterByCustomerPrefix normalises to uppercase for case-insensitive matching.
+            // SuperAdmins (currentBusinessUnit is null/undefined): no filtering.
+            const allowedJumpGroupIds = this.currentBusinessUnit
+                ? new Set(
+                      PraDataFilter.filterByCustomerPrefix(
+                          jumpGroups,
+                          customers.map((c) => c.name),
+                          (g) => g.codeName,
+                      ).map((g) => g.id),
+                  )
+                : null;
+
+            const filteredItems = allowedJumpGroupIds
+                ? PraDataFilter.filterByAllowedJumpGroupIds(
+                      enriched,
+                      allowedJumpGroupIds,
+                  )
+                : enriched;
 
             // Optional pagination overrides (if the calling location wants it)
             if (overrides.pageNumber !== undefined && this.paginator) {
