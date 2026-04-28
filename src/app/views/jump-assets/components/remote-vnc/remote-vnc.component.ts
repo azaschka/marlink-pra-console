@@ -188,7 +188,7 @@ export class RemoteVncComponent extends PraBaseComponent implements OnInit {
                             tag: result.tag,
                             comments: "",
                             jumpPolicyId: result.jumpPolicyId,
-                            sessionPolicyId: null,
+                            sessionPolicyId: result.sessionPolicyId ?? null,
                         } as CreateRemoteVncDtoInput;
                         await this.jumpAssetsService.createRemoteVnc(
                             this.currentTenantId!,
@@ -231,6 +231,7 @@ export class RemoteVncComponent extends PraBaseComponent implements OnInit {
                 currentJumpGroupId: asset.jumpGroupId,
                 currentJumpGroupType: asset.jumpGroupType || "shared",
                 currentJumpPolicyId: asset.jumpPolicyId ?? null,
+                currentSessionPolicyId: asset.sessionPolicyId ?? null,
             } as JumpAssetUpdateDialogData,
             disableClose: true,
         });

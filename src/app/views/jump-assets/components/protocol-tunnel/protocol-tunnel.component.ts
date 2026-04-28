@@ -196,7 +196,7 @@ export class ProtocolTunnelComponent
                             tag: result.tag,
                             comments: "",
                             jumpPolicyId: result.jumpPolicyId,
-                            sessionPolicyId: null,
+                            sessionPolicyId: result.sessionPolicyId ?? null,
                         } as CreateProtocolTunnelJumpDtoInput;
                         await this.jumpAssetsService.createProtocolTunnelJump(
                             this.currentTenantId!,
@@ -242,6 +242,7 @@ export class ProtocolTunnelComponent
                 currentJumpGroupId: asset.jumpGroupId,
                 currentJumpGroupType: asset.jumpGroupType || "shared",
                 currentJumpPolicyId: asset.jumpPolicyId ?? null,
+                currentSessionPolicyId: asset.sessionPolicyId ?? null,
             } as JumpAssetUpdateDialogData,
             disableClose: true,
         });

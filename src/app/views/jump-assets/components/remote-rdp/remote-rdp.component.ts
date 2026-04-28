@@ -184,7 +184,8 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
                             hostname: result.hostname ?? "",
                             jumpGroupId: result.jumpGroupId!,
                             jumpointId: result.jumpointId!,
-                            jumpPolicyId: result.jumpPolicyId ?? 0,
+                            jumpPolicyId: result.jumpPolicyId ?? null,
+                            sessionPolicyId: result.sessionPolicyId ?? null,
                         };
 
                         await this.jumpAssetsService.createRemoteRdp(
@@ -225,7 +226,8 @@ export class RemoteRdpComponent extends PraBaseComponent implements OnInit {
                 currentHostname: asset.hostname,
                 currentJumpGroupId: asset.jumpGroupId,
                 currentJumpGroupType: asset.jumpGroupType,
-                currentJumpPolicyId: asset.jumpPolicyId,
+                currentJumpPolicyId: asset.jumpPolicyId ?? null,
+                currentSessionPolicyId: asset.sessionPolicyId ?? null,
                 tenantId: this.currentTenantId,
             } as JumpAssetUpdateDialogData,
             disableClose: true,

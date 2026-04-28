@@ -8,8 +8,10 @@ import { Jumpoint } from "../../../jumpoints/models";
 import { JumpointsService } from "../../../jumpoints/jumpoints.service";
 import { JumpGroupsService } from "../../../jump-groups/jump-groups.service";
 import { JumpPoliciesService } from "../../../jump-policies/jump-policies.service";
+import { SessionPoliciesService } from "../../../session-policies/session-policies.service";
 import { JumpGroup } from "../../../jump-groups/models";
 import { JumpPolicy } from "../../../jump-policies/models";
+import { SessionPolicy } from "../../../session-policies/models";
 import { JumpAssetCreateRequest } from "../../models";
 import { CustomersService } from "../../../customers/customers.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
@@ -39,6 +41,7 @@ interface JumpAssetForm {
     jumpoint: FormControl<Jumpoint | null>;
     jumpGroup: FormControl<JumpGroup | null>;
     jumpPolicy: FormControl<JumpPolicy | null>;
+    sessionPolicy: FormControl<SessionPolicy | null>;
     mustVerifyCertificate: FormControl<boolean>;
 }
 
@@ -60,9 +63,11 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
     public jumpoints: Jumpoint[] = [];
     public jumpGroups: JumpGroup[] = [];
     public jumpPolicies: JumpPolicy[] = [];
+    public sessionPolicies: SessionPolicy[] = [];
     public filteredJumpoints$: Observable<Jumpoint[]> = of([]);
     public filteredJumpGroups$: Observable<JumpGroup[]> = of([]);
     public filteredJumpPolicies$: Observable<JumpPolicy[]> = of([]);
+    public filteredSessionPolicies$: Observable<SessionPolicy[]> = of([]);
     public form!: FormGroup<JumpAssetForm>;
 
     private readonly assetTypeNames: Record<JumpAssetType, string> = {
@@ -80,6 +85,7 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
         private readonly jumpointsService: JumpointsService,
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
+        private readonly sessionPoliciesService: SessionPoliciesService,
         private readonly customersService: CustomersService,
         private readonly jwtAuthService: JwtAuthService,
     ) {}
@@ -114,6 +120,7 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
                 Validators.required,
             ]),
             jumpPolicy: new FormControl<JumpPolicy | null>(null),
+            sessionPolicy: new FormControl<SessionPolicy | null>(null),
             mustVerifyCertificate: new FormControl<boolean>(false, {
                 nonNullable: true,
             }),
@@ -131,19 +138,7 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
         const user = await firstValueFrom(this.jwtAuthService.praUser);
         const businessUnit = user?.businessUnit;
 
-        // Build the array of observables — always load the three core lists
-        const sources: [
-            Promise<Jumpoint[]>,
-            Promise<JumpGroup[]>,
-            Promise<JumpPolicy[]>,
-        ] = [
-            this.jumpointsService.fetchJumpoints(tenantId),
-            this.jumpGroupsService.fetchJumpGroups(tenantId),
-            this.jumpPoliciesService.fetchJumpPolicies(tenantId),
-        ];
-
-        // If the user has a BU (i.e. is a BU Admin), also load customers for
-        // that BU so we can filter JumpGroups and JumpPolicies by customer prefix.
+        // Optionally load customers for BU-based filtering of jump groups / policies
         const customersPromise = businessUnit
             ? this.customersService.fetchCustomers({
                   businessUnits: [
@@ -153,37 +148,60 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
               })
             : Promise.resolve([]);
 
-        Promise.all([...sources, customersPromise])
-            .then(([jumpoints, jumpGroups, jumpPolicies, customers]) => {
-                if (businessUnit) {
-                    // BU Admin — apply filtering
-                    const customerNames = customers.map((c) => c.name);
+        Promise.all([
+            this.jumpointsService.fetchJumpoints(tenantId),
+            this.jumpGroupsService.fetchJumpGroups(tenantId),
+            this.jumpPoliciesService.fetchJumpPolicies(tenantId),
+            this.sessionPoliciesService.fetchSessionPolicies(tenantId),
+            customersPromise,
+        ])
+            .then(
+                ([
+                    jumpoints,
+                    jumpGroups,
+                    jumpPolicies,
+                    sessionPolicies,
+                    customers,
+                ]) => {
+                    if (businessUnit) {
+                        // BU Admin — apply filtering
+                        const customerNames = customers.map((c) => c.name);
 
-                    this.jumpoints = PraDataFilter.filterByBusinessUnit(
-                        jumpoints,
-                        businessUnit,
-                        [(j) => j.codeName],
-                    );
-                    this.jumpGroups = PraDataFilter.filterByCustomerPrefix(
-                        jumpGroups,
-                        customerNames,
-                        (g) => g.name,
-                    );
-                    this.jumpPolicies = PraDataFilter.filterByCustomerPrefix(
-                        jumpPolicies,
-                        customerNames,
-                        (p) => p.codeName,
-                    );
-                } else {
-                    // SuperAdmin — no filtering
-                    this.jumpoints = jumpoints;
-                    this.jumpGroups = jumpGroups;
-                    this.jumpPolicies = jumpPolicies;
-                }
+                        this.jumpoints = PraDataFilter.filterByBusinessUnit(
+                            jumpoints,
+                            businessUnit,
+                            [(j) => j.codeName],
+                        );
+                        this.jumpGroups = PraDataFilter.filterByCustomerPrefix(
+                            jumpGroups,
+                            customerNames,
+                            (g) => g.name,
+                        );
+                        this.jumpPolicies =
+                            PraDataFilter.filterByCustomerPrefix(
+                                jumpPolicies,
+                                customerNames,
+                                (p) => p.codeName,
+                            );
+                        // Session policies are filtered by BU code directly via codeName
+                        this.sessionPolicies =
+                            PraDataFilter.filterByBusinessUnit(
+                                sessionPolicies,
+                                businessUnit,
+                                [(p) => p.codeName],
+                            );
+                    } else {
+                        // SuperAdmin — no filtering
+                        this.jumpoints = jumpoints;
+                        this.jumpGroups = jumpGroups;
+                        this.jumpPolicies = jumpPolicies;
+                        this.sessionPolicies = sessionPolicies;
+                    }
 
-                this.setupAutocompleteFilters();
-                this.isLoading = false;
-            })
+                    this.setupAutocompleteFilters();
+                    this.isLoading = false;
+                },
+            )
             .catch((error) => {
                 console.error("Failed to load jump asset data:", error);
                 this.loadError =
@@ -197,6 +215,7 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
         const jumpointControl = this.form.controls.jumpoint;
         const jumpGroupControl = this.form.controls.jumpGroup;
         const jumpPolicyControl = this.form.controls.jumpPolicy;
+        const sessionPolicyControl = this.form.controls.sessionPolicy;
 
         this.filteredJumpoints$ = jumpointControl.valueChanges.pipe(
             startWith(jumpointControl.value),
@@ -214,6 +233,14 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
             startWith(jumpPolicyControl.value),
             map((value) =>
                 this.filterItems(value, this.jumpPolicies, "displayName"),
+            ),
+            takeUntil(this.destroy$),
+        );
+
+        this.filteredSessionPolicies$ = sessionPolicyControl.valueChanges.pipe(
+            startWith(sessionPolicyControl.value),
+            map((value) =>
+                this.filterItems(value, this.sessionPolicies, "displayName"),
             ),
             takeUntil(this.destroy$),
         );
@@ -316,6 +343,7 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
             jumpGroupType:
                 JumpAssetCreateOverlayComponent.DEFAULT_JUMP_GROUP_TYPE,
             jumpPolicyId: formValue.jumpPolicy?.id ?? null,
+            sessionPolicyId: formValue.sessionPolicy?.id ?? null,
             mustVerifyCertificate: this.showMustVerifyCertificate()
                 ? formValue.mustVerifyCertificate
                 : undefined,
@@ -337,6 +365,13 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
     /** Display function for Jump Policy autocomplete */
     public displayJumpPolicy = (jumpPolicy: JumpPolicy | null): string => {
         return jumpPolicy?.displayName ?? "— No Jump Policy —";
+    };
+
+    /** Display function for Session Policy autocomplete */
+    public displaySessionPolicy = (
+        sessionPolicy: SessionPolicy | null,
+    ): string => {
+        return sessionPolicy?.displayName ?? "— No Session Policy —";
     };
 
     /** Replace whitespace with underscores, remove special chars, uppercase */

@@ -1,19 +1,10 @@
 <div class="relative overlay-container">
     <div *ngIf="isLoading" class="absolute overlay-loader">
-        <mat-progress-bar
-            mode="indeterminate"
-            color="primary"
-        ></mat-progress-bar>
+        <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
     </div>
 
-    <button
-        *ngIf="!isLoading"
-        mat-mini-fab
-        color="primary"
-        class="overlay-close-button"
-        (click)="cancel()"
-        aria-label="Close dialog"
-    >
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="cancel()"
+        aria-label="Close dialog">
         <mat-icon>close</mat-icon>
     </button>
 
@@ -29,12 +20,7 @@
             <div fxFlex="100">
                 <mat-form-field class="full-width">
                     <mat-label>{{ getAssetTypeName() }} Name</mat-label>
-                    <input
-                        matInput
-                        formControlName="name"
-                        autocomplete="off"
-                        required
-                    />
+                    <input matInput formControlName="name" autocomplete="off" required />
                     <mat-error *ngIf="form.controls.name.hasError('required')">
                         Name is <strong>required</strong>
                     </mat-error>
@@ -50,11 +36,7 @@
             </div>
 
             <!-- Hostname/IP/URL -->
-            <div
-                [fxFlex]="showPortField() ? 80 : 100"
-                class="mt-16"
-                [class.pr-32]="showPortField()"
-            >
+            <div [fxFlex]="showPortField() ? 80 : 100" class="mt-16" [class.pr-32]="showPortField()">
                 <mat-form-field class="full-width">
                     <mat-label>
                         {{
@@ -63,16 +45,9 @@
                                 : "Hostname / IP"
                         }}
                     </mat-label>
-                    <input
-                        matInput
-                        formControlName="hostname"
-                        autocomplete="off"
-                        [type]="data.assetType === 'webJump' ? 'url' : 'text'"
-                        required
-                    />
-                    <mat-error
-                        *ngIf="form.controls.hostname.hasError('required')"
-                    >
+                    <input matInput formControlName="hostname" autocomplete="off"
+                        [type]="data.assetType === 'webJump' ? 'url' : 'text'" required />
+                    <mat-error *ngIf="form.controls.hostname.hasError('required')">
                         {{
                             data.assetType === "webJump" ? "URL" : "Hostname/IP"
                         }}
@@ -98,27 +73,13 @@
             <div fxFlex="100" class="mt-16">
                 <mat-form-field class="full-width">
                     <mat-label>Jumpoint</mat-label>
-                    <input
-                        type="text"
-                        matInput
-                        [matAutocomplete]="autoJumpoint"
-                        formControlName="jumpoint"
-                        required
-                    />
-                    <mat-autocomplete
-                        #autoJumpoint="matAutocomplete"
-                        [displayWith]="displayJumpoint"
-                    >
-                        <mat-option
-                            *ngFor="let jumpoint of filteredJumpoints$ | async"
-                            [value]="jumpoint"
-                        >
+                    <input type="text" matInput [matAutocomplete]="autoJumpoint" formControlName="jumpoint" required />
+                    <mat-autocomplete #autoJumpoint="matAutocomplete" [displayWith]="displayJumpoint">
+                        <mat-option *ngFor="let jumpoint of filteredJumpoints$ | async" [value]="jumpoint">
                             {{ jumpoint.name }}
                         </mat-option>
                     </mat-autocomplete>
-                    <mat-error
-                        *ngIf="form.controls.jumpoint.hasError('required')"
-                    >
+                    <mat-error *ngIf="form.controls.jumpoint.hasError('required')">
                         Jumpoint is <strong>required</strong>
                     </mat-error>
                 </mat-form-field>
@@ -128,27 +89,14 @@
             <div fxFlex="100" class="mt-16">
                 <mat-form-field class="full-width">
                     <mat-label>Jump Group</mat-label>
-                    <input
-                        type="text"
-                        matInput
-                        [matAutocomplete]="autoJumpGroup"
-                        formControlName="jumpGroup"
-                        required
-                    />
-                    <mat-autocomplete
-                        #autoJumpGroup="matAutocomplete"
-                        [displayWith]="displayJumpGroup"
-                    >
-                        <mat-option
-                            *ngFor="let group of filteredJumpGroups$ | async"
-                            [value]="group"
-                        >
+                    <input type="text" matInput [matAutocomplete]="autoJumpGroup" formControlName="jumpGroup"
+                        required />
+                    <mat-autocomplete #autoJumpGroup="matAutocomplete" [displayWith]="displayJumpGroup">
+                        <mat-option *ngFor="let group of filteredJumpGroups$ | async" [value]="group">
                             {{ group.name }}
                         </mat-option>
                     </mat-autocomplete>
-                    <mat-error
-                        *ngIf="form.controls.jumpGroup.hasError('required')"
-                    >
+                    <mat-error *ngIf="form.controls.jumpGroup.hasError('required')">
                         Jump Group is <strong>required</strong>
                     </mat-error>
                 </mat-form-field>
@@ -158,23 +106,24 @@
             <div fxFlex="100" class="mt-16">
                 <mat-form-field class="full-width">
                     <mat-label>Jump Policy (Optional)</mat-label>
-                    <input
-                        type="text"
-                        matInput
-                        [matAutocomplete]="autoJumpPolicy"
-                        formControlName="jumpPolicy"
-                    />
-                    <mat-autocomplete
-                        #autoJumpPolicy="matAutocomplete"
-                        [displayWith]="displayJumpPolicy"
-                    >
-                        <mat-option [value]="null"
-                            >— No Jump Policy —</mat-option
-                        >
-                        <mat-option
-                            *ngFor="let policy of filteredJumpPolicies$ | async"
-                            [value]="policy"
-                        >
+                    <input type="text" matInput [matAutocomplete]="autoJumpPolicy" formControlName="jumpPolicy" />
+                    <mat-autocomplete #autoJumpPolicy="matAutocomplete" [displayWith]="displayJumpPolicy">
+                        <mat-option [value]="null">— No Jump Policy —</mat-option>
+                        <mat-option *ngFor="let policy of filteredJumpPolicies$ | async" [value]="policy">
+                            {{ policy.displayName }}
+                        </mat-option>
+                    </mat-autocomplete>
+                </mat-form-field>
+            </div>
+
+            <!-- Session Policy -->
+            <div fxFlex="100" class="mt-16">
+                <mat-form-field class="full-width">
+                    <mat-label>Session Policy (Optional)</mat-label>
+                    <input type="text" matInput [matAutocomplete]="autoSessionPolicy" formControlName="sessionPolicy" />
+                    <mat-autocomplete #autoSessionPolicy="matAutocomplete" [displayWith]="displaySessionPolicy">
+                        <mat-option [value]="null">— No Session Policy —</mat-option>
+                        <mat-option *ngFor="let policy of filteredSessionPolicies$ | async" [value]="policy">
                             {{ policy.displayName }}
                         </mat-option>
                     </mat-autocomplete>
@@ -183,10 +132,7 @@
 
             <!-- Must Verify Certificate (only for web jumps) -->
             <div fxFlex="100" class="mt-16" *ngIf="showMustVerifyCertificate()">
-                <mat-slide-toggle
-                    class="full-width"
-                    formControlName="mustVerifyCertificate"
-                >
+                <mat-slide-toggle class="full-width" formControlName="mustVerifyCertificate">
                     Verify Certificate
                 </mat-slide-toggle>
             </div>
@@ -194,12 +140,7 @@
             <!-- Submit -->
             <div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
                 <div fxLayout="row" fxLayoutAlign="end center" class="mt-32">
-                    <button
-                        mat-raised-button
-                        color="primary"
-                        type="submit"
-                        [disabled]="form.invalid || isLoading"
-                    >
+                    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || isLoading">
                         Create
                     </button>
                 </div>

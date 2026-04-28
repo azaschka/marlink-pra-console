@@ -14,6 +14,7 @@ import { JumpGroupsService } from "../jump-groups/jump-groups.service";
 import { JumpPoliciesService } from "../jump-policies/jump-policies.service";
 import { JumpointsService } from "../jumpoints/jumpoints.service";
 import { CustomersService } from "../customers/customers.service";
+import { SessionPoliciesService } from "../session-policies/session-policies.service";
 
 // Components
 import { JumpAssetsComponent } from "./jump-assets.component";
@@ -44,6 +45,7 @@ const SERVICES = [
     JumpAssetsService,
     JumpGroupsService,
     JumpPoliciesService,
+    SessionPoliciesService,
     JumpointsService,
     CustomersService,
 ];

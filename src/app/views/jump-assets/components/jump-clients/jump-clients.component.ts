@@ -8,7 +8,6 @@ import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.servic
 import { ConfirmDialogService } from "../../../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../../../shared/dialogs/notification-dialog/notification-dialog.service";
-import { PraDataFilter } from "../../../../shared/helpers";
 import { JumpAssetsService } from "../../jump-assets.service";
 import { JumpAssetCopyOverlayComponent } from "../jump-asset-copy-overlay/jump-asset-copy-overlay.component";
 import {
@@ -22,11 +21,6 @@ import {
 } from "../../models";
 import { JumpPoliciesService } from "../../../jump-policies/jump-policies.service";
 import { JumpGroupsService } from "../../../jump-groups/jump-groups.service";
-import { JumpointsService } from "../../../jumpoints/jumpoints.service";
-import { JumpGroup } from "../../../jump-groups/models";
-import { JumpPolicy } from "../../../jump-policies/models";
-import { Jumpoint } from "../../../jumpoints/models";
-import { BusinessUnit } from "../../../pra-users/enums";
 import { AppService } from "../../../../app.service";
 
 @Component({
@@ -72,6 +66,10 @@ export class JumpClientsComponent extends PraBaseComponent implements OnInit {
         private readonly notificationDialog: NotificationDialogService,
     ) {
         super(jwtAuthService);
+    }
+
+    protected override onBusinessUnitChanged(): void {
+        void this.loadPage();
     }
 
     public async ngOnInit(): Promise<void> {
@@ -155,6 +153,7 @@ export class JumpClientsComponent extends PraBaseComponent implements OnInit {
                 currentJumpGroupId: asset.jumpGroupId,
                 currentJumpGroupType: asset.jumpGroupType || "shared",
                 currentJumpPolicyId: asset.jumpPolicyId ?? null,
+                currentSessionPolicyId: asset.sessionPolicyId ?? null,
                 tenantId: this.currentTenantId,
             } as JumpAssetUpdateDialogData,
             disableClose: true,
@@ -230,6 +229,7 @@ export class JumpClientsComponent extends PraBaseComponent implements OnInit {
         overrides: Partial<{ pageNumber: number; pageSize: number }> = {},
     ): Promise<void> {
         if (!this.currentTenantId) {
+            this.isLoading = false;
             return;
         }
 
@@ -245,18 +245,20 @@ export class JumpClientsComponent extends PraBaseComponent implements OnInit {
                 ),
             ]);
 
-            // Enrich items directly
+            // Build lookup maps for O(1) enrichment (instead of Array.find per item)
+            const jumpGroupMap = new Map(jumpGroups.map((g) => [g.id, g]));
+            const jumpPolicyMap = new Map(jumpPolicies.map((p) => [p.id, p]));
+
+            // Enrich items with display names
             const enriched = items.map((item) => ({
                 ...item,
-                jumpGroupName:
-                    jumpGroups.find((g) => g.id === item.jumpGroupId)?.name ??
-                    "—",
-                jumpPolicyName:
-                    jumpPolicies.find((p) => p.id === item.jumpPolicyId)
-                        ?.displayName ?? "—",
+                jumpGroupName: jumpGroupMap.get(item.jumpGroupId)?.name ?? "—",
+                jumpPolicyName: item.jumpPolicyId
+                    ? (jumpPolicyMap.get(item.jumpPolicyId)?.displayName ?? "—")
+                    : "—",
             }));
 
-            // Optional pagination overrides (if the calling location wants it)
+            // Optional pagination overrides
             if (overrides.pageNumber !== undefined && this.paginator) {
                 this.paginator.pageIndex = overrides.pageNumber;
             }

@@ -191,7 +191,7 @@ export class WebJumpComponent extends PraBaseComponent implements OnInit {
                             usernameField: "",
                             passwordField: "",
                             submitField: "",
-                            sessionPolicyId: null,
+                            sessionPolicyId: result.sessionPolicyId ?? null,
                         } as CreateWebJumpDtoInput;
                         await this.jumpAssetsService.createWebJump(
                             this.currentTenantId!,
@@ -233,6 +233,7 @@ export class WebJumpComponent extends PraBaseComponent implements OnInit {
                 currentJumpGroupId: asset.jumpGroupId,
                 currentJumpGroupType: asset.jumpGroupType || "shared",
                 currentJumpPolicyId: asset.jumpPolicyId ?? null,
+                currentSessionPolicyId: asset.sessionPolicyId ?? null,
             } as JumpAssetUpdateDialogData,
             disableClose: true,
         });

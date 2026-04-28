@@ -1,10 +1,11 @@
-import { Component, Inject, OnInit } from "@angular/core";
+import { Component, Inject, OnInit, OnDestroy } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { FormControl, FormGroup, Validators } from "@angular/forms";
+import { Observable, of, Subject, firstValueFrom } from "rxjs";
+import { map, startWith, takeUntil } from "rxjs/operators";
 import { JumpGroupsService } from "../../../jump-groups/jump-groups.service";
 import { JumpAssetCopyRequest } from "../../models";
 import { JumpGroup } from "../../../jump-groups/models";
-import { Observable, of, startWith, map, firstValueFrom } from "rxjs";
 import { CustomersService } from "../../../customers/customers.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
@@ -24,15 +25,40 @@ export interface CopyJumpAssetDialogData {
     tenantId: number;
 }
 
+interface CopyForm {
+    name: FormControl<string>;
+    jumpGroup: FormControl<JumpGroup | null>;
+}
+
 @Component({
     selector: "app-jump-asset-copy-overlay",
     templateUrl: "./jump-asset-copy-overlay.component.html",
 })
-export class JumpAssetCopyOverlayComponent implements OnInit {
+export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
+    private static readonly headlineMap: Record<string, string> = {
+        remoteRdp: "Copy Remote RDP",
+        shellJump: "Copy Shell Jump",
+        webJump: "Copy Web Jump",
+        remoteVnc: "Copy Remote VNC",
+        protocolTunnel: "Copy Protocol Tunnel",
+        jumpClient: "Copy Jump Client",
+    };
+
+    private static readonly assetNameMap: Record<string, string> = {
+        remoteRdp: "Remote RDP Name",
+        shellJump: "Shell Jump Name",
+        webJump: "Web Jump Name",
+        remoteVnc: "Remote VNC Name",
+        protocolTunnel: "Protocol Tunnel Name",
+        jumpClient: "Jump Client Name",
+    };
+
+    private readonly destroy$ = new Subject<void>();
+
     public isLoading = false;
     public jumpGroups: JumpGroup[] = [];
     public filteredJumpGroups$: Observable<JumpGroup[]> = of([]);
-    public form: FormGroup;
+    public form: FormGroup<CopyForm>;
 
     constructor(
         public dialogRef: MatDialogRef<JumpAssetCopyOverlayComponent>,
@@ -41,34 +67,39 @@ export class JumpAssetCopyOverlayComponent implements OnInit {
         private readonly customersService: CustomersService,
         private readonly jwtAuthService: JwtAuthService,
     ) {
-        this.form = new FormGroup({
-            name: new FormControl(`Copy of ${data.defaultName}`, [
-                Validators.required,
-            ]),
+        this.form = new FormGroup<CopyForm>({
+            name: new FormControl(`Copy of ${data.defaultName}`, {
+                nonNullable: true,
+                validators: [Validators.required],
+            }),
             jumpGroup: new FormControl<JumpGroup | null>(null, [
                 Validators.required,
             ]),
         });
     }
 
-    public async ngOnInit() {
+    public async ngOnInit(): Promise<void> {
         this.isLoading = true;
         try {
             const tenantId = this.data.tenantId;
             const user = await firstValueFrom(this.jwtAuthService.praUser);
             const businessUnit = user?.businessUnit;
 
-            const allJumpGroups =
-                await this.jumpGroupsService.fetchJumpGroups(tenantId);
+            // Load jump groups and (optionally) customers in parallel
+            const [allJumpGroups, customers] = await Promise.all([
+                this.jumpGroupsService.fetchJumpGroups(tenantId),
+                businessUnit
+                    ? this.customersService.fetchCustomers({
+                          businessUnits: [
+                              businessUnit as unknown as CustomerBusinessUnit,
+                          ],
+                          pageSize: 9999,
+                      })
+                    : Promise.resolve([]),
+            ]);
 
             if (businessUnit) {
                 // BU Admin — filter jump groups by customer name prefix
-                const customers = await this.customersService.fetchCustomers({
-                    businessUnits: [
-                        businessUnit as unknown as CustomerBusinessUnit,
-                    ],
-                    pageSize: 9999,
-                });
                 const customerNames = customers.map((c) => c.name);
                 this.jumpGroups = PraDataFilter.filterByCustomerPrefix(
                     allJumpGroups,
@@ -80,75 +111,62 @@ export class JumpAssetCopyOverlayComponent implements OnInit {
                 this.jumpGroups = allJumpGroups;
             }
 
-            this.filteredJumpGroups$ = this.form
-                .get("jumpGroup")!
-                .valueChanges.pipe(
-                    startWith(""),
-                    map((val) => this._filterJumpGroups(val)),
-                );
+            const jumpGroupCtrl = this.form.controls.jumpGroup;
+
+            this.filteredJumpGroups$ = jumpGroupCtrl.valueChanges.pipe(
+                startWith(jumpGroupCtrl.value),
+                map((val) => this.filterJumpGroups(val)),
+                takeUntil(this.destroy$),
+            );
         } finally {
             this.isLoading = false;
         }
     }
 
+    public ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
     public displayHeadline(): string {
-        switch (this.data.assetType) {
-            case "remoteRdp":
-                return "Copy Remote RDP";
-            case "shellJump":
-                return "Copy Shell Jump";
-            case "webJump":
-                return "Copy Web Jump";
-            case "remoteVnc":
-                return "Copy Remote VNC";
-            case "protocolTunnel":
-                return "Copy Protocol Tunnel";
-            case "jumpClient":
-                return "Copy Jump Client";
-            default:
-                return "Unknown Asset Type";
-        }
+        return (
+            JumpAssetCopyOverlayComponent.headlineMap[this.data.assetType] ??
+            "Copy Jump Asset"
+        );
     }
 
     public displayJumpAssetName(): string {
-        switch (this.data.assetType) {
-            case "remoteRdp":
-                return "Remote RDP Name";
-            case "shellJump":
-                return "Shell Jump Name";
-            case "webJump":
-                return "Web Jump Name";
-            case "remoteVnc":
-                return "Remote VNC Name";
-            case "protocolTunnel":
-                return "Protocol Tunnel Name";
-            case "jumpClient":
-                return "Jump Client Name";
-            default:
-                return "Unknown Asset Type";
+        return (
+            JumpAssetCopyOverlayComponent.assetNameMap[this.data.assetType] ??
+            "Name"
+        );
+    }
+
+    /** Arrow function ensures correct `this` context when used as [displayWith] */
+    public displayJumpGroup = (jumpGroup: JumpGroup | null): string => {
+        return jumpGroup?.name ?? "";
+    };
+
+    public submit(): void {
+        if (this.form.invalid) {
+            this.form.markAllAsTouched();
+            return;
         }
-    }
 
-    public displayJumpGroup(jumpGroup: JumpGroup): string {
-        return jumpGroup ? jumpGroup.name : "";
-    }
-
-    public async submit() {
-        if (this.form.invalid) return;
-        const { name, jumpGroup } = this.form.value;
+        const formValue = this.form.getRawValue();
         const request: JumpAssetCopyRequest = {
-            name: name.trim(),
-            jumpGroupId: jumpGroup.id,
+            name: formValue.name.trim(),
+            jumpGroupId: formValue.jumpGroup!.id,
             jumpGroupType: "shared",
         };
         this.dialogRef.close(request);
     }
 
-    public cancel() {
+    public cancel(): void {
         this.dialogRef.close(null);
     }
 
-    private _filterJumpGroups(value: string | JumpGroup | null): JumpGroup[] {
+    private filterJumpGroups(value: string | JumpGroup | null): JumpGroup[] {
         const filter =
             typeof value === "string"
                 ? value.toLowerCase()

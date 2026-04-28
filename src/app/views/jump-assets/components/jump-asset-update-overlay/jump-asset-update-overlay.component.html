@@ -3,7 +3,8 @@
         <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
     </div>
 
-    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="cancel()">
+    <button *ngIf="!isLoading" mat-mini-fab color="primary" class="overlay-close-button" (click)="cancel()"
+        aria-label="Close dialog">
         <mat-icon>close</mat-icon>
     </button>
 
@@ -16,7 +17,7 @@
                 <mat-form-field class="full-width">
                     <mat-label>{{ getAssetTypeName() }} Name</mat-label>
                     <input matInput formControlName="name" autocomplete="off" />
-                    <mat-error *ngIf="form.get('name')?.hasError('required')">
+                    <mat-error *ngIf="form.controls.name.hasError('required')">
                         Name is <strong>required</strong>
                     </mat-error>
                 </mat-form-field>
@@ -27,7 +28,6 @@
                 <mat-form-field class="full-width">
                     <mat-label>{{ getAssetTypeName() }} Tag</mat-label>
                     <input matInput formControlName="tag" autocomplete="off" />
-                    <mat-error></mat-error>
                 </mat-form-field>
             </div>
 
@@ -43,7 +43,7 @@
                     </mat-label>
                     <input matInput formControlName="hostname" autocomplete="off"
                         [type]="data.assetType === 'webJump' ? 'url' : 'text'" />
-                    <mat-error *ngIf="form.get('hostname')?.hasError('required')">
+                    <mat-error *ngIf="form.controls.hostname.hasError('required')">
                         {{ data.assetType === 'webJump' ? 'URL' : 'Hostname/IP' }} is <strong>required</strong>
                     </mat-error>
                 </mat-form-field>
@@ -54,8 +54,8 @@
                 <mat-form-field class="full-width">
                     <mat-label>Port</mat-label>
                     <input matInput formControlName="port" type="number" autocomplete="off" min="1" max="65535" />
-                    <mat-error *ngIf="form.get('port')?.hasError('min') || form.get('port')?.hasError('max')">
-                        Port number must be between <strong>1</strong> and <strong>65535</strong>
+                    <mat-error *ngIf="form.controls.port.hasError('min') || form.controls.port.hasError('max')">
+                        Port must be between <strong>1</strong> and <strong>65535</strong>
                     </mat-error>
                 </mat-form-field>
             </div>
@@ -64,13 +64,14 @@
             <div fxFlex="100" class="mt-16">
                 <mat-form-field class="full-width">
                     <mat-label>Jump Group</mat-label>
-                    <input type="text" matInput [matAutocomplete]="autoJumpGroup" formControlName="jumpGroup" />
+                    <input type="text" matInput [matAutocomplete]="autoJumpGroup" formControlName="jumpGroup"
+                        required />
                     <mat-autocomplete #autoJumpGroup="matAutocomplete" [displayWith]="displayJumpGroup">
                         <mat-option *ngFor="let group of filteredJumpGroups$ | async" [value]="group">
                             {{ group.name }}
                         </mat-option>
                     </mat-autocomplete>
-                    <mat-error *ngIf="form.get('jumpGroup')?.hasError('required')">
+                    <mat-error *ngIf="form.controls.jumpGroup.hasError('required')">
                         Jump Group is <strong>required</strong>
                     </mat-error>
                 </mat-form-field>
@@ -79,7 +80,7 @@
             <!-- Jump Policy -->
             <div fxFlex="100" class="mt-16">
                 <mat-form-field class="full-width">
-                    <mat-label>Jump Policy</mat-label>
+                    <mat-label>Jump Policy (Optional)</mat-label>
                     <input type="text" matInput [matAutocomplete]="autoJumpPolicy" formControlName="jumpPolicy" />
                     <mat-autocomplete #autoJumpPolicy="matAutocomplete" [displayWith]="displayJumpPolicy">
                         <mat-option [value]="null">— No Jump Policy —</mat-option>
@@ -87,20 +88,36 @@
                             {{ policy.displayName }}
                         </mat-option>
                     </mat-autocomplete>
-                    <mat-error></mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Session Policy -->
+            <div fxFlex="100" class="mt-16">
+                <mat-form-field class="full-width">
+                    <mat-label>Session Policy (Optional)</mat-label>
+                    <input type="text" matInput [matAutocomplete]="autoSessionPolicy" formControlName="sessionPolicy" />
+                    <mat-autocomplete #autoSessionPolicy="matAutocomplete" [displayWith]="displaySessionPolicy">
+                        <mat-option [value]="null">— No Session Policy —</mat-option>
+                        <mat-option *ngFor="let policy of filteredSessionPolicies$ | async" [value]="policy">
+                            {{ policy.displayName }}
+                        </mat-option>
+                    </mat-autocomplete>
                 </mat-form-field>
             </div>
 
             <!-- Must Verify Certificate (only for web jumps) -->
             <div fxFlex="100" class="mt-16" *ngIf="showMustVerifyCertificate()">
-                <mat-slide-toggle class="full-width" formControlName="mustVerifyCertificate">Verify Certificate
+                <mat-slide-toggle class="full-width" formControlName="mustVerifyCertificate">
+                    Verify Certificate
                 </mat-slide-toggle>
             </div>
 
             <!-- Submit -->
             <div fxFlex="100" fxLayout="row" fxLayoutAlign="end center">
                 <div fxLayout="row" fxLayoutAlign="end center" class="mt-32">
-                    <button mat-raised-button color="primary" [disabled]="form.invalid || isLoading">Update</button>
+                    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || isLoading">
+                        Update
+                    </button>
                 </div>
             </div>
         </div>

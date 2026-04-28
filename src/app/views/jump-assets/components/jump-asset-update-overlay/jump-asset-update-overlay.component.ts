@@ -1,11 +1,14 @@
-import { Component, Inject, OnInit } from "@angular/core";
+import { Component, Inject, OnInit, OnDestroy } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { FormGroup, FormControl, Validators } from "@angular/forms";
+import { Observable, of, Subject, firstValueFrom } from "rxjs";
+import { map, startWith, takeUntil } from "rxjs/operators";
 import { JumpGroupsService } from "../../../jump-groups/jump-groups.service";
 import { JumpPoliciesService } from "../../../jump-policies/jump-policies.service";
+import { SessionPoliciesService } from "../../../session-policies/session-policies.service";
 import { JumpGroup } from "../../../jump-groups/models";
 import { JumpPolicy } from "../../../jump-policies/models";
-import { Observable, of, startWith, map, firstValueFrom } from "rxjs";
+import { SessionPolicy } from "../../../session-policies/models";
 import { JumpAssetUpdateRequest } from "../../models";
 import { StringSanitizer } from "app/shared/helpers";
 import { CustomersService } from "../../../customers/customers.service";
@@ -29,83 +32,136 @@ export interface JumpAssetUpdateDialogData {
     currentJumpGroupId: number;
     currentJumpGroupType: string;
     currentJumpPolicyId: number | null;
+    currentSessionPolicyId?: number | null;
     currentMustVerifyCertificate?: boolean;
     /** The tenant ID of the selected BeyondTrust instance. */
     tenantId: number;
+}
+
+interface UpdateForm {
+    name: FormControl<string>;
+    tag: FormControl<string>;
+    hostname: FormControl<string>;
+    port: FormControl<number | null>;
+    jumpGroup: FormControl<JumpGroup | null>;
+    jumpPolicy: FormControl<JumpPolicy | null>;
+    sessionPolicy: FormControl<SessionPolicy | null>;
+    mustVerifyCertificate: FormControl<boolean>;
 }
 
 @Component({
     selector: "app-jump-asset-update-overlay",
     templateUrl: "./jump-asset-update-overlay.component.html",
 })
-export class JumpAssetUpdateOverlayComponent implements OnInit {
+export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
     private static readonly DEFAULT_REMOTE_VNC_PORT = 5900;
     private static readonly DEFAULT_SHELL_JUMP_PORT = 22;
     private static readonly MINIMUM_PORT_NUMBER = 1;
     private static readonly MAXIMUM_PORT_NUMBER = 65535;
 
+    private readonly destroy$ = new Subject<void>();
+
+    private static readonly assetTypeNames: Record<string, string> = {
+        remoteRdp: "Remote RDP",
+        shellJump: "Shell Jump",
+        webJump: "Web Jump",
+        remoteVnc: "Remote VNC",
+        protocolTunnel: "Protocol Tunnel",
+        jumpClient: "Jump Client",
+    };
+
     public isLoading = false;
     public jumpGroups: JumpGroup[] = [];
     public jumpPolicies: JumpPolicy[] = [];
+    public sessionPolicies: SessionPolicy[] = [];
     public filteredJumpGroups$: Observable<JumpGroup[]> = of([]);
     public filteredJumpPolicies$: Observable<JumpPolicy[]> = of([]);
-    public form: FormGroup;
+    public filteredSessionPolicies$: Observable<SessionPolicy[]> = of([]);
+    public form!: FormGroup<UpdateForm>;
 
     constructor(
         public dialogRef: MatDialogRef<JumpAssetUpdateOverlayComponent>,
         @Inject(MAT_DIALOG_DATA) public data: JumpAssetUpdateDialogData,
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
+        private readonly sessionPoliciesService: SessionPoliciesService,
         private readonly customersService: CustomersService,
         private readonly jwtAuthService: JwtAuthService,
-    ) {
-        this.form = new FormGroup({
-            name: new FormControl<string>(data.currentName, [
-                Validators.required,
-            ]),
-            tag: new FormControl<string>(data.currentTag ?? "", []),
-            hostname: new FormControl<string>(data.currentHostname ?? "", [
-                Validators.required,
-            ]),
-            port: new FormControl<number | null>(
-                data.currentPort ?? null,
-                [], // Validators kommen dynamisch im ngOnInit, je nach Asset-Typ
-            ),
+    ) {}
+
+    public ngOnInit(): void {
+        this.initForm();
+        void this.loadData();
+    }
+
+    public ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
+    /** Initialize the reactive form with current values & base validators */
+    private initForm(): void {
+        this.form = new FormGroup<UpdateForm>({
+            name: new FormControl<string>(this.data.currentName, {
+                nonNullable: true,
+                validators: [Validators.required],
+            }),
+            tag: new FormControl<string>(this.data.currentTag ?? "", {
+                nonNullable: true,
+            }),
+            hostname: new FormControl<string>(this.data.currentHostname ?? "", {
+                nonNullable: true,
+                validators: [Validators.required],
+            }),
+            port: new FormControl<number | null>(this.data.currentPort ?? null),
             jumpGroup: new FormControl<JumpGroup | null>(null, [
                 Validators.required,
             ]),
             jumpPolicy: new FormControl<JumpPolicy | null>(null),
+            sessionPolicy: new FormControl<SessionPolicy | null>(null),
             mustVerifyCertificate: new FormControl<boolean>(
-                data.currentMustVerifyCertificate || false,
+                this.data.currentMustVerifyCertificate ?? false,
+                { nonNullable: true },
             ),
         });
     }
 
-    public async ngOnInit() {
+    /** Load all required data and apply BU-based filtering for non-SuperAdmins */
+    private async loadData(): Promise<void> {
         this.isLoading = true;
+
         try {
             const tenantId = this.data.tenantId;
             const user = await firstValueFrom(this.jwtAuthService.praUser);
             const businessUnit = user?.businessUnit;
 
-            // Load core lists in parallel; optionally also load customers
-            const [allJumpGroups, allJumpPolicies, customers] =
-                await Promise.all([
-                    this.jumpGroupsService.fetchJumpGroups(tenantId),
-                    this.jumpPoliciesService.fetchJumpPolicies(tenantId),
-                    businessUnit
-                        ? this.customersService.fetchCustomers({
-                              businessUnits: [
-                                  businessUnit as unknown as CustomerBusinessUnit,
-                              ],
-                              pageSize: 9999,
-                          })
-                        : Promise.resolve([]),
-                ]);
+            // Optionally load customers for BU-based filtering
+            const customersPromise = businessUnit
+                ? this.customersService.fetchCustomers({
+                      businessUnits: [
+                          businessUnit as unknown as CustomerBusinessUnit,
+                      ],
+                      pageSize: 9999,
+                  })
+                : Promise.resolve([]);
+
+            const [
+                allJumpGroups,
+                allJumpPolicies,
+                allSessionPolicies,
+                customers,
+            ] = await Promise.all([
+                this.jumpGroupsService.fetchJumpGroups(tenantId),
+                this.jumpPoliciesService.fetchJumpPolicies(tenantId),
+                this.sessionPoliciesService.fetchSessionPolicies(tenantId),
+                customersPromise,
+            ]);
 
             if (businessUnit) {
-                // BU Admin — filter by customer name prefix
+                // BU Admin — filter jump groups / jump policies by customer prefix,
+                // and session policies by BU code directly via codeName
                 const customerNames = customers.map((c) => c.name);
+
                 this.jumpGroups = PraDataFilter.filterByCustomerPrefix(
                     allJumpGroups,
                     customerNames,
@@ -116,50 +172,81 @@ export class JumpAssetUpdateOverlayComponent implements OnInit {
                     customerNames,
                     (p) => p.codeName,
                 );
+                this.sessionPolicies = PraDataFilter.filterByBusinessUnit(
+                    allSessionPolicies,
+                    businessUnit,
+                    [(p) => p.codeName],
+                );
             } else {
                 // SuperAdmin — no filtering
                 this.jumpGroups = allJumpGroups;
                 this.jumpPolicies = allJumpPolicies;
+                this.sessionPolicies = allSessionPolicies;
             }
 
+            // Pre-select the current values from the filtered lists
             const currentJumpGroup =
                 this.jumpGroups.find(
                     (g) => g.id === this.data.currentJumpGroupId,
-                ) || null;
+                ) ?? null;
             const currentJumpPolicy = this.data.currentJumpPolicyId
-                ? this.jumpPolicies.find(
+                ? (this.jumpPolicies.find(
                       (p) => p.id === this.data.currentJumpPolicyId,
-                  ) || null
+                  ) ?? null)
+                : null;
+            const currentSessionPolicy = this.data.currentSessionPolicyId
+                ? (this.sessionPolicies.find(
+                      (p) => p.id === this.data.currentSessionPolicyId,
+                  ) ?? null)
                 : null;
 
             this.form.patchValue({
                 jumpGroup: currentJumpGroup,
                 jumpPolicy: currentJumpPolicy,
+                sessionPolicy: currentSessionPolicy,
             });
 
             this.setPortValidators();
-
-            // Filter
-            this.filteredJumpGroups$ = this.form
-                .get("jumpGroup")!
-                .valueChanges.pipe(
-                    startWith(currentJumpGroup),
-                    map((val) => this.filterJumpGroups(val)),
-                );
-            this.filteredJumpPolicies$ = this.form
-                .get("jumpPolicy")!
-                .valueChanges.pipe(
-                    startWith(currentJumpPolicy),
-                    map((val) => this.filterJumpPolicies(val)),
-                );
-
             this.setVerifyCertificateValidators();
+            this.setupAutocompleteFilters(
+                currentJumpGroup,
+                currentJumpPolicy,
+                currentSessionPolicy,
+            );
         } finally {
             this.isLoading = false;
         }
     }
 
-    // Zeigt/hidet das Port-Feld für die entsprechenden Typen:
+    /** Setup autocomplete filter streams — must be called after data is loaded */
+    private setupAutocompleteFilters(
+        initialJumpGroup: JumpGroup | null,
+        initialJumpPolicy: JumpPolicy | null,
+        initialSessionPolicy: SessionPolicy | null,
+    ): void {
+        const jumpGroupCtrl = this.form.controls.jumpGroup;
+        const jumpPolicyCtrl = this.form.controls.jumpPolicy;
+        const sessionPolicyCtrl = this.form.controls.sessionPolicy;
+
+        this.filteredJumpGroups$ = jumpGroupCtrl.valueChanges.pipe(
+            startWith(initialJumpGroup),
+            map((val) => this.filterJumpGroups(val)),
+            takeUntil(this.destroy$),
+        );
+
+        this.filteredJumpPolicies$ = jumpPolicyCtrl.valueChanges.pipe(
+            startWith(initialJumpPolicy),
+            map((val) => this.filterJumpPolicies(val)),
+            takeUntil(this.destroy$),
+        );
+
+        this.filteredSessionPolicies$ = sessionPolicyCtrl.valueChanges.pipe(
+            startWith(initialSessionPolicy),
+            map((val) => this.filterSessionPolicies(val)),
+            takeUntil(this.destroy$),
+        );
+    }
+
     public showPortField(): boolean {
         return (
             this.data.assetType === "shellJump" ||
@@ -172,110 +259,102 @@ export class JumpAssetUpdateOverlayComponent implements OnInit {
     }
 
     public getAssetTypeName(): string {
-        switch (this.data.assetType) {
-            case "remoteRdp":
-                return "Remote RDP";
-            case "shellJump":
-                return "Shell Jump";
-            case "webJump":
-                return "Web Jump";
-            case "remoteVnc":
-                return "Remote VNC";
-            case "protocolTunnel":
-                return "Protocol Tunnel";
-            case "jumpClient":
-                return "Jump Client";
-            default:
-                return "Unknown Asset Type";
-        }
+        return (
+            JumpAssetUpdateOverlayComponent.assetTypeNames[
+                this.data.assetType
+            ] ?? "Jump Asset"
+        );
     }
 
-    public submit() {
-        if (this.form.invalid) return;
-        const {
-            name,
-            tag,
-            hostname,
-            port,
-            mustVerifyCertificate,
-            jumpGroup,
-            jumpPolicy,
-        } = this.form.value;
+    public submit(): void {
+        if (this.form.invalid) {
+            this.form.markAllAsTouched();
+            return;
+        }
+
+        const formValue = this.form.getRawValue();
+
         this.dialogRef.close({
-            name: name?.trim(),
-            tag: JumpAssetUpdateOverlayComponent.sanitizeString(tag),
+            name: formValue.name.trim(),
+            tag: JumpAssetUpdateOverlayComponent.sanitizeString(formValue.tag),
             hostname:
                 this.data.assetType !== "webJump"
-                    ? hostname?.trim()
+                    ? formValue.hostname.trim()
                     : undefined,
             url:
                 this.data.assetType === "webJump"
-                    ? hostname?.trim()
+                    ? formValue.hostname.trim()
                     : undefined,
-            port: this.showPortField() ? port : undefined,
-            jumpGroupId: jumpGroup.id,
+            port: this.showPortField() ? formValue.port! : undefined,
+            jumpGroupId: formValue.jumpGroup!.id,
             jumpGroupType: "shared",
-            jumpPolicyId: jumpPolicy ? jumpPolicy.id : null,
+            jumpPolicyId: formValue.jumpPolicy?.id ?? null,
+            sessionPolicyId: formValue.sessionPolicy?.id ?? null,
             mustVerifyCertificate: this.showMustVerifyCertificate()
-                ? mustVerifyCertificate
+                ? formValue.mustVerifyCertificate
                 : undefined,
         } as JumpAssetUpdateRequest);
     }
 
-    public cancel() {
+    public cancel(): void {
         this.dialogRef.close(null);
     }
 
-    public displayJumpGroup(jumpGroup: JumpGroup | null): string {
-        return jumpGroup ? jumpGroup.name : "";
-    }
-    public displayJumpPolicy(jumpPolicy: JumpPolicy | null): string {
-        return jumpPolicy ? jumpPolicy.displayName : "— No Jump Policy —";
-    }
+    /** Display function for Jump Group autocomplete */
+    public displayJumpGroup = (jumpGroup: JumpGroup | null): string => {
+        return jumpGroup?.name ?? "";
+    };
+
+    /** Display function for Jump Policy autocomplete */
+    public displayJumpPolicy = (jumpPolicy: JumpPolicy | null): string => {
+        return jumpPolicy?.displayName ?? "— No Jump Policy —";
+    };
+
+    /** Display function for Session Policy autocomplete */
+    public displaySessionPolicy = (
+        sessionPolicy: SessionPolicy | null,
+    ): string => {
+        return sessionPolicy?.displayName ?? "— No Session Policy —";
+    };
 
     private setPortValidators(): void {
+        const portCtrl = this.form.controls.port;
+
         if (this.showPortField()) {
-            this.form
-                .get("port")
-                ?.setValidators([
-                    Validators.required,
-                    Validators.min(
-                        JumpAssetUpdateOverlayComponent.MINIMUM_PORT_NUMBER,
-                    ),
-                    Validators.max(
-                        JumpAssetUpdateOverlayComponent.MAXIMUM_PORT_NUMBER,
-                    ),
-                ]);
-            // Default Port, falls noch nicht gesetzt:
-            if (!this.form.get("port")?.value) {
-                this.form
-                    .get("port")
-                    ?.setValue(
-                        this.data.currentPort ||
-                            (this.data.assetType === "remoteVnc"
-                                ? JumpAssetUpdateOverlayComponent.DEFAULT_REMOTE_VNC_PORT
-                                : JumpAssetUpdateOverlayComponent.DEFAULT_SHELL_JUMP_PORT),
-                    );
+            portCtrl.setValidators([
+                Validators.required,
+                Validators.min(
+                    JumpAssetUpdateOverlayComponent.MINIMUM_PORT_NUMBER,
+                ),
+                Validators.max(
+                    JumpAssetUpdateOverlayComponent.MAXIMUM_PORT_NUMBER,
+                ),
+            ]);
+            if (!portCtrl.value) {
+                portCtrl.setValue(
+                    this.data.currentPort ??
+                        (this.data.assetType === "remoteVnc"
+                            ? JumpAssetUpdateOverlayComponent.DEFAULT_REMOTE_VNC_PORT
+                            : JumpAssetUpdateOverlayComponent.DEFAULT_SHELL_JUMP_PORT),
+                );
             }
         } else {
-            this.form.get("port")?.clearValidators();
-            this.form.get("port")?.setValue(null);
+            portCtrl.clearValidators();
+            portCtrl.setValue(null);
         }
-        this.form.get("port")?.updateValueAndValidity();
+
+        portCtrl.updateValueAndValidity();
     }
 
     private setVerifyCertificateValidators(): void {
-        if (this.showMustVerifyCertificate()) {
-            if (!this.form.get("mustVerifyCertificate")?.value) {
-                this.form
-                    .get("mustVerifyCertificate")
-                    .setValue(this.data.currentMustVerifyCertificate || false);
-            }
-        } else {
-            this.form.get("mustVerifyCertificate")?.setValue(false);
-            this.form.get("mustVerifyCertificate")?.clearValidators();
+        const certCtrl = this.form.controls.mustVerifyCertificate;
+
+        if (!this.showMustVerifyCertificate()) {
+            certCtrl.setValue(false);
+            certCtrl.clearValidators();
         }
-        this.form.get("mustVerifyCertificate")?.updateValueAndValidity();
+
+        certCtrl.updateValueAndValidity();
     }
 
     private filterJumpGroups(value: string | JumpGroup | null): JumpGroup[] {
@@ -302,19 +381,23 @@ export class JumpAssetUpdateOverlayComponent implements OnInit {
         );
     }
 
-    /**
-     * Sanitizes a string by replacing whitespace with underscores, removing special characters, and converting to uppercase.
-     * @param value The string to sanitize.
-     * @returns The sanitized string.
-     */
-    private static sanitizeString(value: string): string {
-        let sanitizeString =
-            StringSanitizer.replaceWhitespaceWithUnderscore(value);
-        sanitizeString =
-            StringSanitizer.replaceSpecialCharacters(sanitizeString);
-        sanitizeString =
-            StringSanitizer.removeSpecialCharacters(sanitizeString);
+    private filterSessionPolicies(
+        value: string | SessionPolicy | null,
+    ): SessionPolicy[] {
+        const filter =
+            typeof value === "string"
+                ? value.toLowerCase()
+                : (value?.displayName?.toLowerCase() ?? "");
 
-        return sanitizeString.toUpperCase();
+        return this.sessionPolicies.filter((p) =>
+            p.displayName.toLowerCase().includes(filter),
+        );
+    }
+
+    private static sanitizeString(value: string): string {
+        let s = StringSanitizer.replaceWhitespaceWithUnderscore(value);
+        s = StringSanitizer.replaceSpecialCharacters(s);
+        s = StringSanitizer.removeSpecialCharacters(s);
+        return s.toUpperCase();
     }
 }
