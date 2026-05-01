@@ -12,10 +12,11 @@ import { JumpointsComponent } from "./jumpoints.component";
 import { JumpointsRoutes } from "./jumpoints.routes";
 import { JumpointInstallerDownloadOverlayComponent } from "./components/jumpoint-installer-download-overlay/jumpoint-installer-download-overlay.component";
 import { JumpointDeployOverlayComponent } from "./components/jumpoint-deploy-overlay/jumpoint-deploy-overlay.component";
+import { SitesService } from "../sites/sites.service";
 
 const COMPONENTS = [JumpointsComponent, JumpointInstallerDownloadOverlayComponent, JumpointDeployOverlayComponent];
 
-const SERVICES = [];
+const SERVICES = [SitesService];
 
 @NgModule({
     imports: [
