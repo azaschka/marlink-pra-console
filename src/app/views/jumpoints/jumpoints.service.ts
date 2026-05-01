@@ -4,7 +4,8 @@ import { firstValueFrom, Observable } from "rxjs";
 import { distinctUntilChanged, skip } from "rxjs/operators";
 import { AppService } from "../../app.service";
 import { TenantCache } from "../../shared/helpers/tenant-cache";
-import { Jumpoint } from "./models";
+import { JumpointDeploymentNode, Jumpoint } from "./models";
+import { JumpointNodeBusinessUnit } from "./enums";
 
 @Injectable({ providedIn: "root" })
 export class JumpointsService {
@@ -59,5 +60,51 @@ export class JumpointsService {
             reportProgress: true,
             ...this.createHeaders(tenantId),
         });
+    }
+
+    // -------------------------------------------------------------------------
+    // Deployment node methods
+    // Auth is handled automatically by ApiKeyInterceptor — no X-Tenant-Id needed.
+    // -------------------------------------------------------------------------
+
+    public fetchDeploymentNodes(): Promise<JumpointDeploymentNode[]> {
+        const params = new HttpParams().set("pageSize", "9999");
+        return firstValueFrom(this.http.get<JumpointDeploymentNode[]>("deployments/jumpoint-nodes", { params }));
+    }
+
+    public createDeploymentNode(
+        siteKey: string,
+        businessUnit: JumpointNodeBusinessUnit,
+    ): Promise<JumpointDeploymentNode> {
+        return firstValueFrom(
+            this.http.post<JumpointDeploymentNode>("deployments/jumpoint-nodes", { siteKey, businessUnit }),
+        );
+    }
+
+    public createDeploymentNodeService(id: number): Promise<JumpointDeploymentNode> {
+        return firstValueFrom(
+            this.http.post<JumpointDeploymentNode>(`deployments/jumpoint-nodes/${id}/services`, { serviceType: "pra" }),
+        );
+    }
+
+    public approveDeploymentNode(id: number): Promise<JumpointDeploymentNode> {
+        return firstValueFrom(this.http.post<JumpointDeploymentNode>(`deployments/jumpoint-nodes/${id}/approve`, {}));
+    }
+
+    public downloadDeploymentNodeIso(id: number): Promise<JumpointDeploymentNode> {
+        return firstValueFrom(this.http.post<JumpointDeploymentNode>(`deployments/jumpoint-nodes/${id}/iso`, {}));
+    }
+
+    public async downloadDeploymentIsoFile(id: number, certname: string): Promise<void> {
+        const blob = await firstValueFrom(
+            this.http.get(`deployments/jumpoint-nodes/${id}/iso`, { responseType: "blob" }),
+        );
+
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = objectUrl;
+        anchor.download = `${certname}.iso`;
+        anchor.click();
+        URL.revokeObjectURL(objectUrl);
     }
 }

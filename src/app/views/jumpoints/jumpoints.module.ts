@@ -11,11 +11,9 @@ import { SharedModule } from "../../shared/shared.module";
 import { JumpointsComponent } from "./jumpoints.component";
 import { JumpointsRoutes } from "./jumpoints.routes";
 import { JumpointInstallerDownloadOverlayComponent } from "./components/jumpoint-installer-download-overlay/jumpoint-installer-download-overlay.component";
+import { JumpointDeployOverlayComponent } from "./components/jumpoint-deploy-overlay/jumpoint-deploy-overlay.component";
 
-const COMPONENTS = [
-    JumpointsComponent,
-    JumpointInstallerDownloadOverlayComponent,
-];
+const COMPONENTS = [JumpointsComponent, JumpointInstallerDownloadOverlayComponent, JumpointDeployOverlayComponent];
 
 const SERVICES = [];
 

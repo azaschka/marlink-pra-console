@@ -1,0 +1,95 @@
+<div class="overlay-container">
+
+    <!-- Top progress bar — visible only while deployment is running -->
+    <mat-progress-bar
+        *ngIf="isDeploying"
+        mode="indeterminate"
+        color="primary"
+        class="overlay-progress">
+    </mat-progress-bar>
+
+    <h2 mat-dialog-title>Deploy Jumpoint Service</h2>
+
+    <mat-dialog-content>
+
+        <!-- Jumpoint info panel -->
+        <div class="jumpoint-info">
+            <div class="info-label">Jumpoint</div>
+            <div class="info-value">{{ data.jumpointName }}</div>
+            <div fxLayout="row" fxLayoutGap="16px" style="margin-top: 6px;">
+                <div>
+                    <span class="info-label">Site Key:&nbsp;</span>
+                    <span class="info-value">{{ data.siteKey }}</span>
+                </div>
+                <div>
+                    <span class="info-label">Business Unit:&nbsp;</span>
+                    <span class="info-value">{{ data.businessUnit }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deployment step list -->
+        <div class="step-list">
+            <div
+                *ngFor="let step of deploymentSteps"
+                class="step-item"
+                fxLayout="row"
+                fxLayoutAlign="start center"
+                fxLayoutGap="12px">
+
+                <!-- Status icon -->
+                <mat-icon class="step-icon" [color]="getStepIconColor(step.status)">
+                    {{ getStepIcon(step.status) }}
+                </mat-icon>
+
+                <!-- Step text -->
+                <div class="step-content" fxFlex>
+                    <div class="step-label" [class.is-running]="step.status === 'running'">
+                        {{ step.label }}
+                    </div>
+                    <div class="step-description">{{ step.description }}</div>
+                    <div class="step-error" *ngIf="step.error">{{ step.error }}</div>
+                </div>
+
+                <!-- Inline spinner for running state -->
+                <mat-spinner
+                    *ngIf="step.status === 'running'"
+                    class="step-spinner"
+                    [diameter]="20"
+                    color="primary">
+                </mat-spinner>
+
+            </div>
+        </div>
+
+    </mat-dialog-content>
+
+    <mat-dialog-actions>
+        <div class="action-row">
+
+            <!-- Close — disabled while async work is in progress -->
+            <button mat-stroked-button [disabled]="!canClose" (click)="dialogRef.close()">
+                Close
+            </button>
+
+            <!-- Start / Retry — only when deployment has steps to run and is idle -->
+            <button
+                mat-raised-button
+                color="primary"
+                *ngIf="!deploymentComplete && !isDeploying && hasAnyPendingStep"
+                (click)="startDeployment()">
+                {{ retryLabel }}
+            </button>
+
+            <!-- Visual placeholder shown while deploying (not clickable) -->
+            <button mat-raised-button color="primary" disabled *ngIf="isDeploying">
+                <mat-icon style="font-size: 18px; height: 18px; width: 18px; vertical-align: middle; margin-right: 4px;">
+                    hourglass_top
+                </mat-icon>
+                Deploying...
+            </button>
+
+        </div>
+    </mat-dialog-actions>
+
+</div>

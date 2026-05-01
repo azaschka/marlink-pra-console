@@ -42,8 +42,115 @@
     width: 150px;
     white-space: nowrap;
 }
+.mat-column-deploymentStatus {
+    flex: 0 0 130px;
+    width: 130px;
+}
+// Updated — more buttons require additional width
 .mat-column-actions {
-    flex: 0 0 64px;
-    min-width: 64px;
-    width: 64px;
+    flex: 0 0 180px;
+    min-width: 180px;
+    width: 180px;
+}
+// Expanded detail column must fill the full row width
+.mat-column-expandedDetail {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding: 0 !important;
+}
+
+// ── Expandable row styles ───────────────────────────────────────────────────────────
+.detail-row {
+    height: 0;
+    min-height: 0 !important; // override mat-row default min-height: 48px
+
+    td {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border-bottom-width: 0;
+        overflow: hidden;
+    }
+}
+
+.deployment-detail-wrapper {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 350ms ease;
+
+    &.detail-expanded {
+        max-height: 800px;
+    }
+}
+
+.deployment-detail-content {
+    padding: 16px 24px 24px;
+    background-color: #fafafa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+// ── Deployment step indicators ────────────────────────────────────────────────────
+.deployment-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.deployment-step {
+    .step-label {
+        font-size: 13px;
+        font-weight: 500;
+        min-width: 130px;
+    }
+
+    .step-value {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.7);
+        font-family: monospace;
+    }
+
+    .step-pending {
+        font-size: 12px;
+        color: #ff9800;
+        font-style: italic;
+    }
+}
+
+// ── Node detail grid ──────────────────────────────────────────────────────────────
+.node-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.node-detail-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 180px;
+
+    .detail-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(0, 0, 0, 0.54);
+        margin-bottom: 2px;
+    }
+
+    .detail-value {
+        font-size: 13px;
+        font-weight: 500;
+        font-family: monospace;
+        word-break: break-all;
+    }
+}
+
+// ── Row states ──────────────────────────────────────────────────────────────────
+.element-row {
+    cursor: default;
+}
+
+.row-expanded {
+    background-color: rgba(63, 81, 181, 0.04);
 }
