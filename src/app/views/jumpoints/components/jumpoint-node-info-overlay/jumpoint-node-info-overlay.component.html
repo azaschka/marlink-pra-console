@@ -1,0 +1,85 @@
+<div class="relative overlay-container">
+
+    <button mat-mini-fab color="primary" class="overlay-close-button" (click)="dialogRef.close()" matTooltip="Close">
+        <mat-icon>close</mat-icon>
+    </button>
+
+    <h2 matDialogTitle class="mb-8">Deployment Details</h2>
+    <p style="font-size: 12px; color: rgba(0,0,0,0.54); margin-bottom: 20px;">
+        {{ data.jumpointName }}
+    </p>
+
+    <!-- ── 4-Step deployment status ───────────────────────────────────── -->
+    <div class="info-section">
+        <div class="section-label">Deployment Steps</div>
+
+        <div class="step-row">
+            <mat-icon [style.color]="getStepColor(node.certname)" class="step-icon">
+                {{ getStepIcon(node.certname) }}
+            </mat-icon>
+            <span class="step-name">Node Created</span>
+            <span class="step-detail" *ngIf="node.certname">{{ node.certname }}</span>
+            <span class="step-pending" *ngIf="!node.certname">Not completed</span>
+        </div>
+
+        <div class="step-row">
+            <mat-icon [style.color]="getStepColor(node.serviceType)" class="step-icon">
+                {{ getStepIcon(node.serviceType) }}
+            </mat-icon>
+            <span class="step-name">Service Assigned</span>
+            <span class="step-detail" *ngIf="node.serviceType">{{ node.serviceType }}</span>
+            <span class="step-pending" *ngIf="!node.serviceType">Not completed</span>
+        </div>
+
+        <div class="step-row">
+            <mat-icon [style.color]="getStepColor(node.hasApproval)" class="step-icon">
+                {{ getStepIcon(node.hasApproval) }}
+            </mat-icon>
+            <span class="step-name">Approved</span>
+            <span class="step-detail" *ngIf="node.hasApproval">Yes</span>
+            <span class="step-pending" *ngIf="!node.hasApproval">Not completed</span>
+        </div>
+
+        <div class="step-row">
+            <mat-icon [style.color]="getStepColor(node.isoFilePath)" class="step-icon">
+                {{ getStepIcon(node.isoFilePath) }}
+            </mat-icon>
+            <span class="step-name">ISO Generated</span>
+            <span class="step-detail" *ngIf="node.isoFilePath">Ready</span>
+            <span class="step-pending" *ngIf="!node.isoFilePath">Not completed</span>
+        </div>
+    </div>
+
+    <!-- ── Node metadata ──────────────────────────────────────────────── -->
+    <div class="info-section">
+        <div class="section-label">Node Details</div>
+
+        <div class="meta-grid">
+            <div class="meta-item">
+                <span class="meta-label">Certname</span>
+                <span class="meta-value mono">{{ node.certname || '—' }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Puppet Server Domain</span>
+                <span class="meta-value mono">{{ node.puppetServerDomain || '—' }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Status</span>
+                <span class="meta-value">{{ node.status }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Business Unit</span>
+                <span class="meta-value">{{ node.businessUnit }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Site Key</span>
+                <span class="meta-value mono">{{ node.siteKey }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Created</span>
+                <span class="meta-value">{{ node.creationDate | date : "dd.MM.yy – HH:mm" }}</span>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -18,6 +18,10 @@ import {
     JumpointDeployOverlayComponent,
     JumpointDeployDialogData,
 } from "./components/jumpoint-deploy-overlay/jumpoint-deploy-overlay.component";
+import {
+    JumpointNodeInfoOverlayComponent,
+    JumpointNodeInfoDialogData,
+} from "./components/jumpoint-node-info-overlay/jumpoint-node-info-overlay.component";
 import { JumpointNodeBusinessUnit } from "./enums";
 import { AppService } from "app/app.service";
 import { CustomerCacheService } from "../customers/customer-cache.service";
@@ -41,6 +45,7 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
         "deploymentStatus",
         "lastSyncDate",
         "actions",
+        // Note: "expandedDetail" removed — deployment details shown via overlay instead
     ];
 
     @ViewChild(MatSort, { static: true }) sort!: MatSort;
@@ -65,7 +70,6 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
     /** Customers keyed by customer key */
     private customersByKey = new Map<string, Customer>();
     private downloadingIsoIds = new Set<number>();
-    public expandedJumpointId: number | null = null;
 
     private currentTenantId: number | null = null;
 
@@ -130,7 +134,9 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
      * Returns the JumpointNodeBusinessUnit for a given site key by looking
      * up the site → customer → businessUnit chain.
      */
-    private getBusinessUnitForSiteKey(siteKey: string): JumpointNodeBusinessUnit | null {
+    private getBusinessUnitForSiteKey(
+        siteKey: string,
+    ): JumpointNodeBusinessUnit | null {
         const site = this.sitesByKey.get(siteKey);
         if (!site) return null;
         const customer = this.customersByKey.get(site.customerKey);
@@ -145,7 +151,9 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
      * Returns the deployment node for this jumpoint by extracting the site
      * key from the name and looking it up in the deployment nodes map.
      */
-    public getDeploymentNode(jumpoint: Jumpoint): JumpointDeploymentNode | undefined {
+    public getDeploymentNode(
+        jumpoint: Jumpoint,
+    ): JumpointDeploymentNode | undefined {
         const siteKey = this.extractSiteKey(jumpoint.name);
         if (!siteKey) return undefined;
         return this.deploymentNodes.get(siteKey);
@@ -218,11 +226,20 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
         return "#ff9800";
     }
 
-    /** Toggle the expandable detail row for a jumpoint that has a deployment node */
-    public toggleExpand(jumpoint: Jumpoint): void {
+    /** Open the deployment info overlay for a jumpoint that has a deployment node */
+    public openNodeInfoOverlay(jumpoint: Jumpoint): void {
         const node = this.getDeploymentNode(jumpoint);
         if (!node) return;
-        this.expandedJumpointId = this.expandedJumpointId === jumpoint.id ? null : jumpoint.id;
+
+        const dialogData: JumpointNodeInfoDialogData = {
+            jumpointName: jumpoint.name,
+            node,
+        };
+
+        this.dialog.open(JumpointNodeInfoOverlayComponent, {
+            data: dialogData,
+            width: "480px",
+        });
     }
 
     /** True if a browser ISO download is in progress for the given node */
@@ -231,15 +248,22 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
     }
 
     /** Trigger browser download of the ISO file for a fully-deployed node */
-    public async downloadIsoHandler(node: JumpointDeploymentNode): Promise<void> {
+    public async downloadIsoHandler(
+        node: JumpointDeploymentNode,
+    ): Promise<void> {
         if (this.downloadingIsoIds.has(node.id)) return;
         this.downloadingIsoIds.add(node.id);
         try {
-            await this.jumpointsService.downloadDeploymentIsoFile(node.id, node.certname);
+            await this.jumpointsService.downloadDeploymentIsoFile(
+                node.id,
+                node.certname,
+            );
         } catch (err: any) {
             this.errorDialog.show({
                 title: "ISO Download Failed",
-                message: err?.message ?? "Failed to download the ISO file. Please try again.",
+                message:
+                    err?.message ??
+                    "Failed to download the ISO file. Please try again.",
             });
         } finally {
             this.downloadingIsoIds.delete(node.id);
@@ -271,12 +295,14 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
             width: "520px",
         });
 
-        dialogRef.afterClosed().subscribe((updatedNode: JumpointDeploymentNode | undefined) => {
-            if (updatedNode) {
-                // Merge the freshly deployed node back into our local map
-                this.deploymentNodes.set(updatedNode.siteKey, updatedNode);
-            }
-        });
+        dialogRef
+            .afterClosed()
+            .subscribe((updatedNode: JumpointDeploymentNode | undefined) => {
+                if (updatedNode) {
+                    // Merge the freshly deployed node back into our local map
+                    this.deploymentNodes.set(updatedNode.siteKey, updatedNode);
+                }
+            });
     }
 
     // ── LEGACY installer download (preserved for future use) ─────────────────
@@ -322,7 +348,10 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
         if (confirmed) {
             this.isLoading = true;
             try {
-                await this.jumpointsService.deleteJumpoint(this.currentTenantId, jumpoint.id);
+                await this.jumpointsService.deleteJumpoint(
+                    this.currentTenantId,
+                    jumpoint.id,
+                );
                 this.notificationDialog.show({
                     message: `Jumpoint "${jumpoint.name}" has been deleted.`,
                 });
@@ -330,7 +359,9 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
             } catch (err: any) {
                 this.errorDialog.show({
                     title: "Delete Jumpoint Failed",
-                    message: err?.message || "The jumpoint could not be deleted. Please try again later.",
+                    message:
+                        err?.message ||
+                        "The jumpoint could not be deleted. Please try again later.",
                 });
                 this.isLoading = false;
             }
@@ -342,7 +373,9 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
     private async loadPage(): Promise<void> {
         const tenantId = this.currentTenantId;
         if (!tenantId) {
-            console.warn("No BeyondTrust instance selected, skipping jumpoints load");
+            console.warn(
+                "No BeyondTrust instance selected, skipping jumpoints load",
+            );
             this.isLoading = false;
             return;
         }
@@ -351,12 +384,19 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
         try {
             // All four fetches run in parallel. Sites + customers failures are
             // silenced so the table still renders without deployment features.
-            const [items, deploymentNodesList, customers, sites] = await Promise.all([
-                this.jumpointsService.fetchJumpoints(tenantId),
-                this.jumpointsService.fetchDeploymentNodes().catch((): JumpointDeploymentNode[] => []),
-                this.customerCacheService.fetchCustomers().catch((): Customer[] => []),
-                this.sitesService.fetchSites({ pageSize: 9999 }).catch((): Site[] => []),
-            ]);
+            const [items, deploymentNodesList, customers, sites] =
+                await Promise.all([
+                    this.jumpointsService.fetchJumpoints(tenantId),
+                    this.jumpointsService
+                        .fetchDeploymentNodes()
+                        .catch((): JumpointDeploymentNode[] => []),
+                    this.customerCacheService
+                        .fetchCustomers()
+                        .catch((): Customer[] => []),
+                    this.sitesService
+                        .fetchSites({ pageSize: 9999 })
+                        .catch((): Site[] => []),
+                ]);
 
             // Build site key → deployment node map
             this.deploymentNodes.clear();
@@ -376,9 +416,11 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
                 this.customersByKey.set(customer.key, customer);
             }
 
-            const filteredItems = PraDataFilter.filterByBusinessUnit(items, this.currentBusinessUnit, [
-                (j) => j.codeName,
-            ]);
+            const filteredItems = PraDataFilter.filterByBusinessUnit(
+                items,
+                this.currentBusinessUnit,
+                [(j) => j.codeName],
+            );
             this.dataSource.data = filteredItems;
             this.dataSource.sort = this.sort;
             this.dataSource.paginator = this.paginator;
@@ -401,7 +443,10 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
                 const previousTenantId = this.currentTenantId;
                 this.currentTenantId = instanceId;
 
-                if (previousTenantId !== null && previousTenantId !== instanceId) {
+                if (
+                    previousTenantId !== null &&
+                    previousTenantId !== instanceId
+                ) {
                     this.loadPage();
                 }
             }),

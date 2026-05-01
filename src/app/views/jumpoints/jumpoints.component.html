@@ -32,8 +32,7 @@
                 <ng-container matColumnDef="isConnected">
                     <mat-header-cell *matHeaderCellDef></mat-header-cell>
                     <mat-cell *matCellDef="let row">
-                        <div class="status-light"
-                            matTooltip="{{ row.isConnected ? 'Connected' : 'Disconnected' }}"
+                        <div class="status-light" matTooltip="{{ row.isConnected ? 'Connected' : 'Disconnected' }}"
                             [ngClass]="row.isConnected ? 'ok' : 'error'">
                         </div>
                     </mat-cell>
@@ -65,17 +64,13 @@
                     <mat-cell *matCellDef="let row">
                         <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="4px"
                             *ngIf="getDeploymentNode(row)">
-                            <mat-icon
-                                [style.font-size]="'18px'"
-                                [style.height]="'18px'"
-                                [style.width]="'18px'"
+                            <mat-icon [style.font-size]="'18px'" [style.height]="'18px'" [style.width]="'18px'"
                                 [style.color]="getDeploymentStatusColor(row)">
                                 {{ getDeploymentStatusIcon(row) }}
                             </mat-icon>
                             <span style="font-size: 12px;">{{ getDeploymentStatusLabel(row) }}</span>
                         </div>
-                        <span *ngIf="!getDeploymentNode(row)"
-                            style="color: rgba(0,0,0,0.38); font-size: 12px;">
+                        <span *ngIf="!getDeploymentNode(row)" style="color: rgba(0,0,0,0.38); font-size: 12px;">
                             Not deployed
                         </span>
                     </mat-cell>
@@ -94,25 +89,20 @@
                     <mat-header-cell *matHeaderCellDef></mat-header-cell>
                     <mat-cell *matCellDef="let row">
 
-                        <!-- EXPAND toggle — only for rows that have a deployment node -->
-                        <button mat-icon-button *ngIf="getDeploymentNode(row)"
-                            (click)="toggleExpand(row); $event.stopPropagation()"
-                            [matTooltip]="expandedJumpointId === row.id ? 'Hide details' : 'Show deployment details'">
-                            <mat-icon>
-                                {{ expandedJumpointId === row.id ? 'expand_less' : 'expand_more' }}
-                            </mat-icon>
+                        <!-- INFO — show deployment details overlay -->
+                        <button mat-icon-button *ngIf="getDeploymentNode(row)" (click)="openNodeInfoOverlay(row)"
+                            matTooltip="Show deployment details">
+                            <mat-icon>info_outline</mat-icon>
                         </button>
 
                         <!-- DEPLOY — no node exists yet -->
-                        <button mat-icon-button color="primary" *ngIf="canDeploy(row)"
-                            (click)="openDeployOverlay(row)"
+                        <button mat-icon-button color="primary" *ngIf="canDeploy(row)" (click)="openDeployOverlay(row)"
                             matTooltip="Deploy Service">
                             <mat-icon>rocket_launch</mat-icon>
                         </button>
 
                         <!-- RETRY — node exists but ISO not yet generated -->
-                        <button mat-icon-button color="primary" *ngIf="canRetry(row)"
-                            (click)="openDeployOverlay(row)"
+                        <button mat-icon-button color="primary" *ngIf="canRetry(row)" (click)="openDeployOverlay(row)"
                             matTooltip="Continue / Retry Deployment">
                             <mat-icon>sync_problem</mat-icon>
                         </button>
@@ -120,16 +110,14 @@
                         <!-- DOWNLOAD ISO — ISO ready, jumpoint not yet online -->
                         <button mat-icon-button color="accent" *ngIf="canDownloadIso(row)"
                             [disabled]="isDownloadingIso(getDeploymentNode(row)!)"
-                            (click)="downloadIsoHandler(getDeploymentNode(row)!)"
-                            matTooltip="Download ISO">
+                            (click)="downloadIsoHandler(getDeploymentNode(row)!)" matTooltip="Download ISO">
                             <mat-icon>
                                 {{ isDownloadingIso(getDeploymentNode(row)!) ? 'hourglass_top' : 'cloud_download' }}
                             </mat-icon>
                         </button>
 
                         <!-- ONLINE indicator — fully deployed and connected -->
-                        <mat-icon *ngIf="isFullyOnline(row)" color="accent"
-                            style="font-size: 20px;"
+                        <mat-icon *ngIf="isFullyOnline(row)" color="accent" style="font-size: 20px;"
                             matTooltip="Jumpoint Service is deployed and online">
                             cloud_done
                         </mat-icon>
@@ -144,8 +132,7 @@
                         -->
 
                         <!-- DELETE -->
-                        <button mat-icon-button color="warn"
-                            (click)="deleteJumpointHandler(row)"
+                        <button mat-icon-button color="warn" (click)="deleteJumpointHandler(row)"
                             matTooltip="Delete Jumpoint">
                             <mat-icon>delete</mat-icon>
                         </button>
@@ -153,128 +140,21 @@
                     </mat-cell>
                 </ng-container>
 
-                <!-- ── Expanded Detail (NEW) ─────────────────────────────────── -->
-                <ng-container matColumnDef="expandedDetail">
-                    <td mat-cell *matCellDef="let row"
-                        [attr.colspan]="displayedColumns.length"
-                        class="detail-cell p-0">
-                        <div class="deployment-detail-wrapper"
-                            [class.detail-expanded]="expandedJumpointId === row.id">
-                            <div class="deployment-detail-content"
-                                *ngIf="getDeploymentNode(row) as node">
-
-                                <!-- Deployment step indicators -->
-                                <div class="deployment-steps">
-
-                                    <div class="deployment-step"
-                                        fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-                                        <mat-icon
-                                            [style.color]="node.certname ? '#4caf50' : '#9e9e9e'"
-                                            style="font-size:18px;height:18px;width:18px">
-                                            {{ node.certname ? 'check_circle' : 'radio_button_unchecked' }}
-                                        </mat-icon>
-                                        <span class="step-label">Node Created</span>
-                                        <span class="step-value" *ngIf="node.certname">
-                                            {{ node.certname }}
-                                        </span>
-                                    </div>
-
-                                    <div class="deployment-step"
-                                        fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-                                        <mat-icon
-                                            [style.color]="node.serviceType ? '#4caf50' : '#ff9800'"
-                                            style="font-size:18px;height:18px;width:18px">
-                                            {{ node.serviceType ? 'check_circle' : 'error_outline' }}
-                                        </mat-icon>
-                                        <span class="step-label">Service Assigned</span>
-                                        <span class="step-value" *ngIf="node.serviceType">
-                                            {{ node.serviceType }}
-                                        </span>
-                                        <span class="step-pending" *ngIf="!node.serviceType">
-                                            Pending – retry required
-                                        </span>
-                                    </div>
-
-                                    <div class="deployment-step"
-                                        fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-                                        <mat-icon
-                                            [style.color]="node.hasApproval ? '#4caf50' : '#ff9800'"
-                                            style="font-size:18px;height:18px;width:18px">
-                                            {{ node.hasApproval ? 'check_circle' : 'error_outline' }}
-                                        </mat-icon>
-                                        <span class="step-label">Approved</span>
-                                        <span class="step-value" *ngIf="node.hasApproval">Yes</span>
-                                        <span class="step-pending" *ngIf="!node.hasApproval">
-                                            Pending – retry required
-                                        </span>
-                                    </div>
-
-                                    <div class="deployment-step"
-                                        fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-                                        <mat-icon
-                                            [style.color]="node.isoFilePath ? '#4caf50' : '#ff9800'"
-                                            style="font-size:18px;height:18px;width:18px">
-                                            {{ node.isoFilePath ? 'check_circle' : 'error_outline' }}
-                                        </mat-icon>
-                                        <span class="step-label">ISO Generated</span>
-                                        <span class="step-value" *ngIf="node.isoFilePath">Ready</span>
-                                        <span class="step-pending" *ngIf="!node.isoFilePath">
-                                            Pending – retry required
-                                        </span>
-                                    </div>
-
-                                </div><!-- /deployment-steps -->
-
-                                <!-- Node metadata grid -->
-                                <div class="node-details" fxLayout="row wrap" fxLayoutGap="16px">
-
-                                    <div class="node-detail-item">
-                                        <span class="detail-label">Certname</span>
-                                        <span class="detail-value">{{ node.certname }}</span>
-                                    </div>
-
-                                    <div class="node-detail-item">
-                                        <span class="detail-label">Puppet Server Domain</span>
-                                        <span class="detail-value">{{ node.puppetServerDomain }}</span>
-                                    </div>
-
-                                    <div class="node-detail-item">
-                                        <span class="detail-label">Status</span>
-                                        <span class="detail-value">{{ node.status }}</span>
-                                    </div>
-
-                                    <div class="node-detail-item">
-                                        <span class="detail-label">Created</span>
-                                        <span class="detail-value">
-                                            {{ node.creationDate | date : "dd.MM.yy - HH:mm" }}
-                                        </span>
-                                    </div>
-
-                                </div><!-- /node-details -->
-
-                            </div><!-- /deployment-detail-content -->
-                        </div><!-- /deployment-detail-wrapper -->
-                    </td>
-                </ng-container>
+                <!-- Deployment details are shown via the JumpointNodeInfoOverlayComponent
+                     (opened by the info button in the actions column). The inline
+                     expandable-row approach was removed because Angular Material
+                     expandable rows require @angular/animations for proper animation. -->
 
                 <!-- ── Row definitions ───────────────────────────────────────── -->
 
                 <!-- Sticky header rows -->
                 <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-                <mat-header-row *matHeaderRowDef="['loader']; sticky: true"
-                    class="progress-row" [class.hidden]="!isLoading">
+                <mat-header-row *matHeaderRowDef="['loader']; sticky: true" class="progress-row"
+                    [class.hidden]="!isLoading">
                 </mat-header-row>
 
                 <!-- Main data rows -->
-                <mat-row class="selectable element-row"
-                    *matRowDef="let row; columns: displayedColumns"
-                    [class.row-expanded]="expandedJumpointId === row.id"
-                    [matRowDefTrackBy]="trackById">
-                </mat-row>
-
-                <!-- Expandable detail rows (always rendered; CSS collapses them) -->
-                <mat-row *matRowDef="let row; columns: ['expandedDetail']"
-                    class="detail-row"
+                <mat-row class="selectable element-row" *matRowDef="let row; columns: displayedColumns"
                     [matRowDefTrackBy]="trackById">
                 </mat-row>
 
@@ -287,11 +167,8 @@
 
             </mat-table>
 
-            <mat-paginator #tablePaginator
-                [length]="dataCount"
-                [pageSize]="defaultPageSize"
-                [pageSizeOptions]="pageSizeOptions"
-                showFirstLastButtons>
+            <mat-paginator #tablePaginator [length]="dataCount" [pageSize]="defaultPageSize"
+                [pageSizeOptions]="pageSizeOptions" showFirstLastButtons>
             </mat-paginator>
         </mat-card-content>
     </mat-card>

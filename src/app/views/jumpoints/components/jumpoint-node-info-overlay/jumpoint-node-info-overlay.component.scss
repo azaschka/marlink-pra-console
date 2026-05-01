@@ -1,0 +1,81 @@
+.info-section {
+    margin-bottom: 20px;
+}
+
+.section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(0, 0, 0, 0.54);
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.step-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.step-icon {
+    font-size: 18px;
+    height: 18px;
+    width: 18px;
+    flex-shrink: 0;
+}
+
+.step-name {
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 130px;
+    flex-shrink: 0;
+}
+
+.step-detail {
+    font-size: 12px;
+    font-family: monospace;
+    color: rgba(0, 0, 0, 0.7);
+    word-break: break-all;
+}
+
+.step-pending {
+    font-size: 12px;
+    color: #ff9800;
+    font-style: italic;
+}
+
+.meta-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.meta-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(0, 0, 0, 0.54);
+    margin-bottom: 2px;
+}
+
+.meta-value {
+    font-size: 13px;
+    font-weight: 500;
+
+    &.mono {
+        font-family: monospace;
+        font-size: 12px;
+        word-break: break-all;
+    }
+}

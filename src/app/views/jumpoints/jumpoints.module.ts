@@ -12,9 +12,15 @@ import { JumpointsComponent } from "./jumpoints.component";
 import { JumpointsRoutes } from "./jumpoints.routes";
 import { JumpointInstallerDownloadOverlayComponent } from "./components/jumpoint-installer-download-overlay/jumpoint-installer-download-overlay.component";
 import { JumpointDeployOverlayComponent } from "./components/jumpoint-deploy-overlay/jumpoint-deploy-overlay.component";
+import { JumpointNodeInfoOverlayComponent } from "./components/jumpoint-node-info-overlay/jumpoint-node-info-overlay.component";
 import { SitesService } from "../sites/sites.service";
 
-const COMPONENTS = [JumpointsComponent, JumpointInstallerDownloadOverlayComponent, JumpointDeployOverlayComponent];
+const COMPONENTS = [
+    JumpointsComponent,
+    JumpointInstallerDownloadOverlayComponent,
+    JumpointDeployOverlayComponent,
+    JumpointNodeInfoOverlayComponent,
+];
 
 const SERVICES = [SitesService];
 
