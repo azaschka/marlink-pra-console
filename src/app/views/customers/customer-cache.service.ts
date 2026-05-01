@@ -120,9 +120,7 @@ export class CustomerCacheService {
         // different BeyondTrust instance.  skip(1) ignores the initial
         // BehaviorSubject emission so we do not wipe a just-populated
         // cache on app startup.
-        appService.selectedInstanceId$
-            .pipe(distinctUntilChanged(), skip(1))
-            .subscribe(() => this.invalidate());
+        appService.selectedInstanceId$.pipe(distinctUntilChanged(), skip(1)).subscribe(() => this.invalidate());
     }
 
     // ------------------------------------------------------------------
@@ -139,9 +137,7 @@ export class CustomerCacheService {
      * @param filters  Optional business-unit filter.  Omit (or pass `{}`)
      *                 to fetch all customers visible to the current user.
      */
-    public fetchCustomers(
-        filters: CustomerFetchFilters = {},
-    ): Promise<Customer[]> {
+    public fetchCustomers(filters: CustomerFetchFilters = {}): Promise<Customer[]> {
         const key = this.buildKey(filters);
         const entry = this.cache.get(key);
 
@@ -158,6 +154,15 @@ export class CustomerCacheService {
             .fetchCustomers({
                 ...filters,
                 pageSize: CustomerCacheService.FETCH_ALL_PAGE_SIZE,
+            })
+            .then((result) => {
+                // Do not retain an empty result: customers may not be
+                // configured yet. Removing the entry immediately lets the
+                // next caller make a fresh request instead of serving stale [].
+                if (result.length === 0) {
+                    this.cache.delete(key);
+                }
+                return result;
             })
             .catch((err: unknown) => {
                 // On failure, remove the entry so the next caller triggers a
@@ -204,9 +209,7 @@ export class CustomerCacheService {
      */
     private buildKey(filters: CustomerFetchFilters): string {
         return JSON.stringify({
-            businessUnits: filters.businessUnits
-                ? [...filters.businessUnits].sort()
-                : null,
+            businessUnits: filters.businessUnits ? [...filters.businessUnits].sort() : null,
         });
     }
 }

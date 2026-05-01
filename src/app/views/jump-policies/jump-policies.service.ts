@@ -14,9 +14,7 @@ export class JumpPoliciesService {
         private readonly http: HttpClient,
         appService: AppService,
     ) {
-        appService.selectedInstanceId$
-            .pipe(distinctUntilChanged(), skip(1))
-            .subscribe(() => this.cache.invalidate());
+        appService.selectedInstanceId$.pipe(distinctUntilChanged(), skip(1)).subscribe(() => this.cache.invalidate());
     }
 
     private createHeaders(tenantId: number) {
@@ -29,13 +27,17 @@ export class JumpPoliciesService {
 
     public async fetchJumpPolicies(tenantId: number): Promise<JumpPolicy[]> {
         const params = new HttpParams().set("pageSize", "9999");
-        return this.cache.get(tenantId, () =>
-            firstValueFrom(
+        return this.cache.get(tenantId, async () => {
+            const result = await firstValueFrom(
                 this.http.get<JumpPolicy[]>("jump-policies", {
                     params,
                     ...this.createHeaders(tenantId),
                 }),
-            ),
-        );
+            );
+            if (result.length === 0) {
+                this.cache.invalidate(tenantId);
+            }
+            return result;
+        });
     }
 }

@@ -2,11 +2,7 @@ import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
 import { distinctUntilChanged, skip } from "rxjs/operators";
-import {
-    GroupPolicy,
-    GroupPolicyAddMemberRequest,
-    GroupPolicyMember,
-} from "./models";
+import { GroupPolicy, GroupPolicyAddMemberRequest, GroupPolicyMember } from "./models";
 import { TenantCache } from "../../shared/helpers/tenant-cache";
 import { AppService } from "../../app.service";
 
@@ -19,12 +15,10 @@ export class GroupPoliciesService {
         private readonly http: HttpClient,
         appService: AppService,
     ) {
-        appService.selectedInstanceId$
-            .pipe(distinctUntilChanged(), skip(1))
-            .subscribe(() => {
-                this.policiesCache.invalidate();
-                this.membersCache.invalidate();
-            });
+        appService.selectedInstanceId$.pipe(distinctUntilChanged(), skip(1)).subscribe(() => {
+            this.policiesCache.invalidate();
+            this.membersCache.invalidate();
+        });
     }
 
     /**
@@ -41,46 +35,41 @@ export class GroupPoliciesService {
     }
 
     public async fetchGroupPolicies(tenantId: number): Promise<GroupPolicy[]> {
-        return this.policiesCache.get(tenantId, () => {
+        return this.policiesCache.get(tenantId, async () => {
             const params = new HttpParams().set("pageSize", "9999");
-            return firstValueFrom(
+            const result = await firstValueFrom(
                 this.http.get<GroupPolicy[]>("group-policies", {
                     params,
                     ...this.createHeaders(tenantId),
                 }),
             );
+            if (result.length === 0) {
+                this.policiesCache.invalidate(tenantId);
+            }
+            return result;
         });
     }
 
-    public async deleteGroupPolicy(
-        tenantId: number,
-        id: number,
-    ): Promise<void> {
-        await firstValueFrom(
-            this.http.delete<void>(
-                `group-policies/${id}`,
-                this.createHeaders(tenantId),
-            ),
-        );
+    public async deleteGroupPolicy(tenantId: number, id: number): Promise<void> {
+        await firstValueFrom(this.http.delete<void>(`group-policies/${id}`, this.createHeaders(tenantId)));
         this.policiesCache.invalidate(tenantId);
     }
 
     // Fetch all members (users) of a group policy
-    public async fetchGroupPolicyMembers(
-        tenantId: number,
-        groupPolicyId: number,
-    ): Promise<GroupPolicyMember[]> {
-        return this.membersCache.get(`${tenantId}_${groupPolicyId}`, () => {
+    public async fetchGroupPolicyMembers(tenantId: number, groupPolicyId: number): Promise<GroupPolicyMember[]> {
+        const cacheKey = `${tenantId}_${groupPolicyId}`;
+        return this.membersCache.get(cacheKey, async () => {
             const params = new HttpParams().set("pageSize", "9999");
-            return firstValueFrom(
-                this.http.get<GroupPolicyMember[]>(
-                    `group-policies/${groupPolicyId}/members`,
-                    {
-                        params,
-                        ...this.createHeaders(tenantId),
-                    },
-                ),
+            const result = await firstValueFrom(
+                this.http.get<GroupPolicyMember[]>(`group-policies/${groupPolicyId}/members`, {
+                    params,
+                    ...this.createHeaders(tenantId),
+                }),
             );
+            if (result.length === 0) {
+                this.membersCache.invalidate(cacheKey);
+            }
+            return result;
         });
     }
 
@@ -91,26 +80,15 @@ export class GroupPoliciesService {
         body: GroupPolicyAddMemberRequest,
     ): Promise<void> {
         await firstValueFrom(
-            this.http.post<void>(
-                `group-policies/${groupPolicyId}/members`,
-                body,
-                this.createHeaders(tenantId),
-            ),
+            this.http.post<void>(`group-policies/${groupPolicyId}/members`, body, this.createHeaders(tenantId)),
         );
         this.membersCache.invalidate(`${tenantId}_${groupPolicyId}`);
     }
 
     // Remove a user from a group policy
-    public async removeMemberFromGroupPolicy(
-        tenantId: number,
-        groupPolicyId: number,
-        memberId: number,
-    ): Promise<void> {
+    public async removeMemberFromGroupPolicy(tenantId: number, groupPolicyId: number, memberId: number): Promise<void> {
         await firstValueFrom(
-            this.http.delete<void>(
-                `group-policies/${groupPolicyId}/members/${memberId}`,
-                this.createHeaders(tenantId),
-            ),
+            this.http.delete<void>(`group-policies/${groupPolicyId}/members/${memberId}`, this.createHeaders(tenantId)),
         );
         this.membersCache.invalidate(`${tenantId}_${groupPolicyId}`);
     }

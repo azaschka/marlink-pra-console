@@ -15,9 +15,7 @@ export class JumpGroupsService {
         appService: AppService,
         private readonly http: HttpClient,
     ) {
-        appService.selectedInstanceId$
-            .pipe(distinctUntilChanged(), skip(1))
-            .subscribe(() => this.cache.invalidate());
+        appService.selectedInstanceId$.pipe(distinctUntilChanged(), skip(1)).subscribe(() => this.cache.invalidate());
     }
 
     /**
@@ -34,40 +32,31 @@ export class JumpGroupsService {
     }
 
     public fetchJumpGroups(tenantId: number): Promise<JumpGroup[]> {
-        return this.cache.get(tenantId, () => {
+        return this.cache.get(tenantId, async () => {
             const params = new HttpParams().set("pageSize", "9999");
-            return firstValueFrom(
+            const result = await firstValueFrom(
                 this.http.get<JumpGroup[]>("jump-groups", {
                     params,
                     ...this.createHeaders(tenantId),
                 }),
             );
+            if (result.length === 0) {
+                this.cache.invalidate(tenantId);
+            }
+            return result;
         });
     }
 
-    public async updateJumpGroup(
-        tenantId: number,
-        id: number,
-        body: JumpGroupUpdateRequest,
-    ): Promise<JumpGroup> {
+    public async updateJumpGroup(tenantId: number, id: number, body: JumpGroupUpdateRequest): Promise<JumpGroup> {
         const result = await firstValueFrom(
-            this.http.patch<JumpGroup>(
-                `jump-groups/${id}`,
-                body,
-                this.createHeaders(tenantId),
-            ),
+            this.http.patch<JumpGroup>(`jump-groups/${id}`, body, this.createHeaders(tenantId)),
         );
         this.cache.invalidate(tenantId);
         return result;
     }
 
     public async deleteJumpGroup(tenantId: number, id: number): Promise<void> {
-        await firstValueFrom(
-            this.http.delete<void>(
-                `jump-groups/${id}`,
-                this.createHeaders(tenantId),
-            ),
-        );
+        await firstValueFrom(this.http.delete<void>(`jump-groups/${id}`, this.createHeaders(tenantId)));
         this.cache.invalidate(tenantId);
     }
 }

@@ -42,7 +42,7 @@ export class SessionPoliciesService {
                       ),
                   )}`;
 
-        return this.cache.get(cacheKey, () => {
+        return this.cache.get(cacheKey, async () => {
             let httpParams = new HttpParams().set(
                 "pageSize",
                 (params.pageSize ?? 9999).toString(),
@@ -69,12 +69,20 @@ export class SessionPoliciesService {
                 });
             }
 
-            return firstValueFrom(
+            const result = await firstValueFrom(
                 this.http.get<SessionPolicy[]>("session-policies", {
                     params: httpParams,
                     ...this.createHeaders(tenantId),
                 }),
             );
+
+            // Do not cache an empty result — session policies may not be synced
+            // yet. On the next open, a fresh request will be attempted.
+            if (result.length === 0) {
+                this.cache.invalidate(cacheKey);
+            }
+
+            return result;
         });
     }
 }

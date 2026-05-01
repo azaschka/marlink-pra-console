@@ -14,9 +14,7 @@ export class JumpointsService {
         private readonly http: HttpClient,
         appService: AppService,
     ) {
-        appService.selectedInstanceId$
-            .pipe(distinctUntilChanged(), skip(1))
-            .subscribe(() => this.cache.invalidate());
+        appService.selectedInstanceId$.pipe(distinctUntilChanged(), skip(1)).subscribe(() => this.cache.invalidate());
     }
 
     /**
@@ -33,31 +31,27 @@ export class JumpointsService {
     }
 
     public fetchJumpoints(tenantId: number): Promise<Jumpoint[]> {
-        return this.cache.get(tenantId, () => {
+        return this.cache.get(tenantId, async () => {
             const params = new HttpParams().set("pageSize", "9999");
-            return firstValueFrom(
+            const result = await firstValueFrom(
                 this.http.get<Jumpoint[]>("jumpoints", {
                     params,
                     ...this.createHeaders(tenantId),
                 }),
             );
+            if (result.length === 0) {
+                this.cache.invalidate(tenantId);
+            }
+            return result;
         });
     }
 
     public async deleteJumpoint(tenantId: number, id: number): Promise<void> {
-        await firstValueFrom(
-            this.http.delete<void>(
-                `jumpoints/${id}`,
-                this.createHeaders(tenantId),
-            ),
-        );
+        await firstValueFrom(this.http.delete<void>(`jumpoints/${id}`, this.createHeaders(tenantId)));
         this.cache.invalidate(tenantId);
     }
 
-    public downloadJumpointInstaller(
-        tenantId: number,
-        jumpointId: number,
-    ): Observable<HttpEvent<Blob>> {
+    public downloadJumpointInstaller(tenantId: number, jumpointId: number): Observable<HttpEvent<Blob>> {
         const url = `jumpoints/${jumpointId}/installer`;
         return this.http.get(url, {
             observe: "events",
