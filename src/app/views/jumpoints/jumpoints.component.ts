@@ -105,14 +105,16 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
 
     /** Returns the deployment node linked to this jumpoint (or undefined) */
     public getDeploymentNode(jumpoint: Jumpoint): JumpointDeploymentNode | undefined {
-        const parsed = JumpointNameParser.parse(jumpoint.codeName);
+        // Parse from `name` — BeyondTrust's code_name is a short identifier and does NOT
+        // follow the Marlink naming convention that contains the site key.
+        const parsed = JumpointNameParser.parse(jumpoint.name);
         if (!parsed) return undefined;
         return this.deploymentNodes.get(this.nodeKey(parsed.businessUnit, parsed.siteKey));
     }
 
-    /** True if the jumpoint codeName follows the Marlink naming convention */
+    /** True if the jumpoint name follows the Marlink naming convention (BU_JPOI1_..._siteKey) */
     public isDeployable(jumpoint: Jumpoint): boolean {
-        return !!JumpointNameParser.parse(jumpoint.codeName);
+        return !!JumpointNameParser.parse(jumpoint.name);
     }
 
     /** True when no deployment node exists yet — show the Deploy button */
@@ -202,13 +204,13 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
     // ── Deploy overlay ────────────────────────────────────────────────────────
 
     public openDeployOverlay(jumpoint: Jumpoint): void {
-        const parsed: ParsedJumpointName | null = JumpointNameParser.parse(jumpoint.codeName);
+        const parsed: ParsedJumpointName | null = JumpointNameParser.parse(jumpoint.name);
         if (!parsed) return;
 
         const existingNode = this.getDeploymentNode(jumpoint);
 
         const dialogData: JumpointDeployDialogData = {
-            jumpointName: jumpoint.codeName ?? jumpoint.name,
+            jumpointName: jumpoint.name,
             siteKey: parsed.siteKey,
             businessUnit: parsed.businessUnit as JumpointNodeBusinessUnit,
             existingNode,
