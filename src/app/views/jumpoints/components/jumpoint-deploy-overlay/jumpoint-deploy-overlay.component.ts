@@ -27,6 +27,8 @@ export type DeploymentStepStatus =
 export interface DeploymentStepDef {
     label: string;
     description: string;
+    /** Shown below description when the step is completed (e.g. certname, serviceType). */
+    detail?: string;
     status: DeploymentStepStatus;
     error?: string;
 }
@@ -121,22 +123,25 @@ export class JumpointDeployOverlayComponent {
                 this.deploymentSteps[0].status = "running";
                 this.cdr.detectChanges();
                 try {
-                    const node = await this.jumpointsService.createDeploymentNode(
-                        this.data.siteKey,
-                        this.data.businessUnit,
-                    );
+                    const node =
+                        await this.jumpointsService.createDeploymentNode(
+                            this.data.siteKey,
+                            this.data.businessUnit,
+                        );
                     this.currentNode = node;
                     this.deploymentSteps[0].status = "success";
                     this.cdr.detectChanges();
                 } catch (err) {
                     this.deploymentSteps[0].status = "failed";
-                    this.deploymentSteps[0].error = this.extractErrorMessage(err);
+                    this.deploymentSteps[0].error =
+                        this.extractErrorMessage(err);
                     this.cdr.detectChanges();
                     return;
                 }
             } else {
-                // Node already exists (retry mode) — skip this step
+                // Node already exists (retry mode) — skip step 1
                 this.deploymentSteps[0].status = "skipped";
+                this.deploymentSteps[0].detail = this.currentNode.certname;
             }
 
             // ── Step 2: Assign Service ─────────────────────────────────────
@@ -144,20 +149,26 @@ export class JumpointDeployOverlayComponent {
                 this.deploymentSteps[1].status = "running";
                 this.cdr.detectChanges();
                 try {
-                    const node = await this.jumpointsService.createDeploymentNodeService(
-                        this.currentNode!.id,
-                    );
+                    const node =
+                        await this.jumpointsService.createDeploymentNodeService(
+                            this.currentNode!.id,
+                        );
                     this.currentNode = node;
                     this.deploymentSteps[1].status = "success";
+                    this.deploymentSteps[1].detail =
+                        node.serviceType ?? undefined;
                     this.cdr.detectChanges();
                 } catch (err) {
                     this.deploymentSteps[1].status = "failed";
-                    this.deploymentSteps[1].error = this.extractErrorMessage(err);
+                    this.deploymentSteps[1].error =
+                        this.extractErrorMessage(err);
                     this.cdr.detectChanges();
                     return;
                 }
             } else {
                 this.deploymentSteps[1].status = "skipped";
+                this.deploymentSteps[1].detail =
+                    this.currentNode!.serviceType ?? undefined;
             }
 
             // ── Step 3: Approve ────────────────────────────────────────────
@@ -165,20 +176,24 @@ export class JumpointDeployOverlayComponent {
                 this.deploymentSteps[2].status = "running";
                 this.cdr.detectChanges();
                 try {
-                    const node = await this.jumpointsService.approveDeploymentNode(
-                        this.currentNode!.id,
-                    );
+                    const node =
+                        await this.jumpointsService.approveDeploymentNode(
+                            this.currentNode!.id,
+                        );
                     this.currentNode = node;
                     this.deploymentSteps[2].status = "success";
+                    this.deploymentSteps[2].detail = "Approved";
                     this.cdr.detectChanges();
                 } catch (err) {
                     this.deploymentSteps[2].status = "failed";
-                    this.deploymentSteps[2].error = this.extractErrorMessage(err);
+                    this.deploymentSteps[2].error =
+                        this.extractErrorMessage(err);
                     this.cdr.detectChanges();
                     return;
                 }
             } else {
                 this.deploymentSteps[2].status = "skipped";
+                this.deploymentSteps[2].detail = "Approved";
             }
 
             // ── Step 4: Generate ISO (stored server-side) ─────────────────
@@ -186,20 +201,25 @@ export class JumpointDeployOverlayComponent {
                 this.deploymentSteps[3].status = "running";
                 this.cdr.detectChanges();
                 try {
-                    const node = await this.jumpointsService.downloadDeploymentNodeIso(
-                        this.currentNode!.id,
-                    );
+                    const node =
+                        await this.jumpointsService.downloadDeploymentNodeIso(
+                            this.currentNode!.id,
+                        );
                     this.currentNode = node;
                     this.deploymentSteps[3].status = "success";
+                    this.deploymentSteps[3].detail =
+                        "ISO file ready for download";
                     this.cdr.detectChanges();
                 } catch (err) {
                     this.deploymentSteps[3].status = "failed";
-                    this.deploymentSteps[3].error = this.extractErrorMessage(err);
+                    this.deploymentSteps[3].error =
+                        this.extractErrorMessage(err);
                     this.cdr.detectChanges();
                     return;
                 }
             } else {
                 this.deploymentSteps[3].status = "skipped";
+                this.deploymentSteps[3].detail = "ISO file ready for download";
             }
 
             // ── All steps succeeded or were skipped ────────────────────────
@@ -217,43 +237,41 @@ export class JumpointDeployOverlayComponent {
 
     private buildInitialSteps(): DeploymentStepDef[] {
         const node = this.data.existingNode;
+
+        // Step 1 is confirmed complete when the SM API returned certname AND puppetServerDomain.
+        // Both fields are populated by POST /api/v1/nodes and stored in the DB.
+        const step1Done = !!(node?.certname && node?.puppetServerDomain);
+
         return [
             {
                 label: "Create Node",
-                description: "Register the jumpoint deployment node in the system",
-                // Node already exists in retry mode → skip
-                status: node ? "skipped" : "pending",
+                description:
+                    "Register the node with the Service Manager (POST /api/v1/nodes)",
+                detail: step1Done ? node!.certname : undefined,
+                status: step1Done ? "skipped" : "pending",
             },
             {
                 label: "Assign Service",
-                description: "Assign the PRA service to the deployment node",
-                status: node
-                    ? node.serviceType
-                        ? "skipped"
-                        : "pending"
-                    : "pending",
+                description: "Assign the PRA service type to the node",
+                detail: node?.serviceType ?? undefined,
+                status: node?.serviceType ? "skipped" : "pending",
             },
             {
                 label: "Approve",
-                description: "Approve the deployment node for ISO generation",
-                status: node
-                    ? node.hasApproval === true
-                        ? "skipped"
-                        : "pending"
-                    : "pending",
+                description: "Approve the node in the Service Manager",
+                detail: node?.hasApproval ? "Approved" : undefined,
+                status: node?.hasApproval === true ? "skipped" : "pending",
             },
             {
                 label: "Generate ISO",
-                description: "Generate and store the ISO boot image server-side",
-                status: node
-                    ? node.isoFilePath
-                        ? "skipped"
-                        : "pending"
-                    : "pending",
+                description: "Generate and store the boot image on the server",
+                detail: node?.isoFilePath
+                    ? "ISO file ready for download"
+                    : undefined,
+                status: node?.isoFilePath ? "skipped" : "pending",
             },
         ];
     }
-
     private extractErrorMessage(err: any): string {
         return (
             err?.error?.message ??
