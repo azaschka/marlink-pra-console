@@ -46,11 +46,13 @@
     flex: 0 0 130px;
     width: 130px;
 }
-// Updated — more buttons require additional width
+// Max 3 icon-buttons (40px each) visible at the same time → 120px is sufficient.
+// justify-content: flex-end ensures the delete icon is always on the same
+// vertical line regardless of which other action buttons are visible.
 .mat-column-actions {
-    flex: 0 0 180px;
-    min-width: 180px;
-    width: 180px;
+    flex: 0 0 120px;
+    width: 120px;
+    justify-content: flex-end;
 }
 // Expanded detail column must fill the full row width
 .mat-column-expandedDetail {
