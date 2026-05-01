@@ -74,6 +74,9 @@
                     <mat-error *ngIf="form.controls.jumpGroup.hasError('required')">
                         Jump Group is <strong>required</strong>
                     </mat-error>
+                    <mat-error *ngIf="form.controls.jumpGroup.hasError('invalidSelection')">
+                        Please <strong>select</strong> a Jump Group from the list
+                    </mat-error>
                 </mat-form-field>
             </div>
 

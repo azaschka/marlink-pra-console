@@ -15,6 +15,7 @@ import { CustomerCacheService } from "../../../customers/customer-cache.service"
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
+import { AutocompleteValidators } from "../../../../shared/validators";
 
 export interface JumpClientInstallerCreateDialogData {
     /** The tenant ID of the selected BeyondTrust instance. */
@@ -79,6 +80,7 @@ export class JumpClientInstallerCreateOverlayComponent
             tag: new FormControl<string>("", { nonNullable: true }),
             jumpGroup: new FormControl<JumpGroup | null>(null, [
                 Validators.required,
+                AutocompleteValidators.requireSelection,
             ]),
             jumpPolicy: new FormControl<JumpPolicy | null>(null),
             sessionPolicy: new FormControl<SessionPolicy | null>(null),

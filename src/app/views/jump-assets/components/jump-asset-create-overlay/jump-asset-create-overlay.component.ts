@@ -4,6 +4,7 @@ import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { Observable, of, Subject, firstValueFrom } from "rxjs";
 import { map, startWith, takeUntil } from "rxjs/operators";
 import { StringSanitizer } from "../../../../shared/helpers";
+import { AutocompleteValidators } from "../../../../shared/validators";
 import { Jumpoint } from "../../../jumpoints/models";
 import { JumpointsService } from "../../../jumpoints/jumpoints.service";
 import { JumpGroupsService } from "../../../jump-groups/jump-groups.service";
@@ -115,9 +116,11 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
             port: new FormControl<number | null>(null),
             jumpoint: new FormControl<Jumpoint | null>(null, [
                 Validators.required,
+                AutocompleteValidators.requireSelection,
             ]),
             jumpGroup: new FormControl<JumpGroup | null>(null, [
                 Validators.required,
+                AutocompleteValidators.requireSelection,
             ]),
             jumpPolicy: new FormControl<JumpPolicy | null>(null),
             sessionPolicy: new FormControl<SessionPolicy | null>(null),

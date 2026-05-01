@@ -11,6 +11,7 @@ import { JumpPolicy } from "../../../jump-policies/models";
 import { SessionPolicy } from "../../../session-policies/models";
 import { JumpAssetUpdateRequest } from "../../models";
 import { StringSanitizer } from "app/shared/helpers";
+import { AutocompleteValidators } from "../../../../shared/validators";
 import { CustomerCacheService } from "../../../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
@@ -116,6 +117,7 @@ export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
             port: new FormControl<number | null>(this.data.currentPort ?? null),
             jumpGroup: new FormControl<JumpGroup | null>(null, [
                 Validators.required,
+                AutocompleteValidators.requireSelection,
             ]),
             jumpPolicy: new FormControl<JumpPolicy | null>(null),
             sessionPolicy: new FormControl<SessionPolicy | null>(null),

@@ -10,6 +10,7 @@ import { CustomerCacheService } from "../../../customers/customer-cache.service"
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
+import { AutocompleteValidators } from "../../../../shared/validators";
 
 export interface CopyJumpAssetDialogData {
     assetType:
@@ -74,6 +75,7 @@ export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
             }),
             jumpGroup: new FormControl<JumpGroup | null>(null, [
                 Validators.required,
+                AutocompleteValidators.requireSelection,
             ]),
         });
     }
