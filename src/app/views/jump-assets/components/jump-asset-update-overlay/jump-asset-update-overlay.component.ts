@@ -72,6 +72,7 @@ export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
     };
 
     public isLoading = false;
+    public loadError: string | null = null;
     public jumpGroups: JumpGroup[] = [];
     public jumpPolicies: JumpPolicy[] = [];
     public sessionPolicies: SessionPolicy[] = [];
@@ -123,7 +124,9 @@ export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
             sessionPolicy: new FormControl<SessionPolicy | null>(null),
             mustVerifyCertificate: new FormControl<boolean>(
                 this.data.currentMustVerifyCertificate ?? false,
-                { nonNullable: true },
+                {
+                    nonNullable: true,
+                },
             ),
         });
     }
@@ -131,6 +134,7 @@ export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
     /** Load all required data and apply BU-based filtering for non-SuperAdmins */
     private async loadData(): Promise<void> {
         this.isLoading = true;
+        this.loadError = null;
 
         try {
             const tenantId = this.data.tenantId;
@@ -214,6 +218,12 @@ export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
                 currentJumpPolicy,
                 currentSessionPolicy,
             );
+        } catch (error) {
+            console.error(
+                "[JumpAssetUpdateOverlay] Failed to load data:",
+                error,
+            );
+            this.loadError = "Failed to load required data. Please try again.";
         } finally {
             this.isLoading = false;
         }

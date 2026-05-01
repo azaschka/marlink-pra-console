@@ -9,6 +9,10 @@
 
     <h2 matDialogTitle class="mb-32">{{ displayHeadline() }}</h2>
 
+    <div *ngIf="loadError" class="mb-16">
+        <mat-error>{{ loadError }}</mat-error>
+    </div>
+
     <form [formGroup]="form" (ngSubmit)="submit()" style="width: 480px;">
         <div fxLayout="row wrap">
             <!-- Jump Asset Name -->

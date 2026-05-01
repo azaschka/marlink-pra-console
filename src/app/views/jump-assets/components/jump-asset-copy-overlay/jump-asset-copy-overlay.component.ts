@@ -13,13 +13,7 @@ import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
 import { AutocompleteValidators } from "../../../../shared/validators";
 
 export interface CopyJumpAssetDialogData {
-    assetType:
-        | "remoteRdp"
-        | "shellJump"
-        | "webJump"
-        | "remoteVnc"
-        | "protocolTunnel"
-        | "jumpClient";
+    assetType: "remoteRdp" | "shellJump" | "webJump" | "remoteVnc" | "protocolTunnel" | "jumpClient";
     assetId: number;
     defaultName: string;
     /** The tenant ID of the selected BeyondTrust instance. */
@@ -57,6 +51,7 @@ export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
     private readonly destroy$ = new Subject<void>();
 
     public isLoading = false;
+    public loadError: string | null = null;
     public jumpGroups: JumpGroup[] = [];
     public filteredJumpGroups$: Observable<JumpGroup[]> = of([]);
     public form: FormGroup<CopyForm>;
@@ -82,6 +77,7 @@ export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
 
     public async ngOnInit(): Promise<void> {
         this.isLoading = true;
+        this.loadError = null;
         try {
             const tenantId = this.data.tenantId;
             const user = await firstValueFrom(this.jwtAuthService.praUser);
@@ -92,9 +88,7 @@ export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
                 this.jumpGroupsService.fetchJumpGroups(tenantId),
                 businessUnit
                     ? this.customerCacheService.fetchCustomers({
-                          businessUnits: [
-                              businessUnit as unknown as CustomerBusinessUnit,
-                          ],
+                          businessUnits: [businessUnit as unknown as CustomerBusinessUnit],
                       })
                     : Promise.resolve([]),
             ]);
@@ -102,11 +96,7 @@ export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
             if (businessUnit) {
                 // BU Admin — filter jump groups by customer name prefix
                 const customerNames = customers.map((c) => c.name);
-                this.jumpGroups = PraDataFilter.filterByCustomerPrefix(
-                    allJumpGroups,
-                    customerNames,
-                    (g) => g.name,
-                );
+                this.jumpGroups = PraDataFilter.filterByCustomerPrefix(allJumpGroups, customerNames, (g) => g.name);
             } else {
                 // SuperAdmin — no filtering
                 this.jumpGroups = allJumpGroups;
@@ -119,6 +109,9 @@ export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
                 map((val) => this.filterJumpGroups(val)),
                 takeUntil(this.destroy$),
             );
+        } catch (error) {
+            console.error("[JumpAssetCopyOverlay] Failed to load data:", error);
+            this.loadError = "Failed to load required data. Please try again.";
         } finally {
             this.isLoading = false;
         }
@@ -130,17 +123,11 @@ export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
     }
 
     public displayHeadline(): string {
-        return (
-            JumpAssetCopyOverlayComponent.headlineMap[this.data.assetType] ??
-            "Copy Jump Asset"
-        );
+        return JumpAssetCopyOverlayComponent.headlineMap[this.data.assetType] ?? "Copy Jump Asset";
     }
 
     public displayJumpAssetName(): string {
-        return (
-            JumpAssetCopyOverlayComponent.assetNameMap[this.data.assetType] ??
-            "Name"
-        );
+        return JumpAssetCopyOverlayComponent.assetNameMap[this.data.assetType] ?? "Name";
     }
 
     /** Arrow function ensures correct `this` context when used as [displayWith] */
@@ -168,13 +155,8 @@ export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
     }
 
     private filterJumpGroups(value: string | JumpGroup | null): JumpGroup[] {
-        const filter =
-            typeof value === "string"
-                ? value.toLowerCase()
-                : (value?.name?.toLowerCase() ?? "");
+        const filter = typeof value === "string" ? value.toLowerCase() : (value?.name?.toLowerCase() ?? "");
 
-        return this.jumpGroups.filter((g) =>
-            g.name.toLowerCase().includes(filter),
-        );
+        return this.jumpGroups.filter((g) => g.name.toLowerCase().includes(filter));
     }
 }
