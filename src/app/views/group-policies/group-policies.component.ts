@@ -37,12 +37,7 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
         "GP_MARLINK_OPERATORS",
         "MARLINK_OPERATORS",
     ];
-    private static readonly DISPLAYED_COLUMNS = [
-        "name",
-        "groupMembersCount",
-        "lastSyncDate",
-        "actions",
-    ];
+    private static readonly DISPLAYED_COLUMNS = ["name", "groupMembersCount", "lastSyncDate", "actions"];
 
     @ViewChild(MatSort, { static: true }) sort!: MatSort;
     @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -89,9 +84,7 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
         this.applyFilter();
     }
 
-    public getAccessStatusLightColor(
-        status: AccessPermissionStatusType,
-    ): "ok" | "error" | "warn" {
+    public getAccessStatusLightColor(status: AccessPermissionStatusType): "ok" | "error" | "warn" {
         switch (status) {
             case AccessPermissionStatusType.Final:
                 return "warn";
@@ -146,9 +139,7 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
             });
     }
 
-    public async deleteGroupPolicyHandler(
-        groupPolicy: GroupPolicy,
-    ): Promise<void> {
+    public async deleteGroupPolicyHandler(groupPolicy: GroupPolicy): Promise<void> {
         if (!this.currentTenantId) {
             await this.errorDialog.show({
                 title: "No Instance Selected",
@@ -165,10 +156,7 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
         if (confirmed) {
             this.isLoading = true;
             try {
-                await this.groupPoliciesService.deleteGroupPolicy(
-                    this.currentTenantId,
-                    groupPolicy.id,
-                );
+                await this.groupPoliciesService.deleteGroupPolicy(this.currentTenantId, groupPolicy.id);
                 this.notificationDialog.show({
                     message: `Group Policy "${groupPolicy.name}" has been deleted.`,
                 });
@@ -176,9 +164,7 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
             } catch (err: any) {
                 this.errorDialog.show({
                     title: "Delete Group Policy Failed",
-                    message:
-                        err?.message ||
-                        "The group policy could not be deleted. Please try again later.",
+                    message: err?.message || "The group policy could not be deleted. Please try again later.",
                 });
                 this.isLoading = false;
             }
@@ -186,7 +172,7 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
     }
 
     protected override onUserChanged(user: PraUser): void {
-        this.isSuperAdmin = user.role === UserRole.SuperAdmin;
+        this.isSuperAdmin = user?.role === UserRole.SuperAdmin;
     }
 
     protected override onBusinessUnitChanged(): void {
@@ -201,10 +187,7 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
                 this.currentTenantId = instanceId;
 
                 // Reload data if tenant changed (and not initial load)
-                if (
-                    previousTenantId !== null &&
-                    previousTenantId !== instanceId
-                ) {
+                if (previousTenantId !== null && previousTenantId !== instanceId) {
                     this.loadPage();
                 }
             }),
@@ -214,49 +197,36 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
     private async loadPage(): Promise<void> {
         const tenantId = this.currentTenantId;
         if (!tenantId) {
-            console.warn(
-                "No BeyondTrust instance selected, skipping group policies load",
-            );
+            console.warn("No BeyondTrust instance selected, skipping group policies load");
             this.isLoading = false;
             return;
         }
 
         this.isLoading = true;
         try {
-            const allPolicies =
-                await this.groupPoliciesService.fetchGroupPolicies(tenantId);
+            const allPolicies = await this.groupPoliciesService.fetchGroupPolicies(tenantId);
 
             let filteredGroupPolicies: GroupPolicy[];
 
             if (this.isSuperAdmin || !this.currentBusinessUnit) {
                 filteredGroupPolicies = allPolicies;
             } else {
-                const businessUnit = this
-                    .currentBusinessUnit as unknown as CustomerBusinessUnit;
-                const customers =
-                    await this.customerCacheService.fetchCustomers({
-                        businessUnits: [businessUnit],
-                    });
-                const customerNames = customers.map((c) =>
-                    c.name.toLowerCase(),
-                );
-                const specialPolicies = new Set(
-                    GroupPoliciesComponent.SPECIAL_GROUP_POLICIES,
-                );
+                const businessUnit = this.currentBusinessUnit as unknown as CustomerBusinessUnit;
+                const customers = await this.customerCacheService.fetchCustomers({
+                    businessUnits: [businessUnit],
+                });
+                const customerNames = customers.map((c) => c.name.toLowerCase());
+                const specialPolicies = new Set(GroupPoliciesComponent.SPECIAL_GROUP_POLICIES);
 
                 filteredGroupPolicies = allPolicies.filter((policy) => {
                     if (specialPolicies.has(policy.name.toUpperCase())) {
                         return true;
                     }
-                    if (
-                        policy.name.startsWith(`${this.currentBusinessUnit}_`)
-                    ) {
+                    if (policy.name.startsWith(`${this.currentBusinessUnit}_`)) {
                         return true;
                     }
                     const lowerName = policy.name.toLowerCase();
-                    return customerNames.some((customerName) =>
-                        lowerName.includes(customerName),
-                    );
+                    return customerNames.some((customerName) => lowerName.includes(customerName));
                 });
             }
 
