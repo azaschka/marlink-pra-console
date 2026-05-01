@@ -18,9 +18,12 @@ import {
     JumpointDeployOverlayComponent,
     JumpointDeployDialogData,
 } from "./components/jumpoint-deploy-overlay/jumpoint-deploy-overlay.component";
-import { JumpointNameParser, ParsedJumpointName } from "./helpers/jumpoint-name-parser";
 import { JumpointNodeBusinessUnit } from "./enums";
 import { AppService } from "app/app.service";
+import { CustomerCacheService } from "../customers/customer-cache.service";
+import { Customer } from "../customers/models";
+import { SitesService } from "../sites/sites.service";
+import { Site } from "../sites/models";
 
 @Component({
     selector: "app-jumpoints",
@@ -55,7 +58,12 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
     public dataCount = 0;
 
     // ── Deployment state ──────────────────────────────────────────────────────
+    /** Deployment nodes keyed by siteKey (matches Site.key) */
     private deploymentNodes = new Map<string, JumpointDeploymentNode>();
+    /** Sites keyed by site key — only sites accessible to the current user */
+    private sitesByKey = new Map<string, Site>();
+    /** Customers keyed by customer key */
+    private customersByKey = new Map<string, Customer>();
     private downloadingIsoIds = new Set<number>();
     public expandedJumpointId: number | null = null;
 
@@ -66,6 +74,8 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
         jwtAuthService: JwtAuthService,
         private readonly jumpointsService: JumpointsService,
         private readonly appService: AppService,
+        private readonly customerCacheService: CustomerCacheService,
+        private readonly sitesService: SitesService,
         private readonly confirmDialog: ConfirmDialogService,
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
@@ -96,25 +106,60 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
         this.applyFilter();
     }
 
+    // ── Site-key extraction ───────────────────────────────────────────────────
+
+    /**
+     * Extracts the potential site key from a jumpoint name.
+     *
+     * Marlink naming convention: {BU}_JPOI1_{CustomerName}_{SiteName}_{SiteKey}
+     * Example: "MT_JPOI1_GANI_INC_DANNY_1_77771" → "77771"
+     *
+     * The site key is always the LAST underscore-separated segment.
+     * A jumpoint is only considered deployable if this extracted key
+     * actually exists in the known sites list.
+     */
+    private extractSiteKey(name: string | undefined | null): string | null {
+        if (!name) return null;
+        const parts = name.split("_");
+        if (parts.length < 2) return null;
+        const last = parts[parts.length - 1];
+        return last || null;
+    }
+
+    /**
+     * Returns the JumpointNodeBusinessUnit for a given site key by looking
+     * up the site → customer → businessUnit chain.
+     */
+    private getBusinessUnitForSiteKey(siteKey: string): JumpointNodeBusinessUnit | null {
+        const site = this.sitesByKey.get(siteKey);
+        if (!site) return null;
+        const customer = this.customersByKey.get(site.customerKey);
+        if (!customer) return null;
+        // CustomerBusinessUnit and JumpointNodeBusinessUnit share identical values
+        return customer.businessUnit as unknown as JumpointNodeBusinessUnit;
+    }
+
     // ── Deployment node helpers ───────────────────────────────────────────────
 
-    /** Map key used to correlate Jumpoint codeName to a DeploymentNode */
-    private nodeKey(businessUnit: string, siteKey: string): string {
-        return `${businessUnit}:${siteKey}`;
-    }
-
-    /** Returns the deployment node linked to this jumpoint (or undefined) */
+    /**
+     * Returns the deployment node for this jumpoint by extracting the site
+     * key from the name and looking it up in the deployment nodes map.
+     */
     public getDeploymentNode(jumpoint: Jumpoint): JumpointDeploymentNode | undefined {
-        // Parse from `name` — BeyondTrust's code_name is a short identifier and does NOT
-        // follow the Marlink naming convention that contains the site key.
-        const parsed = JumpointNameParser.parse(jumpoint.name);
-        if (!parsed) return undefined;
-        return this.deploymentNodes.get(this.nodeKey(parsed.businessUnit, parsed.siteKey));
+        const siteKey = this.extractSiteKey(jumpoint.name);
+        if (!siteKey) return undefined;
+        return this.deploymentNodes.get(siteKey);
     }
 
-    /** True if the jumpoint name follows the Marlink naming convention (BU_JPOI1_..._siteKey) */
+    /**
+     * True if the jumpoint's site key exists in the known sites set.
+     * Jumpoints whose site key is not in the sites list are ignored
+     * (they belong to a site we don't manage or don't know about).
+     */
     public isDeployable(jumpoint: Jumpoint): boolean {
-        return !!JumpointNameParser.parse(jumpoint.name);
+        const siteKey = this.extractSiteKey(jumpoint.name);
+        if (!siteKey) return false;
+        return this.sitesByKey.has(siteKey);
     }
 
     /** True when no deployment node exists yet — show the Deploy button */
@@ -144,7 +189,7 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
     public getDeploymentStatusLabel(jumpoint: Jumpoint): string {
         const node = this.getDeploymentNode(jumpoint);
         if (!node) {
-            return JumpointNameParser.parse(jumpoint.codeName) ? "–" : "N/A";
+            return this.isDeployable(jumpoint) ? "–" : "N/A";
         }
         if (node.isoFilePath && jumpoint.isConnected) return "Online";
         if (node.isoFilePath) return "ISO Ready";
@@ -168,15 +213,15 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
     public getDeploymentStatusColor(jumpoint: Jumpoint): string {
         const node = this.getDeploymentNode(jumpoint);
         if (!node) return "rgba(0,0,0,0.38)";
-        if (node.isoFilePath && jumpoint.isConnected) return "#4caf50"; // green — online
-        if (node.isoFilePath) return "#2196f3"; // blue — ISO ready
-        return "#ff9800"; // amber — partially deployed
+        if (node.isoFilePath && jumpoint.isConnected) return "#4caf50";
+        if (node.isoFilePath) return "#2196f3";
+        return "#ff9800";
     }
 
     /** Toggle the expandable detail row for a jumpoint that has a deployment node */
     public toggleExpand(jumpoint: Jumpoint): void {
         const node = this.getDeploymentNode(jumpoint);
-        if (!node) return; // Only expand rows with an existing node
+        if (!node) return;
         this.expandedJumpointId = this.expandedJumpointId === jumpoint.id ? null : jumpoint.id;
     }
 
@@ -204,15 +249,19 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
     // ── Deploy overlay ────────────────────────────────────────────────────────
 
     public openDeployOverlay(jumpoint: Jumpoint): void {
-        const parsed: ParsedJumpointName | null = JumpointNameParser.parse(jumpoint.name);
-        if (!parsed) return;
+        const siteKey = this.extractSiteKey(jumpoint.name);
+        if (!siteKey) return;
+
+        // Get businessUnit from the site's customer — no name-parsing guesswork.
+        const businessUnit = this.getBusinessUnitForSiteKey(siteKey);
+        if (!businessUnit) return;
 
         const existingNode = this.getDeploymentNode(jumpoint);
 
         const dialogData: JumpointDeployDialogData = {
             jumpointName: jumpoint.name,
-            siteKey: parsed.siteKey,
-            businessUnit: parsed.businessUnit as JumpointNodeBusinessUnit,
+            siteKey,
+            businessUnit,
             existingNode,
         };
 
@@ -225,7 +274,7 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
         dialogRef.afterClosed().subscribe((updatedNode: JumpointDeploymentNode | undefined) => {
             if (updatedNode) {
                 // Merge the freshly deployed node back into our local map
-                this.deploymentNodes.set(this.nodeKey(updatedNode.businessUnit, updatedNode.siteKey), updatedNode);
+                this.deploymentNodes.set(updatedNode.siteKey, updatedNode);
             }
         });
     }
@@ -300,17 +349,31 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
 
         this.isLoading = true;
         try {
-            // Fetch jumpoints AND deployment nodes in parallel.
-            // Deployment node failures are silenced — the table still renders without them.
-            const [items, deploymentNodesList] = await Promise.all([
+            // All four fetches run in parallel. Sites + customers failures are
+            // silenced so the table still renders without deployment features.
+            const [items, deploymentNodesList, customers, sites] = await Promise.all([
                 this.jumpointsService.fetchJumpoints(tenantId),
-                this.jumpointsService.fetchDeploymentNodes().catch(() => [] as JumpointDeploymentNode[]),
+                this.jumpointsService.fetchDeploymentNodes().catch((): JumpointDeploymentNode[] => []),
+                this.customerCacheService.fetchCustomers().catch((): Customer[] => []),
+                this.sitesService.fetchSites({ pageSize: 9999 }).catch((): Site[] => []),
             ]);
 
-            // Rebuild the keyed map for fast O(1) lookups per row
+            // Build site key → deployment node map
             this.deploymentNodes.clear();
             for (const node of deploymentNodesList) {
-                this.deploymentNodes.set(this.nodeKey(node.businessUnit, node.siteKey), node);
+                this.deploymentNodes.set(node.siteKey, node);
+            }
+
+            // Build site key → site map (only sites the user can access)
+            this.sitesByKey.clear();
+            for (const site of sites) {
+                this.sitesByKey.set(site.key, site);
+            }
+
+            // Build customer key → customer map (for BU lookup)
+            this.customersByKey.clear();
+            for (const customer of customers) {
+                this.customersByKey.set(customer.key, customer);
             }
 
             const filteredItems = PraDataFilter.filterByBusinessUnit(items, this.currentBusinessUnit, [
@@ -333,7 +396,6 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
     // ── Listeners ─────────────────────────────────────────────────────────────
 
     private addListeners(): void {
-        // Reload when the user switches BeyondTrust instance
         this.subscriptionsToClear.add(
             this.appService.selectedInstanceId$.subscribe((instanceId) => {
                 const previousTenantId = this.currentTenantId;
