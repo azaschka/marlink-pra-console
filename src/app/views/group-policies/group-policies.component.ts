@@ -68,6 +68,14 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
     }
 
     public async ngOnInit(): Promise<void> {
+        // Belt-and-suspenders role check: PraBaseComponent.onUserChanged() sets
+        // isSuperAdmin synchronously in the constructor via the BehaviorSubject.
+        // We re-verify here using the same localStorage source as UserRoleGuard
+        // to catch any edge case where the BehaviorSubject fired before
+        // APP_INITIALIZER had a chance to update it with the server profile.
+        const currentUser = this.jwtAuthService.getPraUser();
+        this.isSuperAdmin = currentUser?.role === UserRole.SuperAdmin;
+
         await this.appService.initialize();
         this.currentTenantId = this.appService.getSelectedInstanceId();
         this.addListeners();

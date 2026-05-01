@@ -8,10 +8,7 @@ import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.comp
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
 import { NotificationDialogService } from "../../shared/dialogs/notification-dialog/notification-dialog.service";
-import {
-    UserOverlayComponent,
-    UserOverlayDialogData,
-} from "./components/user-overlay/user-overlay.component";
+import { UserOverlayComponent, UserOverlayDialogData } from "./components/user-overlay/user-overlay.component";
 import { UsersService } from "./users.service";
 import { User } from "./models";
 import { AppService } from "app/app.service";
@@ -49,10 +46,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
      * shown to BU Admins.  Here we control *which users* are shown.
      * The list will be extended over time.
      */
-    private static readonly SUPERUSER_GROUP_POLICIES = new Set<string>([
-        "GP_MARLINK_SUPERUSERS",
-        "MARLINK_SUPERUSERS",
-    ]);
+    private static readonly SUPERUSER_GROUP_POLICIES = new Set<string>(["GP_MARLINK_SUPERUSERS", "MARLINK_SUPERUSERS"]);
 
     @ViewChild(MatSort, { static: true }) sort!: MatSort;
     @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -84,6 +78,11 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
     }
 
     public async ngOnInit(): Promise<void> {
+        // Belt-and-suspenders role check: uses the same localStorage source as
+        // UserRoleGuard to catch any BehaviorSubject timing edge cases.
+        const currentUser = this.jwtAuthService.getPraUser();
+        this.isSuperAdmin = currentUser?.role === UserRole.SuperAdmin;
+
         await this.appService.initialize();
         this.currentTenantId = this.appService.getSelectedInstanceId();
         this.addListeners();
@@ -213,9 +212,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
         } catch (err: any) {
             this.errorDialog.show({
                 title: "Deactivate User Failed",
-                message:
-                    err?.message ||
-                    "The user could not be deactivated. Please try again later.",
+                message: err?.message || "The user could not be deactivated. Please try again later.",
             });
         } finally {
             this.isLoading = false;
@@ -252,9 +249,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
         } catch (err: any) {
             this.errorDialog.show({
                 title: "Reactivate User Failed",
-                message:
-                    err?.message ||
-                    "The user could not be reactivated. Please try again later.",
+                message: err?.message || "The user could not be reactivated. Please try again later.",
             });
         } finally {
             this.isLoading = false;
@@ -278,10 +273,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
         if (confirmed) {
             this.isLoading = true;
             try {
-                await this.usersService.deleteUser(
-                    this.currentTenantId,
-                    user.id,
-                );
+                await this.usersService.deleteUser(this.currentTenantId, user.id);
                 this.notificationDialog.show({
                     message: `User ${user.publicDisplayName} has been deleted.`,
                 });
@@ -289,9 +281,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
             } catch (err: any) {
                 this.errorDialog.show({
                     title: "Delete User Failed",
-                    message:
-                        err?.message ||
-                        "The user could not be deleted. Please try again later.",
+                    message: err?.message || "The user could not be deleted. Please try again later.",
                 });
             } finally {
                 this.isLoading = false;
@@ -328,9 +318,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
     private async loadPage(): Promise<void> {
         const tenantId = this.currentTenantId;
         if (!tenantId) {
-            console.warn(
-                "No BeyondTrust instance selected, skipping user load",
-            );
+            console.warn("No BeyondTrust instance selected, skipping user load");
             this.isLoading = false;
             return;
         }
@@ -345,17 +333,13 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
                 // SuperAdmin or no BU assigned: show everything unfiltered.
                 filteredUsers = allUsers;
             } else {
-                const businessUnit = this
-                    .currentBusinessUnit as unknown as CustomerBusinessUnit;
+                const businessUnit = this.currentBusinessUnit as unknown as CustomerBusinessUnit;
 
-                const customers =
-                    await this.customerCacheService.fetchCustomers({
-                        businessUnits: [businessUnit],
-                    });
+                const customers = await this.customerCacheService.fetchCustomers({
+                    businessUnits: [businessUnit],
+                });
 
-                const customerNames = customers.map((c) =>
-                    c.name.toLowerCase(),
-                );
+                const customerNames = customers.map((c) => c.name.toLowerCase());
                 const superuserSet = UsersComponent.SUPERUSER_GROUP_POLICIES;
                 const buPrefix = `${this.currentBusinessUnit}_`;
 
@@ -364,20 +348,12 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
                  * that user should be visible to the current BU Admin.
                  */
                 const matchesBU = async (user: User): Promise<boolean> => {
-                    const policies = await this.usersService
-                        .fetchUserGroupPolicies(tenantId, user.id)
-                        .catch(() => []);
+                    const policies = await this.usersService.fetchUserGroupPolicies(tenantId, user.id).catch(() => []);
 
-                    const policyNames = policies.map(
-                        (p) => p.groupPolicy?.name ?? "",
-                    );
+                    const policyNames = policies.map((p) => p.groupPolicy?.name ?? "");
 
                     // (a) Global superuser → always hide from BU Admin.
-                    if (
-                        policyNames.some((name) =>
-                            superuserSet.has(name.toUpperCase()),
-                        )
-                    ) {
+                    if (policyNames.some((name) => superuserSet.has(name.toUpperCase()))) {
                         return false;
                     }
 
@@ -401,9 +377,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
 
                 for (let i = 0; i < allUsers.length; i += BATCH_SIZE) {
                     const batch = allUsers.slice(i, i + BATCH_SIZE);
-                    const batchResults = await Promise.all(
-                        batch.map((u) => matchesBU(u)),
-                    );
+                    const batchResults = await Promise.all(batch.map((u) => matchesBU(u)));
                     matchResults.push(...batchResults);
                 }
 
@@ -432,10 +406,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
                 this.currentTenantId = instanceId;
 
                 // Reload data if tenant changed (and not initial load).
-                if (
-                    previousTenantId !== null &&
-                    previousTenantId !== instanceId
-                ) {
+                if (previousTenantId !== null && previousTenantId !== instanceId) {
                     this.loadPage();
                 }
             }),

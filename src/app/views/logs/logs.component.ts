@@ -57,6 +57,11 @@ export class LogsComponent extends PraBaseComponent implements OnInit {
     }
 
     public async ngOnInit(): Promise<void> {
+        // Belt-and-suspenders role check: uses the same localStorage source as
+        // UserRoleGuard to catch any BehaviorSubject timing edge cases.
+        const currentUser = this.jwtAuthService.getPraUser();
+        this.canExport = currentUser?.role === AuthRole.SUPER_ADMIN;
+
         await this.loadPage();
     }
 
@@ -111,15 +116,14 @@ export class LogsComponent extends PraBaseComponent implements OnInit {
     }
 
     protected override onUserChanged(user: PraUser): void {
-        this.canExport = user.role === AuthRole.SUPER_ADMIN;
+        this.canExport = user?.role === AuthRole.SUPER_ADMIN;
     }
 
     private async loadPage(overrides: Partial<RetrieveLogsParams> = {}) {
         this.isLoading = true;
         try {
             const params: RetrieveLogsParams = {
-                pageSize:
-                    this.paginator?.pageSize ?? LogsComponent.DEFAULT_PAGE_SIZE,
+                pageSize: this.paginator?.pageSize ?? LogsComponent.DEFAULT_PAGE_SIZE,
                 pageNumber: this.paginator?.pageIndex ?? 0 + 1,
                 ...overrides,
             };

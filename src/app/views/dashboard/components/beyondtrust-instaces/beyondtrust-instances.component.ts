@@ -63,11 +63,13 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
     ) {}
 
     public async ngOnInit(): Promise<void> {
+        // Belt-and-suspenders role check: uses the same localStorage source as
+        // UserRoleGuard to catch any BehaviorSubject timing edge cases.
+        this.isSuperAdmin = this.jwtAuthService.getPraUser()?.role === AuthRole.SUPER_ADMIN;
+
         this.addListeners();
 
-        await ThreadingUtility.delayForLoadingAnimation(
-            this.appService.initialize(),
-        );
+        await ThreadingUtility.delayForLoadingAnimation(this.appService.initialize());
     }
 
     public ngOnDestroy(): void {
@@ -84,8 +86,7 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
             .subscribe((created: boolean) => {
                 if (created) {
                     this.notificationDialog.show({
-                        message:
-                            "BeyondTrust instance has been created successfully.",
+                        message: "BeyondTrust instance has been created successfully.",
                         icon: "check_circle",
                     });
                     this.refreshBeyondtrustInstancesHealthStatus();
@@ -93,9 +94,7 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
             });
     }
 
-    public openUpdateBeyondtrustInstanceModalHandler(
-        instance: BeyondtrustInstance,
-    ): void {
+    public openUpdateBeyondtrustInstanceModalHandler(instance: BeyondtrustInstance): void {
         this.dialog
             .open(BeyondtrustInstancesOverlayComponent, {
                 data: {
@@ -116,9 +115,7 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
             });
     }
 
-    public async deleteBeyondtrustInstanceHandler(
-        instance: BeyondtrustInstance,
-    ): Promise<void> {
+    public async deleteBeyondtrustInstanceHandler(instance: BeyondtrustInstance): Promise<void> {
         const confirmed = await this.confirmDialog.show({
             title: "Delete Instance",
             message: `Are you sure you want to delete instance "${instance.name}"? This action cannot be undone.`,
@@ -141,9 +138,7 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
         } catch (error: any) {
             await this.errorDialog.show({
                 title: "Delete Failed",
-                message:
-                    error?.message ||
-                    "Failed to delete the instance. Please try again.",
+                message: error?.message || "Failed to delete the instance. Please try again.",
             });
         } finally {
             this.isLoading = false;
@@ -159,9 +154,7 @@ export class BeyondtrustInstancesComponent implements OnInit, OnDestroy {
         } catch (error: any) {
             await this.errorDialog.show({
                 title: "Error Loading Instances",
-                message:
-                    error?.message ||
-                    "Failed to load BeyondTrust instances. Please try again.",
+                message: error?.message || "Failed to load BeyondTrust instances. Please try again.",
             });
         } finally {
             this.isLoading = false;

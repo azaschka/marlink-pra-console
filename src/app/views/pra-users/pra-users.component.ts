@@ -64,6 +64,11 @@ export class PraUsersComponent extends PraBaseComponent implements OnInit {
     }
 
     public async ngOnInit(): Promise<void> {
+        // Belt-and-suspenders role check: uses the same localStorage source as
+        // UserRoleGuard to catch any BehaviorSubject timing edge cases.
+        const currentUser = this.jwtAuthService.getPraUser();
+        this.isAdmin = currentUser?.role === UserRole.Admin;
+
         await this.loadPage();
     }
 
@@ -130,9 +135,7 @@ export class PraUsersComponent extends PraBaseComponent implements OnInit {
             } catch (err: any) {
                 this.errorDialog.show({
                     title: "Delete PRA User Failed",
-                    message:
-                        err?.message ||
-                        "The user could not be deleted. Please try again later.",
+                    message: err?.message || "The user could not be deleted. Please try again later.",
                 });
             } finally {
                 this.isLoading = false;
@@ -141,7 +144,7 @@ export class PraUsersComponent extends PraBaseComponent implements OnInit {
     }
 
     protected override onUserChanged(user: AuthPraUser): void {
-        this.isAdmin = user.role === UserRole.Admin;
+        this.isAdmin = user?.role === UserRole.Admin;
     }
 
     protected override onBusinessUnitChanged(): void {
@@ -154,11 +157,9 @@ export class PraUsersComponent extends PraBaseComponent implements OnInit {
             const praUsers = await this.praUsersService.fetchPraUsers();
             let filteredPraUsers = praUsers;
             if (this.isAdmin) {
-                filteredPraUsers = PraDataFilter.filterByBusinessUnit(
-                    praUsers,
-                    this.currentBusinessUnit,
-                    [(user) => user.businessUnit],
-                );
+                filteredPraUsers = PraDataFilter.filterByBusinessUnit(praUsers, this.currentBusinessUnit, [
+                    (user) => user.businessUnit,
+                ]);
             }
 
             this.dataSource.data = filteredPraUsers;

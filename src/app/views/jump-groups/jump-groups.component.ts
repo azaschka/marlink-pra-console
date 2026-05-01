@@ -30,12 +30,7 @@ import { PraUser } from "app/shared/models";
 export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
-    private static readonly DISPLAYED_COLUMNS = [
-        "name",
-        "comments",
-        "lastSyncDate",
-        "actions",
-    ];
+    private static readonly DISPLAYED_COLUMNS = ["name", "comments", "lastSyncDate", "actions"];
 
     @ViewChild(MatSort, { static: true }) sort!: MatSort;
     @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -66,6 +61,11 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
     }
 
     public async ngOnInit(): Promise<void> {
+        // Belt-and-suspenders role check: uses the same localStorage source as
+        // UserRoleGuard to catch any BehaviorSubject timing edge cases.
+        const currentUser = this.jwtAuthService.getPraUser();
+        this.canDelete = currentUser?.role === UserRole.SuperAdmin;
+
         await this.appService.initialize();
         this.currentTenantId = this.appService.getSelectedInstanceId();
         this.addListeners();
@@ -98,31 +98,25 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
             disableClose: true,
         });
 
-        dialogRef
-            .afterClosed()
-            .subscribe(async (result: JumpGroupUpdateRequest | null) => {
-                if (result) {
-                    this.isLoading = true;
-                    try {
-                        await this.jumpGroupsService.updateJumpGroup(
-                            this.currentTenantId!,
-                            jumpGroup.id,
-                            result,
-                        );
-                        this.notificationDialog.show({
-                            message: "Jump Group successfully updated.",
-                        });
-                        await this.loadPage();
-                    } catch (err: any) {
-                        this.errorDialog.show({
-                            title: "Error",
-                            message: err?.message ?? "Unexpected error",
-                        });
-                    } finally {
-                        this.isLoading = false;
-                    }
+        dialogRef.afterClosed().subscribe(async (result: JumpGroupUpdateRequest | null) => {
+            if (result) {
+                this.isLoading = true;
+                try {
+                    await this.jumpGroupsService.updateJumpGroup(this.currentTenantId!, jumpGroup.id, result);
+                    this.notificationDialog.show({
+                        message: "Jump Group successfully updated.",
+                    });
+                    await this.loadPage();
+                } catch (err: any) {
+                    this.errorDialog.show({
+                        title: "Error",
+                        message: err?.message ?? "Unexpected error",
+                    });
+                } finally {
+                    this.isLoading = false;
                 }
-            });
+            }
+        });
     }
 
     public async deleteJumpGroupHandler(jumpGroup: JumpGroup): Promise<void> {
@@ -142,10 +136,7 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
         if (confirmed) {
             this.isLoading = true;
             try {
-                await this.jumpGroupsService.deleteJumpGroup(
-                    this.currentTenantId,
-                    jumpGroup.id,
-                );
+                await this.jumpGroupsService.deleteJumpGroup(this.currentTenantId, jumpGroup.id);
                 this.notificationDialog.show({
                     message: `Jump Group "${jumpGroup.name}" has been deleted.`,
                 });
@@ -153,9 +144,7 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
             } catch (err: any) {
                 this.errorDialog.show({
                     title: "Delete Jump Group Failed",
-                    message:
-                        err?.message ||
-                        "The jump group could not be deleted. Please try again later.",
+                    message: err?.message || "The jump group could not be deleted. Please try again later.",
                 });
             } finally {
                 this.isLoading = false;
@@ -164,7 +153,7 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
     }
 
     protected override onUserChanged(user: PraUser): void {
-        this.canDelete = user.role === UserRole.SuperAdmin;
+        this.canDelete = user?.role === UserRole.SuperAdmin;
     }
 
     protected override onBusinessUnitChanged(): void {
@@ -186,10 +175,7 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
                 this.jumpGroupsService.fetchJumpGroups(tenantId),
                 this.currentBusinessUnit
                     ? this.customerCacheService.fetchCustomers({
-                          businessUnits: [
-                              this
-                                  .currentBusinessUnit as unknown as CustomerBusinessUnit,
-                          ],
+                          businessUnits: [this.currentBusinessUnit as unknown as CustomerBusinessUnit],
                       })
                     : Promise.resolve([]),
             ]);
@@ -216,12 +202,7 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
 
             // Ensure paginator does not point to a page that no longer exists
             if (this.paginator) {
-                const maxPageIndex = Math.max(
-                    Math.ceil(
-                        filteredJumpGroups.length / this.paginator.pageSize,
-                    ) - 1,
-                    0,
-                );
+                const maxPageIndex = Math.max(Math.ceil(filteredJumpGroups.length / this.paginator.pageSize) - 1, 0);
                 if (this.paginator.pageIndex > maxPageIndex) {
                     this.paginator.firstPage();
                 }
@@ -244,10 +225,7 @@ export class JumpGroupsComponent extends PraBaseComponent implements OnInit {
                 this.currentTenantId = instanceId;
 
                 // Reload data if tenant changed (and not initial load)
-                if (
-                    previousTenantId !== null &&
-                    previousTenantId !== instanceId
-                ) {
+                if (previousTenantId !== null && previousTenantId !== instanceId) {
                     void this.loadPage();
                 }
             }),

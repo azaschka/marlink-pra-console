@@ -62,11 +62,11 @@
                 <ng-container matColumnDef="actions">
                     <mat-header-cell *matHeaderCellDef></mat-header-cell>
                     <mat-cell *matCellDef="let row">
-                        <button mat-icon-button color="primary" [disabled]="!isSuperAdmin"
+                        <button mat-icon-button color="primary" [class.disabled]="!isSuperAdmin"
                             (click)="editGroupPolicyHandler(row)">
                             <mat-icon>edit</mat-icon>
                         </button>
-                        <button mat-icon-button color="warn" [disabled]="!isSuperAdmin"
+                        <button mat-icon-button color="warn" [class.disabled]="!isSuperAdmin"
                             (click)="deleteGroupPolicyHandler(row)">
                             <mat-icon>delete</mat-icon>
                         </button>
