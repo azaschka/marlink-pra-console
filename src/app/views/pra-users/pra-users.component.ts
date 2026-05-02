@@ -50,7 +50,14 @@ export class PraUsersComponent extends PraBaseComponent implements OnInit {
     public filterValue = "";
     public dataCount = 0;
 
-    private isAdmin = false;
+    /**
+     * True when the authenticated user is a SuperAdmin.
+     * SuperAdmins see ALL pra-users without BU filtering.
+     * All other roles (Admin / DataCenterEngineer) are filtered to
+     * their own business unit — or see an empty list when no BU is set
+     * (fail-secure default).
+     */
+    private isSuperAdmin = false;
 
     constructor(
         private readonly dialog: MatDialog,
@@ -66,8 +73,12 @@ export class PraUsersComponent extends PraBaseComponent implements OnInit {
     public async ngOnInit(): Promise<void> {
         // Belt-and-suspenders role check: uses the same localStorage source as
         // UserRoleGuard to catch any BehaviorSubject timing edge cases.
+        // PraBaseComponent already sets isSuperAdmin synchronously via
+        // onUserChanged() in the constructor, but we re-verify here to guard
+        // against edge cases where the BehaviorSubject fired before
+        // APP_INITIALIZER had a chance to refresh the server profile.
         const currentUser = this.jwtAuthService.getPraUser();
-        this.isAdmin = currentUser?.role === UserRole.Admin;
+        this.isSuperAdmin = currentUser?.role === UserRole.SuperAdmin;
 
         await this.loadPage();
     }
@@ -83,39 +94,47 @@ export class PraUsersComponent extends PraBaseComponent implements OnInit {
     }
 
     public addUserHandler(): void {
-        this.dialog
-            .open(PraUserOverlayComponent, {
-                data: { mode: "add" } as PraUserOverlayDialogData,
-                disableClose: true,
-                width: "720px",
-            })
-            .afterClosed()
-            .subscribe((created: boolean) => {
-                if (created) {
-                    this.notificationDialog.show({
-                        message: "User has been created successfully.",
-                    });
-                    this.loadPage();
-                }
-            });
+        // Add to subscriptionsToClear so Angular cleans up if the component
+        // is destroyed before the dialog closes.
+        this.subscriptionsToClear.add(
+            this.dialog
+                .open(PraUserOverlayComponent, {
+                    data: { mode: "add" } as PraUserOverlayDialogData,
+                    disableClose: true,
+                    width: "720px",
+                })
+                .afterClosed()
+                .subscribe((created: boolean) => {
+                    if (created) {
+                        this.notificationDialog.show({
+                            message: "User has been created successfully.",
+                        });
+                        // Service auto-invalidates its cache after createPraUser();
+                        // loadPage() will fetch fresh data.
+                        void this.loadPage();
+                    }
+                }),
+        );
     }
 
     public editUserHandler(user: PraUser): void {
-        this.dialog
-            .open(PraUserOverlayComponent, {
-                data: { mode: "edit", user } as PraUserOverlayDialogData,
-                disableClose: true,
-                width: "720px",
-            })
-            .afterClosed()
-            .subscribe((updated: boolean) => {
-                if (updated) {
-                    this.notificationDialog.show({
-                        message: `User "${user.displayName}" updated successfully.`,
-                    });
-                    this.loadPage();
-                }
-            });
+        this.subscriptionsToClear.add(
+            this.dialog
+                .open(PraUserOverlayComponent, {
+                    data: { mode: "edit", user } as PraUserOverlayDialogData,
+                    disableClose: true,
+                    width: "720px",
+                })
+                .afterClosed()
+                .subscribe((updated: boolean) => {
+                    if (updated) {
+                        this.notificationDialog.show({
+                            message: `User "${user.displayName}" updated successfully.`,
+                        });
+                        void this.loadPage();
+                    }
+                }),
+        );
     }
 
     public async deleteUserHandler(user: PraUser): Promise<void> {
@@ -144,7 +163,7 @@ export class PraUsersComponent extends PraBaseComponent implements OnInit {
     }
 
     protected override onUserChanged(user: AuthPraUser): void {
-        this.isAdmin = user?.role === UserRole.Admin;
+        this.isSuperAdmin = user?.role === UserRole.SuperAdmin;
     }
 
     protected override onBusinessUnitChanged(): void {
@@ -155,11 +174,26 @@ export class PraUsersComponent extends PraBaseComponent implements OnInit {
         this.isLoading = true;
         try {
             const praUsers = await this.praUsersService.fetchPraUsers();
-            let filteredPraUsers = praUsers;
-            if (this.isAdmin) {
+
+            let filteredPraUsers: PraUser[];
+
+            if (this.isSuperAdmin) {
+                // SuperAdmins see the full list — no BU restriction.
+                filteredPraUsers = praUsers;
+            } else if (this.currentBusinessUnit) {
+                // BU Admins see only pra-users that belong to their own BU.
+                // filterByBusinessUnit checks user.businessUnit against the
+                // regex (?:^|_){BU}(?:_|$), so exact-match only (e.g. "MT"
+                // does NOT match "MT2" or "SMT").
                 filteredPraUsers = PraDataFilter.filterByBusinessUnit(praUsers, this.currentBusinessUnit, [
                     (user) => user.businessUnit,
                 ]);
+            } else {
+                // Non-SuperAdmin with no businessUnit assigned: show nothing.
+                // This is a fail-secure default — it should never happen in
+                // practice (every Admin is assigned a BU), but prevents an
+                // accidental data leak if the user object is malformed.
+                filteredPraUsers = [];
             }
 
             this.dataSource.data = filteredPraUsers;

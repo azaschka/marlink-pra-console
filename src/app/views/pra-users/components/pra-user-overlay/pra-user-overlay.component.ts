@@ -1,20 +1,11 @@
 import { Component, Inject, OnInit, OnDestroy } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
-import {
-    FormGroup,
-    FormControl,
-    Validators,
-    AbstractControl,
-} from "@angular/forms";
+import { FormGroup, FormControl, Validators, AbstractControl } from "@angular/forms";
 import { Subject, takeUntil } from "rxjs";
 import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/error-dialog.service";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraUsersService } from "../../pra-users.service";
-import {
-    PraUser,
-    PraUserCreateRequest,
-    PraUserUpdateRequest,
-} from "../../models";
+import { PraUser, PraUserCreateRequest, PraUserUpdateRequest } from "../../models";
 import { BusinessUnit, BusinessUnitLabels, UserRole } from "../../enums";
 import { PraUser as AuthPraUser } from "../../../../shared/models";
 
@@ -67,7 +58,7 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
         @Inject(MAT_DIALOG_DATA) public data: PraUserOverlayDialogData,
         private readonly praUsersService: PraUsersService,
         private readonly errorDialog: ErrorDialogService,
-        private readonly jwtAuthService: JwtAuthService
+        private readonly jwtAuthService: JwtAuthService,
     ) {
         this.mode = data.mode;
         this.user = data.user;
@@ -107,13 +98,8 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
         return new FormGroup({
             displayName: new FormControl<string>("", [Validators.required]),
             username: new FormControl<string>("", [Validators.required]),
-            email: new FormControl<string>("", [
-                Validators.required,
-                Validators.email,
-            ]),
-            role: new FormControl<UserRole>(UserRole.Admin, [
-                Validators.required,
-            ]),
+            email: new FormControl<string>("", [Validators.required, Validators.email]),
+            role: new FormControl<UserRole>(UserRole.Admin, [Validators.required]),
             businessUnit: new FormControl<BusinessUnit | null>(null, []),
             regeneratePassword: new FormControl<boolean>(false),
             canManagePraUsers: new FormControl<boolean>(false),
@@ -147,11 +133,9 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
         this.updateRoleBasedFields(currentRole);
 
         // React to role changes
-        roleControl.valueChanges
-            .pipe(takeUntil(this.destroy$))
-            .subscribe((role: UserRole) => {
-                this.updateRoleBasedFields(role);
-            });
+        roleControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((role: UserRole) => {
+            this.updateRoleBasedFields(role);
+        });
     }
 
     /**
@@ -163,14 +147,19 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks if the current user is an Admin with canManagePraUsers permission
-     * These users should be restricted to their own business unit
+     * Returns true when the currently logged-in user is an Admin (any Admin,
+     * regardless of the `canManagePraUsers` flag).
+     *
+     * Admins are always restricted to their own business unit when creating
+     * or editing users.  This prevents a BU Admin from:
+     *  - assigning a user to a different business unit, or
+     *  - promoting an existing user out of their own BU.
+     *
+     * SuperAdmins (who are not restricted) return false here and can freely
+     * set any business unit.
      */
     private isRestrictedAdmin(): boolean {
-        return (
-            this.currentUser?.role === "Admin" &&
-            this.currentUser?.canManagePraUsers === true
-        );
+        return this.currentUser?.role === "Admin";
     }
 
     /**
@@ -179,10 +168,7 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
     private updateBusinessUnitField(role: UserRole): void {
         const businessUnitControl = this.form.controls["businessUnit"];
 
-        if (
-            role === UserRole.SuperAdmin ||
-            role === UserRole.DataCenterEngineer
-        ) {
+        if (role === UserRole.SuperAdmin || role === UserRole.DataCenterEngineer) {
             // Super Admin and Data Center Engineer don't need business unit
             businessUnitControl.disable({ emitEvent: false });
             businessUnitControl.setValue(null, { emitEvent: false });
@@ -223,8 +209,7 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
      * Only Admin users can have this permission
      */
     private updateCanManagePraUsersField(role: UserRole): void {
-        const canManagePraUsersControl =
-            this.form.controls["canManagePraUsers"];
+        const canManagePraUsersControl = this.form.controls["canManagePraUsers"];
 
         if (role === UserRole.Admin) {
             // Only Admin can manage PRA users
@@ -327,34 +312,23 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
     /**
      * Extracts business unit for API request based on role
      */
-    private getBusinessUnitForRequest(
-        formValue: PraUserFormValue
-    ): BusinessUnit | undefined {
-        return formValue.role === UserRole.Admin
-            ? formValue.businessUnit ?? undefined
-            : undefined;
+    private getBusinessUnitForRequest(formValue: PraUserFormValue): BusinessUnit | undefined {
+        return formValue.role === UserRole.Admin ? (formValue.businessUnit ?? undefined) : undefined;
     }
 
     /**
      * Extracts canManagePraUsers for API request based on role
      * Only Admin users can have this permission
      */
-    private getCanManagePraUsersForRequest(
-        formValue: PraUserFormValue
-    ): boolean | undefined {
-        return formValue.role === UserRole.Admin
-            ? formValue.canManagePraUsers
-            : undefined;
+    private getCanManagePraUsersForRequest(formValue: PraUserFormValue): boolean | undefined {
+        return formValue.role === UserRole.Admin ? formValue.canManagePraUsers : undefined;
     }
 
     /**
      * Handles errors during form submission
      */
     private handleError(err: unknown): void {
-        const message =
-            err instanceof Error
-                ? err.message
-                : "An unknown error occurred while saving the user.";
+        const message = err instanceof Error ? err.message : "An unknown error occurred while saving the user.";
 
         this.errorDialog.show({
             title: "Error",
