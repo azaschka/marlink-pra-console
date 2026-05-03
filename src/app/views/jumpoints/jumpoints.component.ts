@@ -238,7 +238,7 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
 
         this.dialog.open(JumpointNodeInfoOverlayComponent, {
             data: dialogData,
-            width: "480px",
+            width: "580px",
         });
     }
 
@@ -292,7 +292,7 @@ export class JumpointsComponent extends PraBaseComponent implements OnInit {
         const dialogRef = this.dialog.open(JumpointDeployOverlayComponent, {
             data: dialogData,
             disableClose: true,
-            width: "520px",
+            width: "580px",
         });
 
         dialogRef
