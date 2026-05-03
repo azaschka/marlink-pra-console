@@ -17,7 +17,6 @@
     </div>
 
     <ng-container *ngTemplateOutlet="menuTemplate; context: {menuItems: menuItems}"></ng-container>
-
 </div>
 
 <ng-template #menuTemplate let-menuItems="menuItems">
@@ -31,7 +30,7 @@
 
             <!-- Item -->
             <div *ngIf="!item.disabled && item.type !== 'separator' && item.type !== 'icon'" class="lvl1">
-                <a routerLink="/{{item.state}}" appDropdownToggle matRipple
+                <a routerLink="/{{item.state}}" matRipple
                     *ngIf="item.type !== 'extLink' && item.type !== 'dropDown' && item.type !== 'download'"
                     routerLinkActive="open">
                     <mat-icon *ngIf="item.icon" class="sidenav-mat-icon">{{item.icon}}</mat-icon>
@@ -49,7 +48,7 @@
                         *ngFor="let badge of item.badges">{{ badge.value }}</span>
                 </a>
                 <a (click)="handleDownload(item.state, 'Marlink PRA API v3.0.0.postman_collection.json')"
-                    appDropdownToggle matRipple *ngIf="item.type === 'download'" style="cursor: pointer;">
+                    appDropdownToggle matRipple *ngIf="item.type === 'download'" style="cursor: pointer">
                     <mat-icon *ngIf="item.icon" class="sidenav-mat-icon">{{item.icon}}</mat-icon>
                     <span class="item-name lvl1 fw-500">{{item.name | translate}}</span>
                     <span fxFlex></span>
