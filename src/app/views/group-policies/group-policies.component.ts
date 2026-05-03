@@ -230,7 +230,7 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
                     if (specialPolicies.has(policy.name.toUpperCase())) {
                         return true;
                     }
-                    if (policy.name.startsWith(`${this.currentBusinessUnit}_`)) {
+                    if (policy.name.startsWith(`${this.currentBusinessUnit}_`) || policy.name.startsWith(`GP_${this.currentBusinessUnit}_`)) {
                         return true;
                     }
                     const lowerName = policy.name.toLowerCase();

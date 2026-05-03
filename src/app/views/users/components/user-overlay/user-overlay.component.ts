@@ -162,7 +162,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
                 return true;
             }
 
-            if (policy.name.startsWith(`${praUser.businessUnit}_`)) {
+            if (policy.name.startsWith(`${praUser.businessUnit}_`) || policy.name.startsWith(`GP_${praUser.businessUnit}_`)) {
                 return true;
             }
 

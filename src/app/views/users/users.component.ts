@@ -357,8 +357,8 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
                         return false;
                     }
 
-                    // (b) BU prefix match, e.g. "MT_..."
-                    if (policyNames.some((name) => name.startsWith(buPrefix))) {
+                    // (b) BU prefix match, e.g. "MT_..." or "GP_MT_..."
+                    if (policyNames.some((name) => name.startsWith(buPrefix) || name.startsWith(`GP_${buPrefix}`))) {
                         return true;
                     }
 
