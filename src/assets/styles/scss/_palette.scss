@@ -16,9 +16,7 @@
         }
 
         .ngx-datatable.material:not(.cell-selection) .datatable-body-row:hover,
-        .ngx-datatable.material:not(.cell-selection)
-            .datatable-body-row:hover
-            .datatable-row-group {
+        .ngx-datatable.material:not(.cell-selection) .datatable-body-row:hover .datatable-row-group {
             background: $color500, 5;
         }
     }
@@ -55,9 +53,9 @@
             .icon-menu .mat-raised-button {
                 background: rgba($color500, 0.96) !important;
             }
-            .app-user {
-                // background: darken($color500, 5) !important;
-            }
+            /* app-user {
+                background: darken($color500, 5) !important;
+            }*/
             li.open {
                 // background: rgba($color500, .3) !important;
                 > a {
