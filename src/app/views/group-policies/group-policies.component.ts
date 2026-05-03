@@ -20,6 +20,7 @@ import {
 import { AppService } from "app/app.service";
 import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
 import { PraUser } from "app/shared/models";
+import { PraDataFilter } from "../../shared/helpers";
 
 @Component({
     selector: "app-group-policies",
@@ -29,14 +30,6 @@ import { PraUser } from "app/shared/models";
 export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
     private static readonly DEFAULT_PAGE_SIZE = 20;
     private static readonly PAGE_SIZE_OPTIONS = [20, 50, 100];
-    private static readonly SPECIAL_GROUP_POLICIES: string[] = [
-        "GP_FULL_ACCESS",
-        "FULL_ACCESS",
-        "GP_LIMITED_ACCESS",
-        "LIMITED_ACCESS",
-        "GP_MARLINK_OPERATORS",
-        "MARLINK_OPERATORS",
-    ];
     private static readonly DISPLAYED_COLUMNS = ["name", "groupMembersCount", "lastSyncDate", "actions"];
 
     @ViewChild(MatSort, { static: true }) sort!: MatSort;
@@ -224,18 +217,12 @@ export class GroupPoliciesComponent extends PraBaseComponent implements OnInit {
                     businessUnits: [businessUnit],
                 });
                 const customerNames = customers.map((c) => c.name.toLowerCase());
-                const specialPolicies = new Set(GroupPoliciesComponent.SPECIAL_GROUP_POLICIES);
 
-                filteredGroupPolicies = allPolicies.filter((policy) => {
-                    if (specialPolicies.has(policy.name.toUpperCase())) {
-                        return true;
-                    }
-                    if (policy.name.startsWith(`${this.currentBusinessUnit}_`) || policy.name.startsWith(`GP_${this.currentBusinessUnit}_`)) {
-                        return true;
-                    }
-                    const lowerName = policy.name.toLowerCase();
-                    return customerNames.some((customerName) => lowerName.includes(customerName));
-                });
+                filteredGroupPolicies = PraDataFilter.filterGroupPoliciesByBuAdmin(
+                    allPolicies,
+                    this.currentBusinessUnit ?? "",
+                    customerNames,
+                );
             }
 
             this.dataSource.data = filteredGroupPolicies;

@@ -1,11 +1,6 @@
 import { Component, Inject, OnInit, OnDestroy } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
-import {
-    FormGroup,
-    FormControl,
-    Validators,
-    AbstractControl,
-} from "@angular/forms";
+import { FormGroup, FormControl, Validators, AbstractControl } from "@angular/forms";
 import { map, Observable, of, startWith, Subject, takeUntil } from "rxjs";
 import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/error-dialog.service";
 import { GroupPoliciesService } from "../../../group-policies/group-policies.service";
@@ -16,6 +11,7 @@ import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.servic
 import { CustomerCacheService } from "../../../customers/customer-cache.service";
 import { AuthRole } from "../../../../shared/enums/auth-role.enum";
 import { CustomerBusinessUnit } from "../../../customers/enums";
+import { PraDataFilter } from "../../../../shared/helpers";
 
 export type UserOverlayMode = "add" | "edit";
 
@@ -41,15 +37,6 @@ interface UserFormValue {
     templateUrl: "./user-overlay.component.html",
 })
 export class UserOverlayComponent implements OnInit, OnDestroy {
-    private static readonly SPECIAL_GROUP_POLICIES: string[] = [
-        "GP_FULL_ACCESS",
-        "FULL_ACCESS",
-        "GP_LIMITED_ACCESS",
-        "LIMITED_ACCESS",
-        "GP_MARLINK_OPERATORS",
-        "MARLINK_OPERATORS",
-    ];
-
     public isLoading = false;
 
     public readonly mode: UserOverlayMode;
@@ -95,14 +82,9 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      */
     private createForm(): FormGroup {
         return new FormGroup({
-            publicDisplayName: new FormControl<string>("", [
-                Validators.required,
-            ]),
+            publicDisplayName: new FormControl<string>("", [Validators.required]),
             username: new FormControl<string>("", [Validators.required]),
-            email: new FormControl<string>("", [
-                Validators.required,
-                Validators.email,
-            ]),
+            email: new FormControl<string>("", [Validators.required, Validators.email]),
             regeneratePassword: new FormControl<boolean>(false),
         });
     }
@@ -134,9 +116,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      * matching BU customers, special global policies, or BU-prefixed policies.
      */
     private async loadGroupPolicies(): Promise<void> {
-        const allPolicies = await this.groupPoliciesService.fetchGroupPolicies(
-            this.data.tenantId,
-        );
+        const allPolicies = await this.groupPoliciesService.fetchGroupPolicies(this.data.tenantId);
 
         const praUser = this.jwtAuthService.getPraUser();
 
@@ -145,32 +125,17 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const businessUnit =
-            praUser.businessUnit as unknown as CustomerBusinessUnit;
+        const businessUnit = praUser.businessUnit as unknown as CustomerBusinessUnit;
         const customers = await this.customerCacheService.fetchCustomers({
             businessUnits: [businessUnit],
         });
         const customerNames = customers.map((c) => c.name.toLowerCase());
-        const specialPolicies = new Set(
-            UserOverlayComponent.SPECIAL_GROUP_POLICIES,
+
+        this.allGroupPolicies = PraDataFilter.filterGroupPoliciesByBuAdmin(
+            allPolicies,
+            praUser.businessUnit ?? "",
+            customerNames,
         );
-
-        this.allGroupPolicies = allPolicies.filter((policy) => {
-            const upperName = policy.name.toUpperCase();
-
-            if (specialPolicies.has(upperName)) {
-                return true;
-            }
-
-            if (policy.name.startsWith(`${praUser.businessUnit}_`) || policy.name.startsWith(`GP_${praUser.businessUnit}_`)) {
-                return true;
-            }
-
-            const lowerName = policy.name.toLowerCase();
-            return customerNames.some((customerName) =>
-                lowerName.includes(customerName),
-            );
-        });
     }
 
     /**
@@ -181,15 +146,9 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const userGroupPolicies =
-            await this.usersService.fetchUserGroupPolicies(
-                this.data.tenantId,
-                this.user.id,
-            );
+        const userGroupPolicies = await this.usersService.fetchUserGroupPolicies(this.data.tenantId, this.user.id);
 
-        this.selectedGroupPolicies = userGroupPolicies.map(
-            (ugp) => ugp.groupPolicy,
-        );
+        this.selectedGroupPolicies = userGroupPolicies.map((ugp) => ugp.groupPolicy);
         this.initialGroupPolicies = [...this.selectedGroupPolicies];
 
         this.userFormGroup.patchValue({
@@ -203,12 +162,11 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      * Sets up the group policy autocomplete filtering
      */
     private setupGroupPolicyAutocomplete(): void {
-        this.filteredGroupPolicies$ =
-            this.groupPolicyInputCtrl.valueChanges.pipe(
-                startWith(""),
-                map((value) => this.filterGroupPolicies(value || "")),
-                takeUntil(this.destroy$),
-            );
+        this.filteredGroupPolicies$ = this.groupPolicyInputCtrl.valueChanges.pipe(
+            startWith(""),
+            map((value) => this.filterGroupPolicies(value || "")),
+            takeUntil(this.destroy$),
+        );
     }
 
     /**
@@ -218,9 +176,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         const filterValue = this.extractFilterValue(value);
 
         return this.allGroupPolicies.filter(
-            (policy) =>
-                policy.name.toLowerCase().includes(filterValue) &&
-                !this.isGroupPolicySelected(policy),
+            (policy) => policy.name.toLowerCase().includes(filterValue) && !this.isGroupPolicySelected(policy),
         );
     }
 
@@ -260,9 +216,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      * Removes a group policy from the selected list
      */
     public removeGroupPolicy(policy: GroupPolicy): void {
-        this.selectedGroupPolicies = this.selectedGroupPolicies.filter(
-            (sel) => sel.id !== policy.id,
-        );
+        this.selectedGroupPolicies = this.selectedGroupPolicies.filter((sel) => sel.id !== policy.id);
     }
 
     /**
@@ -313,10 +267,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
             mustResetPasswordOnNextLogin: true,
         };
 
-        const createdUser = await this.usersService.createUser(
-            this.data.tenantId,
-            request,
-        );
+        const createdUser = await this.usersService.createUser(this.data.tenantId, request);
 
         await this.assignGroupPolicies(createdUser.id);
     }
@@ -338,11 +289,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
             regeneratePassword: formValue.regeneratePassword || false,
         };
 
-        await this.usersService.updateUser(
-            this.data.tenantId,
-            this.user.id,
-            request,
-        );
+        await this.usersService.updateUser(this.data.tenantId, this.user.id, request);
 
         await this.updateGroupPolicyAssignments(this.user.id);
     }
@@ -351,17 +298,10 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      * Assigns selected group policies to a newly created user
      */
     private async assignGroupPolicies(userId: number): Promise<void> {
-        const groupPolicyIds = this.selectedGroupPolicies.map(
-            (policy) => policy.id,
-        );
+        const groupPolicyIds = this.selectedGroupPolicies.map((policy) => policy.id);
 
         if (groupPolicyIds.length > 0) {
-            await this.usersService.updateUserGroupPolicies(
-                this.data.tenantId,
-                userId,
-                groupPolicyIds,
-                [],
-            );
+            await this.usersService.updateUserGroupPolicies(this.data.tenantId, userId, groupPolicyIds, []);
         }
     }
 
@@ -372,12 +312,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         const { toAdd, toRemove } = this.calculateGroupPolicyChanges();
 
         if (toAdd.length > 0 || toRemove.length > 0) {
-            await this.usersService.updateUserGroupPolicies(
-                this.data.tenantId,
-                userId,
-                toAdd,
-                toRemove,
-            );
+            await this.usersService.updateUserGroupPolicies(this.data.tenantId, userId, toAdd, toRemove);
         }
     }
 
@@ -388,12 +323,8 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         toAdd: number[];
         toRemove: number[];
     } {
-        const initialIds = new Set(
-            this.initialGroupPolicies.map((gp) => gp.id),
-        );
-        const currentIds = new Set(
-            this.selectedGroupPolicies.map((gp) => gp.id),
-        );
+        const initialIds = new Set(this.initialGroupPolicies.map((gp) => gp.id));
+        const currentIds = new Set(this.selectedGroupPolicies.map((gp) => gp.id));
 
         const toAdd = [...currentIds].filter((id) => !initialIds.has(id));
         const toRemove = [...initialIds].filter((id) => !currentIds.has(id));
@@ -405,10 +336,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      * Handles errors during data loading
      */
     private handleLoadError(err: unknown): void {
-        const message =
-            err instanceof Error
-                ? err.message
-                : "Could not load group policies or user data.";
+        const message = err instanceof Error ? err.message : "Could not load group policies or user data.";
 
         this.errorDialog.show({
             title: "Error",
@@ -420,10 +348,7 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
      * Handles errors during form submission
      */
     private handleSubmitError(err: unknown): void {
-        const message =
-            err instanceof Error
-                ? err.message
-                : "An unknown error occurred while saving the user.";
+        const message = err instanceof Error ? err.message : "An unknown error occurred while saving the user.";
 
         this.errorDialog.show({
             title: "Error",

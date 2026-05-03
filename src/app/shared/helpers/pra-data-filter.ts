@@ -1,5 +1,35 @@
 import { BusinessUnit } from "app/views/pra-users/enums";
 
+// ---------------------------------------------------------------------------
+// Module-level exported constants
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps each Business Unit code to its dedicated operator group policy name.
+ * Single source of truth used by `GroupPoliciesComponent`,
+ * `UserOverlayComponent`, and `UsersComponent`.
+ */
+export const BU_OPERATOR_GP_MAP: Record<string, string> = {
+    MT: "GP_MARITIME_OPERATORS",
+    EG: "GP_EEG_OPERATORS",
+    OA: "GP_OMNIACCESS_OPERATORS",
+    TE: "GP_TELEMAR_OPERATORS",
+    MC: "GP_CYBER_OPERATORS",
+};
+
+/**
+ * Global group policies that are always visible to **every** BU Admin,
+ * regardless of business unit or customer assignment.
+ */
+export const GLOBAL_SPECIAL_GROUP_POLICIES = new Set<string>([
+    "GP_FULL_ACCESS",
+    "FULL_ACCESS",
+    "GP_LIMITED_ACCESS",
+    "LIMITED_ACCESS",
+    "GP_MARLINK_OPERATORS",
+    "MARLINK_OPERATORS",
+]);
+
 export class PraDataFilter {
     /**
      * Filters an array of items by a specific business unit.
@@ -84,9 +114,80 @@ export class PraDataFilter {
      * @param items      Array of items that carry a `jumpGroupId` property.
      * @param allowedIds Set of permitted jump group IDs.
      */
-    public static filterByAllowedJumpGroupIds<
-        T extends { jumpGroupId: number },
-    >(items: T[], allowedIds: Set<number>): T[] {
+    public static filterByAllowedJumpGroupIds<T extends { jumpGroupId: number }>(
+        items: T[],
+        allowedIds: Set<number>,
+    ): T[] {
         return items.filter((item) => allowedIds.has(item.jumpGroupId));
+    }
+
+    /**
+     * Determines whether a single group policy name should be visible to a
+     * BU Admin.  A policy is visible when it matches **any** of these criteria:
+     *
+     *  1. It is a global special policy (GP_FULL_ACCESS, GP_MARLINK_OPERATORS …)
+     *  2. It is the BU-specific operator policy (GP_MARITIME_OPERATORS for MT …)
+     *  3. Its name starts with the BU code prefix, e.g. `MT_` or `GP_MT_`
+     *  4. Its name contains one of the customer names belonging to the BU
+     *
+     * This is the **single source of truth** for BU Admin visibility and is
+     * shared by `GroupPoliciesComponent`, `UserOverlayComponent`, and
+     * `UsersComponent` (where it is applied per-policy on a user's policy list).
+     *
+     * @param policyName    The group policy name to evaluate.
+     * @param buCode        The Business Unit code of the current admin (e.g. `"MT"`).
+     * @param customerNames Lower-cased customer names that belong to the BU.
+     */
+    public static isGroupPolicyNameVisibleForBuAdmin(
+        policyName: string,
+        buCode: string,
+        customerNames: string[],
+    ): boolean {
+        const upperName = policyName.toUpperCase();
+
+        // 1. Global special policies
+        if (GLOBAL_SPECIAL_GROUP_POLICIES.has(upperName)) {
+            return true;
+        }
+
+        // 2. BU-specific operator policy, e.g. "GP_MARITIME_OPERATORS" for MT
+        const buOperatorGp = BU_OPERATOR_GP_MAP[buCode];
+        if (buOperatorGp && upperName === buOperatorGp) {
+            return true;
+        }
+
+        // 3. BU prefix match, e.g. "MT_..." or "GP_MT_..."
+        const buPrefix = `${buCode}_`;
+        if (policyName.startsWith(buPrefix) || policyName.startsWith(`GP_${buPrefix}`)) {
+            return true;
+        }
+
+        // 4. Customer name substring match
+        const lowerName = policyName.toLowerCase();
+        return customerNames.some((cn) => lowerName.includes(cn));
+    }
+
+    /**
+     * Filters an array of objects that carry a `name` property (e.g.
+     * `GroupPolicy[]`) to those visible to the current BU Admin.
+     *
+     * Delegates each item to `isGroupPolicyNameVisibleForBuAdmin`.
+     *
+     * Using a generic `T extends { name: string }` constraint instead of
+     * importing domain types keeps `shared/` free from feature-module
+     * dependencies.
+     *
+     * @param policies      Items to filter — must have a `name: string` field.
+     * @param buCode        Business Unit code of the current admin.
+     * @param customerNames Lower-cased customer names belonging to the BU.
+     */
+    public static filterGroupPoliciesByBuAdmin<T extends { name: string }>(
+        policies: T[],
+        buCode: string,
+        customerNames: string[],
+    ): T[] {
+        return policies.filter((policy) =>
+            PraDataFilter.isGroupPolicyNameVisibleForBuAdmin(policy.name, buCode, customerNames),
+        );
     }
 }

@@ -17,6 +17,7 @@ import { CustomerCacheService } from "../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../customers/enums";
 import { UserRole } from "../pra-users/enums";
 import { PraUser } from "app/shared/models";
+import { PraDataFilter } from "../../shared/helpers";
 
 @Component({
     selector: "app-users",
@@ -35,18 +36,6 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
         "lastSyncDate",
         "actions",
     ];
-
-    /**
-     * Group policy names whose *members* must be hidden from BU Admins.
-     * A BT user who belongs to any of these policies is a Marlink-global
-     * account and should not be visible to — or manageable by — a BU Admin.
-     *
-     * NOTE: This list is intentionally separate from the SPECIAL_GROUP_POLICIES
-     * list in GroupPoliciesComponent, which controls *which policies* are
-     * shown to BU Admins.  Here we control *which users* are shown.
-     * The list will be extended over time.
-     */
-    private static readonly SUPERUSER_GROUP_POLICIES = new Set<string>(["GP_MARLINK_SUPERUSERS", "MARLINK_SUPERUSERS"]);
 
     @ViewChild(MatSort, { static: true }) sort!: MatSort;
     @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -309,11 +298,13 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
      * 3. For each user, fetch their group policies     → O(N) calls
      *    processed in parallel batches of BATCH_SIZE to avoid overwhelming
      *    the API (364 users / 50 per batch ≈ 7 sequential rounds).
-     * 4. Per-user decision:
-     *    a. EXCLUDE if any GP name is in SUPERUSER_GROUP_POLICIES
-     *    b. INCLUDE if any GP name starts with the BU prefix (e.g. "MT_")
-     *    c. INCLUDE if any GP name contains a customer name from the BU
-     *    d. EXCLUDE (hide) otherwise — BU cannot be determined
+     * 4. Per-user decision: visible when **any** assigned GP name passes the
+     *    shared `PraDataFilter.isGroupPolicyNameVisibleForBuAdmin` predicate
+     *    (special policy, BU operator, BU prefix, or customer name match).
+     *    Policies outside these criteria — including global super-user policies
+     *    such as `GP_MARLINK_SUPERUSERS` — do not match and are excluded
+     *    implicitly, keeping the behaviour consistent with the group-policy
+     *    and user-overlay views.
      */
     private async loadPage(): Promise<void> {
         const tenantId = this.currentTenantId;
@@ -340,34 +331,26 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
                 });
 
                 const customerNames = customers.map((c) => c.name.toLowerCase());
-                const superuserSet = UsersComponent.SUPERUSER_GROUP_POLICIES;
-                const buPrefix = `${this.currentBusinessUnit}_`;
+                const buCode = this.currentBusinessUnit ?? "";
 
                 /**
-                 * Fetches a single user's group policies and returns whether
-                 * that user should be visible to the current BU Admin.
+                 * A user is visible to the current BU Admin when at least one
+                 * of their assigned group policies passes the shared BU Admin
+                 * visibility predicate (special policy, BU operator, BU prefix,
+                 * or customer-name match).
+                 *
+                 * Global super-user policies (e.g. GP_MARLINK_SUPERUSERS) are
+                 * excluded implicitly — they match none of the positive criteria
+                 * — keeping the behaviour symmetric with the group-policy and
+                 * user-overlay views.
                  */
                 const matchesBU = async (user: User): Promise<boolean> => {
                     const policies = await this.usersService.fetchUserGroupPolicies(tenantId, user.id).catch(() => []);
-
                     const policyNames = policies.map((p) => p.groupPolicy?.name ?? "");
 
-                    // (a) Global superuser → always hide from BU Admin.
-                    if (policyNames.some((name) => superuserSet.has(name.toUpperCase()))) {
-                        return false;
-                    }
-
-                    // (b) BU prefix match, e.g. "MT_..." or "GP_MT_..."
-                    if (policyNames.some((name) => name.startsWith(buPrefix) || name.startsWith(`GP_${buPrefix}`))) {
-                        return true;
-                    }
-
-                    // (c) Customer name substring match,
-                    //     e.g. "ADMINISTRATORS_GANI_INC" contains "gani_inc"
-                    return policyNames.some((name) => {
-                        const lower = name.toLowerCase();
-                        return customerNames.some((cn) => lower.includes(cn));
-                    });
+                    return policyNames.some((name) =>
+                        PraDataFilter.isGroupPolicyNameVisibleForBuAdmin(name, buCode, customerNames),
+                    );
                 };
 
                 // Process users in parallel batches to balance throughput
