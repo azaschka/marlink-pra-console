@@ -5,10 +5,12 @@
             <mat-progress-spinner *ngIf="step.status === 'in-progress'" mode="indeterminate"
                 diameter="24"></mat-progress-spinner>
             <mat-icon *ngIf="step.status === 'success'" color="primary">check_circle</mat-icon>
+            <mat-icon *ngIf="step.status === 'warning'" class="icon-warning">warning</mat-icon>
             <mat-icon *ngIf="step.status === 'error'" color="warn">error</mat-icon>
             <span fxFlex>{{ step.label }}</span>
         </div>
 
-        <p fxFlex *ngIf="step.result" class="ml-40" [class.text-warn]="step.status === 'error'">{{ step.result }}</p>
+        <p fxFlex *ngIf="step.result" class="ml-40" [class.text-warn]="step.status === 'error'"
+            [class.text-warning]="step.status === 'warning'">{{ step.result }}</p>
     </div>
 </div>

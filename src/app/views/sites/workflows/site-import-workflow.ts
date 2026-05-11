@@ -13,7 +13,7 @@ import {
 } from "../../../shared/services/site-excel-parser.service";
 import { Observable } from "rxjs";
 import { CreateSiteDtoInput, ImportStatus, ImportStep, Site } from "../models";
-import { ErrorUtils, StringSanitizer } from "../../../shared/helpers";
+import { BU_OPERATOR_GP_MAP, ErrorUtils, StringSanitizer } from "../../../shared/helpers";
 
 // Customer imports
 import { CustomerFactory } from "../../customers/factories/customer.factory";
@@ -34,6 +34,9 @@ import { JumpPolicy } from "../../jump-policies/models";
 
 // Jumpoints imports
 import { JumpointsService } from "../../jumpoints/jumpoints.service";
+
+// Group Policies imports
+import { GroupPoliciesService } from "../../group-policies/group-policies.service";
 
 // Jump Assets imports
 import {
@@ -85,6 +88,7 @@ export class SiteImportWorkflowService {
         private readonly jumpPoliciesService: JumpPoliciesService,
         private readonly jumpAssetsService: JumpAssetsService,
         private readonly jumpointsService: JumpointsService,
+        private readonly groupPoliciesService: GroupPoliciesService,
     ) {}
 
     public startWorkflow(
@@ -112,11 +116,7 @@ export class SiteImportWorkflowService {
                 });
                 sub.next([...steps]);
                 // Build customer request
-                const customerRequest = this.buildCustomerRequest(
-                    tenantId,
-                    parsed.customer,
-                    steps[0],
-                );
+                const customerRequest = this.buildCustomerRequest(tenantId, parsed.customer, steps[0]);
                 if (!customerRequest) {
                     sub.next([...steps]);
                     this.result.steps = [...steps];
@@ -178,10 +178,8 @@ export class SiteImportWorkflowService {
                 });
                 sub.next([...steps]);
                 try {
-                    this.jumpGroups =
-                        await this.jumpGroupsService.fetchJumpGroups(tenantId);
-                    steps[2].result =
-                        "Site auditors created/updated and JumpGroups resolved.";
+                    this.jumpGroups = await this.jumpGroupsService.fetchJumpGroups(tenantId);
+                    steps[2].result = "Site auditors created/updated and JumpGroups resolved.";
                     steps[2].status = ImportStatus.Success;
                 } catch (err: any) {
                     steps[2].status = ImportStatus.Error;
@@ -200,12 +198,8 @@ export class SiteImportWorkflowService {
                 });
                 sub.next([...steps]);
                 try {
-                    this.jumpPolicies =
-                        await this.jumpPoliciesService.fetchJumpPolicies(
-                            tenantId,
-                        );
-                    steps[3].result =
-                        "Site managers created/updated and JumpPolicies resolved.";
+                    this.jumpPolicies = await this.jumpPoliciesService.fetchJumpPolicies(tenantId);
+                    steps[3].result = "Site managers created/updated and JumpPolicies resolved.";
                     steps[3].status = ImportStatus.Success;
                 } catch (err: any) {
                     steps[3].status = ImportStatus.Error;
@@ -225,13 +219,8 @@ export class SiteImportWorkflowService {
                 sub.next([...steps]);
                 let jumpointId: number | undefined;
                 try {
-                    jumpointId = await this.resolveJumpointId(
-                        tenantId,
-                        parsed.customer,
-                        parsed.site,
-                    );
-                    steps[4].result =
-                        "Support teams created/updated and Jumpoint resolved.";
+                    jumpointId = await this.resolveJumpointId(tenantId, parsed.customer, parsed.site);
+                    steps[4].result = "Support teams created/updated and Jumpoint resolved.";
                     steps[4].status = ImportStatus.Success;
                 } catch (err: any) {
                     steps[4].status = ImportStatus.Error;
@@ -250,26 +239,22 @@ export class SiteImportWorkflowService {
                 for (const asset of parsed.jumpAssets) {
                     if (!asset.teams?.length) continue;
                     for (const teamName of asset.teams) {
-                        const parsedTeam = parsed.supportTeams.find(
-                            (t) => t.teamName === teamName,
-                        );
+                        const parsedTeam = parsed.supportTeams.find((t) => t.teamName === teamName);
                         if (!parsedTeam) continue;
                         const label = `Creating Host ${asset.name} ...`;
                         steps.push({ label, status: ImportStatus.InProgress });
                         const currentStepIdx = steps.length - 1;
                         sub.next([...steps]);
                         try {
-                            const jumpAssetRequest =
-                                this.createJumpAssetRequest(
-                                    asset,
-                                    parsed.customer,
-                                    parsed.site,
-                                    parsedTeam,
-                                    jumpointId,
-                                );
+                            const jumpAssetRequest = this.createJumpAssetRequest(
+                                asset,
+                                parsed.customer,
+                                parsed.site,
+                                parsedTeam,
+                                jumpointId,
+                            );
                             if (!jumpAssetRequest) {
-                                steps[currentStepIdx].status =
-                                    ImportStatus.Error;
+                                steps[currentStepIdx].status = ImportStatus.Error;
                                 steps[currentStepIdx].result =
                                     "Jump Asset creation failed (Jump Group or Jumpoint missing)";
                                 erroredAssets++;
@@ -277,10 +262,7 @@ export class SiteImportWorkflowService {
                                 continue;
                             }
 
-                            if (
-                                asset.jumpItemType ===
-                                ParsedJumpItemType.JumpClient
-                            ) {
+                            if (asset.jumpItemType === ParsedJumpItemType.JumpClient) {
                                 await this.jumpAssetsService.createJumpClientInstaller(
                                     tenantId,
                                     jumpAssetRequest as CreateJumpClientInstallerDtoInput,
@@ -318,14 +300,9 @@ export class SiteImportWorkflowService {
                                         );
                                         break;
                                     default:
-                                        steps[currentStepIdx].status =
-                                            ImportStatus.Error;
-                                        steps[currentStepIdx].result =
-                                            `Unknown jump type: ${asset.jumpType}`;
-                                        console.warn(
-                                            "[SiteImportWorkflow] Unknown jump type:",
-                                            asset.jumpType,
-                                        );
+                                        steps[currentStepIdx].status = ImportStatus.Error;
+                                        steps[currentStepIdx].result = `Unknown jump type: ${asset.jumpType}`;
+                                        console.warn("[SiteImportWorkflow] Unknown jump type:", asset.jumpType);
                                         erroredAssets++;
                                         sub.next([...steps]);
                                         continue;
@@ -333,24 +310,16 @@ export class SiteImportWorkflowService {
                             }
 
                             steps[currentStepIdx].status = ImportStatus.Success;
-                            steps[currentStepIdx].result =
-                                `Created Host: ${asset.name} with Support Team: ${teamName}`;
+                            steps[currentStepIdx].result = `Created Host: ${asset.name} with Support Team: ${teamName}`;
                             createdAssets++;
                         } catch (err: any) {
                             if (err?.status === 409) {
-                                steps[currentStepIdx].status =
-                                    ImportStatus.Success;
-                                const extractedMessages =
-                                    ErrorUtils.extractMessages(err);
-                                steps[currentStepIdx].result =
-                                    extractedMessages[
-                                        extractedMessages.length - 1
-                                    ];
+                                steps[currentStepIdx].status = ImportStatus.Success;
+                                const extractedMessages = ErrorUtils.extractMessages(err);
+                                steps[currentStepIdx].result = extractedMessages[extractedMessages.length - 1];
                             } else {
-                                steps[currentStepIdx].status =
-                                    ImportStatus.Error;
-                                steps[currentStepIdx].result =
-                                    this.stringifyError(err);
+                                steps[currentStepIdx].status = ImportStatus.Error;
+                                steps[currentStepIdx].result = this.stringifyError(err);
                             }
                             erroredAssets++;
                         }
@@ -358,13 +327,47 @@ export class SiteImportWorkflowService {
                     }
                 }
 
+                // === 5. VERIFY BU GROUP POLICY CONFIGURATION ===
+                steps.push({
+                    label: "Verifying BU Group Policy configuration ...",
+                    status: ImportStatus.InProgress,
+                });
+                const buGpStepIdx = steps.length - 1;
+                sub.next([...steps]);
+
+                try {
+                    const buCode = parsed.customer.businessUnit.trim().split(/\s+/)[0].toUpperCase();
+                    const expectedGpName = BU_OPERATOR_GP_MAP[buCode];
+
+                    if (!expectedGpName) {
+                        steps[buGpStepIdx].status = ImportStatus.Warning;
+                        steps[buGpStepIdx].result =
+                            `Unknown Business Unit code "${buCode}". Cannot determine BU Operators Group Policy (R3.1-P003).`;
+                    } else {
+                        const allGroupPolicies = await this.groupPoliciesService.fetchGroupPolicies(tenantId);
+                        const buGroupPolicy = allGroupPolicies.find(
+                            (gp) => gp.name.toUpperCase() === expectedGpName.toUpperCase(),
+                        );
+
+                        if (buGroupPolicy) {
+                            steps[buGpStepIdx].status = ImportStatus.Success;
+                            steps[buGpStepIdx].result =
+                                `BU Operators Group Policy "${buGroupPolicy.name}" confirmed. Jump groups & Jumpoint assigned via site creation.`;
+                        } else {
+                            steps[buGpStepIdx].status = ImportStatus.Warning;
+                            steps[buGpStepIdx].result =
+                                `BU Operators Group Policy "${expectedGpName}" not found on this BeyondTrust instance. Ensure it exists before onboarding (Dependency: R3.1-P003).`;
+                        }
+                    }
+                } catch (err: any) {
+                    steps[buGpStepIdx].status = ImportStatus.Warning;
+                    steps[buGpStepIdx].result = `Could not verify BU Group Policy: ${this.stringifyError(err)}`;
+                }
+                sub.next([...steps]);
+
                 // === FERTIG ===
                 this.result.steps = [...steps];
-                this.result.summary = this.makeSummary(
-                    steps,
-                    createdAssets,
-                    erroredAssets,
-                );
+                this.result.summary = this.makeSummary(steps, createdAssets, erroredAssets);
                 sub.complete();
             })();
         });
@@ -423,9 +426,7 @@ export class SiteImportWorkflowService {
         // Validation errors: { field: ["msg1", "msg2"] }
         if (obj.errors && typeof obj.errors === "object") {
             for (const [field, messages] of Object.entries(obj.errors)) {
-                const msgs = Array.isArray(messages)
-                    ? messages.join("; ")
-                    : String(messages);
+                const msgs = Array.isArray(messages) ? messages.join("; ") : String(messages);
                 parts.push(`${field}: ${msgs}`);
             }
         }
@@ -433,21 +434,13 @@ export class SiteImportWorkflowService {
         return parts.length > 0 ? parts.join(", ") : null;
     }
 
-    private makeSummary(
-        steps: ImportStep[],
-        createdAssets = 0,
-        erroredAssets = 0,
-    ): ImportWorkflowSummary {
+    private makeSummary(steps: ImportStep[], createdAssets = 0, erroredAssets = 0): ImportWorkflowSummary {
         return {
             totalSteps: steps.length,
             assetsCreated: createdAssets,
             assetsErrored: erroredAssets,
             errors: steps
-                .filter(
-                    (s) =>
-                        s.status === ImportStatus.Error &&
-                        s.result !== undefined,
-                )
+                .filter((s) => s.status === ImportStatus.Error && s.result !== undefined)
                 .map((s) => ({
                     label: s.label,
                     result: s.result as string,
@@ -503,8 +496,7 @@ export class SiteImportWorkflowService {
         step: ImportStep,
     ): Promise<Customer | undefined> {
         try {
-            const customer =
-                await this.customersService.createCustomer(customerRequest);
+            const customer = await this.customersService.createCustomer(customerRequest);
             step.status = ImportStatus.Success;
             step.result = `Created customer: ${customer.name} (ID: ${customer.key})`;
             return customer;
@@ -522,10 +514,7 @@ export class SiteImportWorkflowService {
         }
     }
 
-    private async createSite(
-        siteRequest: CreateSiteDtoInput,
-        step: ImportStep,
-    ): Promise<Site | undefined> {
+    private async createSite(siteRequest: CreateSiteDtoInput, step: ImportStep): Promise<Site | undefined> {
         try {
             const site = await this.sitesService.createSite(siteRequest);
             step.status = ImportStatus.Success;
@@ -543,10 +532,7 @@ export class SiteImportWorkflowService {
         }
     }
 
-    private async retrieveSite(
-        key: string,
-        step: ImportStep,
-    ): Promise<Site | undefined> {
+    private async retrieveSite(key: string, step: ImportStep): Promise<Site | undefined> {
         try {
             const existingSite = await this.sitesService.fetchSiteByKey(key);
             if (existingSite) {
@@ -560,9 +546,7 @@ export class SiteImportWorkflowService {
             }
         } catch (fetchErr: any) {
             step.status = ImportStatus.Error;
-            step.result =
-                "Site already exists, but fetching failed: " +
-                this.stringifyError(fetchErr);
+            step.result = "Site already exists, but fetching failed: " + this.stringifyError(fetchErr);
             return undefined;
         }
     }
@@ -584,28 +568,18 @@ export class SiteImportWorkflowService {
         const siteTag = this.createSiteTag(customer, site);
         const jumpGroupId = this.getJumpGroupIdForSupportTeam(customer, team);
         if (!jumpGroupId) {
-            console.error(
-                "[SiteImportWorkflow] Failed to retrieve Jump Group ID.",
-            );
+            console.error("[SiteImportWorkflow] Failed to retrieve Jump Group ID.");
             return;
         }
 
-        const jumpPolicyId = this.getJumpPolicyIdForSupportTeam(
-            customer,
-            site,
-            team,
-        );
+        const jumpPolicyId = this.getJumpPolicyIdForSupportTeam(customer, site, team);
         if (!jumpPolicyId) {
-            console.error(
-                "[SiteImportWorkflow] Failed to retrieve Jump Policy ID.",
-            );
+            console.error("[SiteImportWorkflow] Failed to retrieve Jump Policy ID.");
             return;
         }
 
         if (!jumpointId) {
-            console.error(
-                "[SiteImportWorkflow] Failed to retrieve Jumpoint ID.",
-            );
+            console.error("[SiteImportWorkflow] Failed to retrieve Jumpoint ID.");
             return;
         }
 
@@ -685,11 +659,7 @@ export class SiteImportWorkflowService {
                     hostname: asset.hostname,
                     jumpGroupId: jumpGroupId,
                     protocolType: asset.protocolType as ShellJumpProtocolType,
-                    port:
-                        asset.port ||
-                        asset.protocolType === ShellJumpProtocolType.SSH
-                            ? 22
-                            : 23,
+                    port: asset.port || asset.protocolType === ShellJumpProtocolType.SSH ? 22 : 23,
                     jumpGroupType: JumpGroupType.Shared,
                     terminalType: ShellJumpTerminalType.Xterm,
                     keepAliveIdleSessionInSeconds: 0,
@@ -720,20 +690,11 @@ export class SiteImportWorkflowService {
         }
     }
 
-    private getJumpGroupIdForSupportTeam(
-        customer: ParsedCustomer,
-        team: ParsedSupportTeam,
-    ): number | undefined {
-        const customerName = SiteImportWorkflowService.sanitizeString(
-            customer.name,
-        );
-        const teamName = SiteImportWorkflowService.sanitizeString(
-            team.teamName,
-        );
+    private getJumpGroupIdForSupportTeam(customer: ParsedCustomer, team: ParsedSupportTeam): number | undefined {
+        const customerName = SiteImportWorkflowService.sanitizeString(customer.name);
+        const teamName = SiteImportWorkflowService.sanitizeString(team.teamName);
         const jumpGroupName = `${customerName}_${teamName}`;
-        const jumpGroup = this.jumpGroups.find(
-            (group) => group.name.toLowerCase() === jumpGroupName.toLowerCase(),
-        );
+        const jumpGroup = this.jumpGroups.find((group) => group.name.toLowerCase() === jumpGroupName.toLowerCase());
 
         return jumpGroup ? jumpGroup.id : undefined;
     }
@@ -745,9 +706,7 @@ export class SiteImportWorkflowService {
     ): number | undefined {
         const jumpPolicyName = this.composeJumpPolicyName(customer, site, team);
         const jumpPolicy = this.jumpPolicies.find(
-            (policy) =>
-                policy.displayName.toLowerCase() ===
-                jumpPolicyName.toLowerCase(),
+            (policy) => policy.displayName.toLowerCase() === jumpPolicyName.toLowerCase(),
         );
 
         return jumpPolicy ? jumpPolicy.id : undefined;
@@ -760,27 +719,16 @@ export class SiteImportWorkflowService {
     }
 
     private createSiteTag(customer: ParsedCustomer, site: ParsedSite): string {
-        const customerName = SiteImportWorkflowService.sanitizeString(
-            customer.name,
-        );
+        const customerName = SiteImportWorkflowService.sanitizeString(customer.name);
         const siteName = SiteImportWorkflowService.sanitizeString(site.name);
 
         return `${customerName}_${siteName}`;
     }
 
-    private composeJumpointName(
-        customer: ParsedCustomer,
-        site: ParsedSite,
-    ): string {
-        const businessUnit = SiteImportWorkflowService.sanitizeString(
-            customer.businessUnit,
-        ).toUpperCase();
-        const customerName = SiteImportWorkflowService.sanitizeString(
-            customer.name,
-        ).toUpperCase();
-        const siteName = SiteImportWorkflowService.sanitizeString(
-            site.name,
-        ).toUpperCase();
+    private composeJumpointName(customer: ParsedCustomer, site: ParsedSite): string {
+        const businessUnit = SiteImportWorkflowService.sanitizeString(customer.businessUnit).toUpperCase();
+        const customerName = SiteImportWorkflowService.sanitizeString(customer.name).toUpperCase();
+        const siteName = SiteImportWorkflowService.sanitizeString(site.name).toUpperCase();
         const siteKey = site.key.toUpperCase();
         return `${businessUnit}_JPOI1_${customerName}_${siteName}_${siteKey}`;
     }
@@ -792,32 +740,19 @@ export class SiteImportWorkflowService {
     ): Promise<number | undefined> {
         const jumpointName = this.composeJumpointName(customer, site);
         const jumpoints = await this.jumpointsService.fetchJumpoints(tenantId);
-        const match = jumpoints.find(
-            (j) => j.name.toUpperCase() === jumpointName.toUpperCase(),
-        );
+        const match = jumpoints.find((j) => j.name.toUpperCase() === jumpointName.toUpperCase());
         return match?.id;
     }
 
-    private composeJumpPolicyName(
-        customer: ParsedCustomer,
-        site: ParsedSite,
-        team: ParsedSupportTeam,
-    ): string {
-        const jumpPolicySuffix =
-            this.translateTeamTrustLevelToJumpPolicySuffix(team);
-        const customerName = SiteImportWorkflowService.sanitizeString(
-            customer.name,
-        ).toUpperCase();
-        const sanitizedSiteName = SiteImportWorkflowService.sanitizeString(
-            site.name,
-        ).toUpperCase();
+    private composeJumpPolicyName(customer: ParsedCustomer, site: ParsedSite, team: ParsedSupportTeam): string {
+        const jumpPolicySuffix = this.translateTeamTrustLevelToJumpPolicySuffix(team);
+        const customerName = SiteImportWorkflowService.sanitizeString(customer.name).toUpperCase();
+        const sanitizedSiteName = SiteImportWorkflowService.sanitizeString(site.name).toUpperCase();
 
         return `${customerName}_${sanitizedSiteName}_${site.key.toUpperCase()}_${jumpPolicySuffix}`;
     }
 
-    private translateTeamTrustLevelToJumpPolicySuffix(
-        team: ParsedSupportTeam,
-    ): string {
+    private translateTeamTrustLevelToJumpPolicySuffix(team: ParsedSupportTeam): string {
         if (team.trustLevel === ParsedTrustLevel.NoRestrictions) {
             return "NOAUTH";
         } else if (team.trustLevel === ParsedTrustLevel.RequireAuth) {
@@ -833,14 +768,10 @@ export class SiteImportWorkflowService {
      * @returns The sanitized string.
      */
     private static sanitizeString(value: string): string {
-        let sanitizeString =
-            StringSanitizer.replaceWhitespaceWithUnderscore(value);
-        sanitizeString =
-            StringSanitizer.replaceHyphensWithUnderscore(sanitizeString);
-        sanitizeString =
-            StringSanitizer.replaceSpecialCharacters(sanitizeString);
-        sanitizeString =
-            StringSanitizer.removeSpecialCharacters(sanitizeString);
+        let sanitizeString = StringSanitizer.replaceWhitespaceWithUnderscore(value);
+        sanitizeString = StringSanitizer.replaceHyphensWithUnderscore(sanitizeString);
+        sanitizeString = StringSanitizer.replaceSpecialCharacters(sanitizeString);
+        sanitizeString = StringSanitizer.removeSpecialCharacters(sanitizeString);
 
         return sanitizeString;
     }

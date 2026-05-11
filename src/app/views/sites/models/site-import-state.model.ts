@@ -10,6 +10,7 @@ export enum ImportStatus {
     Pending = "pending",
     InProgress = "in-progress",
     Success = "success",
+    Warning = "warning",
     Error = "error",
 }
 
