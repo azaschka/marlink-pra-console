@@ -516,37 +516,20 @@ export class SiteImportWorkflowService {
 
     private async createSite(siteRequest: CreateSiteDtoInput, step: ImportStep): Promise<Site | undefined> {
         try {
-            const site = await this.sitesService.createSite(siteRequest);
-            step.status = ImportStatus.Success;
-            step.result = `Created site: ${site.name} (ID: ${site.id})`;
+            const response = await this.sitesService.createSite(siteRequest);
+            const site = response.body!;
+            if (response.status === 200) {
+                step.status = ImportStatus.Success;
+                step.result = `Site already existed, updated with new data. (ID: ${site.id})`;
+            } else {
+                step.status = ImportStatus.Success;
+                step.result = `Created site: ${site.name} (ID: ${site.id})`;
+            }
             return site;
         } catch (err: any) {
-            if (err?.status === 409) {
-                return await this.retrieveSite(siteRequest.key, step);
-            } else {
-                step.status = ImportStatus.Error;
-                step.label = "Site creation failed!";
-                step.result = this.stringifyError(err);
-                return undefined;
-            }
-        }
-    }
-
-    private async retrieveSite(key: string, step: ImportStep): Promise<Site | undefined> {
-        try {
-            const existingSite = await this.sitesService.fetchSiteByKey(key);
-            if (existingSite) {
-                step.status = ImportStatus.Success;
-                step.result = `Site already exists. (ID: ${existingSite.id})`;
-                return existingSite;
-            } else {
-                step.status = ImportStatus.Error;
-                step.result = "Site already exists, but could not retrieve it.";
-                return undefined;
-            }
-        } catch (fetchErr: any) {
             step.status = ImportStatus.Error;
-            step.result = "Site already exists, but fetching failed: " + this.stringifyError(fetchErr);
+            step.label = "Site creation failed!";
+            step.result = this.stringifyError(err);
             return undefined;
         }
     }

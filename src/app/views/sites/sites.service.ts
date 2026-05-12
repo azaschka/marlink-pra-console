@@ -1,12 +1,7 @@
 import { Injectable } from "@angular/core";
-import { HttpClient, HttpParams } from "@angular/common/http";
+import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
-import {
-    Site,
-    CreateSiteDtoInput,
-    RetrieveSitesParams,
-    SiteLicenseUsage,
-} from "./models";
+import { Site, CreateSiteDtoInput, RetrieveSitesParams, SiteLicenseUsage } from "./models";
 import { Jumpoint } from "../jumpoints/models";
 
 @Injectable()
@@ -20,10 +15,7 @@ export class SitesService {
             httpParams = httpParams.set("pageSize", params.pageSize.toString());
         }
         if (params.pageNumber !== undefined) {
-            httpParams = httpParams.set(
-                "pageNumber",
-                params.pageNumber.toString(),
-            );
+            httpParams = httpParams.set("pageNumber", params.pageNumber.toString());
         }
         if (params.key !== undefined) {
             httpParams = httpParams.set("key", params.key);
@@ -31,39 +23,27 @@ export class SitesService {
         if (params.name !== undefined) {
             httpParams = httpParams.set("name", params.name);
         }
-        if (
-            params.customerKeys !== undefined &&
-            params.customerKeys.length > 0
-        ) {
+        if (params.customerKeys !== undefined && params.customerKeys.length > 0) {
             params.customerKeys.forEach((key) => {
                 httpParams = httpParams.append("customerKeys", key);
             });
         }
 
-        return firstValueFrom(
-            this.http.get<Site[]>("sites", { params: httpParams }),
-        );
+        return firstValueFrom(this.http.get<Site[]>("sites", { params: httpParams }));
     }
     public async fetchSiteByKey(key: string): Promise<Site | undefined> {
-        const params = new HttpParams();
-        // params.set("pageSize", "9999");
-        if (key) params.set("key", key);
-
-        const sites = await firstValueFrom(
-            this.http.get<Site[]>(`sites`, { params }),
-        );
-
+        let params = new HttpParams();
+        if (key) params = params.set("key", key);
+        const sites = await firstValueFrom(this.http.get<Site[]>(`sites`, { params }));
         return sites[0] ?? undefined;
     }
 
     public async fetchSiteJumpoints(id: number): Promise<Jumpoint[]> {
-        return firstValueFrom(
-            this.http.get<Jumpoint[]>(`sites/${id}/jumpoints`),
-        );
+        return firstValueFrom(this.http.get<Jumpoint[]>(`sites/${id}/jumpoints`));
     }
 
-    public async createSite(body: CreateSiteDtoInput): Promise<Site> {
-        return firstValueFrom(this.http.post<Site>("sites", body));
+    public async createSite(body: CreateSiteDtoInput): Promise<HttpResponse<Site>> {
+        return firstValueFrom(this.http.post<Site>("sites", body, { observe: "response" }));
     }
 
     public async deleteSite(id: number): Promise<void> {
@@ -71,8 +51,6 @@ export class SitesService {
     }
 
     public async calculateLicenseUsage(id: number): Promise<SiteLicenseUsage> {
-        return firstValueFrom(
-            this.http.post<SiteLicenseUsage>(`license-usages/sites/${id}`, {}),
-        );
+        return firstValueFrom(this.http.post<SiteLicenseUsage>(`license-usages/sites/${id}`, {}));
     }
 }
