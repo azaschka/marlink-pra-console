@@ -20,14 +20,16 @@ export const BU_OPERATOR_GP_MAP: Record<string, string> = {
 /**
  * Global group policies that are always visible to **every** BU Admin,
  * regardless of business unit or customer assignment.
+ *
+ * Note: `GP_MARLINK_OPERATORS` is intentionally **excluded** here.
+ * That policy is reserved for Super Admin assignment only and must not
+ * appear in the policy picker or policy list for BU Admins.
  */
 export const GLOBAL_SPECIAL_GROUP_POLICIES = new Set<string>([
     "GP_FULL_ACCESS",
     "FULL_ACCESS",
     "GP_LIMITED_ACCESS",
     "LIMITED_ACCESS",
-    "GP_MARLINK_OPERATORS",
-    "MARLINK_OPERATORS",
 ]);
 
 export class PraDataFilter {
@@ -125,7 +127,7 @@ export class PraDataFilter {
      * Determines whether a single group policy name should be visible to a
      * BU Admin.  A policy is visible when it matches **any** of these criteria:
      *
-     *  1. It is a global special policy (GP_FULL_ACCESS, GP_MARLINK_OPERATORS …)
+     *  1. It is a global special policy (GP_FULL_ACCESS, GP_LIMITED_ACCESS …)
      *  2. It is the BU-specific operator policy (GP_MARITIME_OPERATORS for MT …)
      *  3. Its name starts with the BU code prefix, e.g. `MT_` or `GP_MT_`
      *  4. Its name contains one of the customer names belonging to the BU
