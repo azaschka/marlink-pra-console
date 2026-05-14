@@ -18,6 +18,7 @@ import { BU_OPERATOR_GP_MAP, ErrorUtils, StringSanitizer } from "../../../shared
 // Customer imports
 import { CustomerFactory } from "../../customers/factories/customer.factory";
 import { CustomersService } from "../../customers/customers.service";
+import { CustomerCacheService } from "../../customers/customer-cache.service";
 import { Customer, CustomerCreateRequest } from "../../customers/models";
 
 // Site imports
@@ -83,6 +84,7 @@ export class SiteImportWorkflowService {
 
     constructor(
         private readonly customersService: CustomersService,
+        private readonly customerCacheService: CustomerCacheService,
         private readonly sitesService: SitesService,
         private readonly jumpGroupsService: JumpGroupsService,
         private readonly jumpPoliciesService: JumpPoliciesService,
@@ -126,6 +128,9 @@ export class SiteImportWorkflowService {
                 }
                 // Create customer
                 await this.createCustomer(customerRequest, steps[0]);
+                // Invalidate the customer cache so that the Sites view
+                // immediately shows the newly created customer after import.
+                this.customerCacheService.invalidate();
                 if (steps[0].status === ImportStatus.Error) {
                     sub.next([...steps]);
                     this.result.steps = [...steps];
@@ -177,6 +182,16 @@ export class SiteImportWorkflowService {
                     status: ImportStatus.InProgress,
                 });
                 sub.next([...steps]);
+                // Invalidate tenant caches so that the data fetched below
+                // reflects the Jump Groups, Jump Policies and Jumpoints that
+                // were just created by the SiteWorkflow in pra-api.
+                // Without this, stale cache entries (TTL: 30 min) would be
+                // returned and Jump Asset creation would fail with
+                // "Jump Group or Jumpoint missing".
+                this.jumpGroupsService.invalidateCache(tenantId);
+                this.jumpPoliciesService.invalidateCache(tenantId);
+                this.jumpointsService.invalidateCache(tenantId);
+
                 try {
                     this.jumpGroups = await this.jumpGroupsService.fetchJumpGroups(tenantId);
                     steps[2].result = "Site auditors created/updated and JumpGroups resolved.";

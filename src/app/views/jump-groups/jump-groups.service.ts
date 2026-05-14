@@ -47,6 +47,10 @@ export class JumpGroupsService {
         });
     }
 
+    public invalidateCache(tenantId: number): void {
+        this.cache.invalidate(tenantId);
+    }
+
     public async updateJumpGroup(tenantId: number, id: number, body: JumpGroupUpdateRequest): Promise<JumpGroup> {
         const result = await firstValueFrom(
             this.http.patch<JumpGroup>(`jump-groups/${id}`, body, this.createHeaders(tenantId)),

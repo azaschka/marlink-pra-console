@@ -25,6 +25,10 @@ export class JumpPoliciesService {
         };
     }
 
+    public invalidateCache(tenantId: number): void {
+        this.cache.invalidate(tenantId);
+    }
+
     public async fetchJumpPolicies(tenantId: number): Promise<JumpPolicy[]> {
         const params = new HttpParams().set("pageSize", "9999");
         return this.cache.get(tenantId, async () => {

@@ -47,6 +47,10 @@ export class JumpointsService {
         });
     }
 
+    public invalidateCache(tenantId: number): void {
+        this.cache.invalidate(tenantId);
+    }
+
     public async deleteJumpoint(tenantId: number, id: number): Promise<void> {
         await firstValueFrom(this.http.delete<void>(`jumpoints/${id}`, this.createHeaders(tenantId)));
         this.cache.invalidate(tenantId);
