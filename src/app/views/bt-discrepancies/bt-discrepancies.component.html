@@ -12,11 +12,18 @@
         </div>
         <div fxFlex></div>
         <div class="pl-16">
+            <button mat-stroked-button class="m-16" color="primary" (click)="syncAllExternalHandler()"
+                [disabled]="isLoading || isScanning || isSyncingAllExternal"
+                matTooltip="Apply BeyondTrust data to all discrepancies (ExternalToInternal)">
+                <span *ngIf="!isSyncingAllExternal" translate="views.bt-discrepancies.buttons.syncAllExternal"></span>
+                <span *ngIf="isSyncingAllExternal">Syncing…</span>
+            </button>
             <button mat-raised-button class="m-16" color="primary" (click)="scanAllHandler()"
                 [disabled]="isLoading || isScanning">
                 <span *ngIf="!isScanning" translate="views.bt-discrepancies.buttons.scanAll"></span>
                 <span *ngIf="isScanning">Scanning…</span>
             </button>
+            <p *ngIf="syncAllExternalError" class="scan-error-message">{{ syncAllExternalError }}</p>
             <p *ngIf="scanError" class="scan-error-message">{{ scanError }}</p>
         </div>
     </div>

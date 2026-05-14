@@ -28,10 +28,7 @@ export class BtDiscrepanciesService {
             httpParams = httpParams.set("pageSize", params.pageSize.toString());
         }
         if (params.pageNumber !== undefined) {
-            httpParams = httpParams.set(
-                "pageNumber",
-                params.pageNumber.toString(),
-            );
+            httpParams = httpParams.set("pageNumber", params.pageNumber.toString());
         }
         if (params.entityType !== undefined) {
             httpParams = httpParams.set("entityType", params.entityType);
@@ -48,25 +45,25 @@ export class BtDiscrepanciesService {
         );
     }
 
-    public async scanAllDiscrepancies(
-        tenantId: number,
-    ): Promise<ScanStartedResponse> {
+    public async scanAllDiscrepancies(tenantId: number): Promise<ScanStartedResponse> {
         return firstValueFrom(
-            this.http.post<ScanStartedResponse>(
-                "discrepancies/scan/all",
-                {},
-                this.createHeaders(tenantId),
-            ),
+            this.http.post<ScanStartedResponse>("discrepancies/scan/all", {}, this.createHeaders(tenantId)),
         );
     }
 
-    public getScanStatus(
+    public getScanStatus(tenantId: number, scanId: string): Observable<ScanStatusResponse> {
+        return this.http.get<ScanStatusResponse>(`discrepancies/scan/status/${scanId}`, this.createHeaders(tenantId));
+    }
+
+    public async syncAllExternalDiscrepancies(
         tenantId: number,
-        scanId: string,
-    ): Observable<ScanStatusResponse> {
-        return this.http.get<ScanStatusResponse>(
-            `discrepancies/scan/status/${scanId}`,
-            this.createHeaders(tenantId),
+    ): Promise<{ total: number; synced: number; failed: number }> {
+        return firstValueFrom(
+            this.http.post<{ total: number; synced: number; failed: number }>(
+                "discrepancies/sync/all-external",
+                {},
+                this.createHeaders(tenantId),
+            ),
         );
     }
 
@@ -76,11 +73,7 @@ export class BtDiscrepanciesService {
         request: SyncDiscrepancyRequest,
     ): Promise<void> {
         return firstValueFrom(
-            this.http.post<void>(
-                `discrepancies/${discrepancyId}/sync`,
-                request,
-                this.createHeaders(tenantId),
-            ),
+            this.http.post<void>(`discrepancies/${discrepancyId}/sync`, request, this.createHeaders(tenantId)),
         );
     }
 }

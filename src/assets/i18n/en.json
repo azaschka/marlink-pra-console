@@ -107,7 +107,8 @@
     "bt-discrepancies": {
       "headline": "BT Discrepancies",
       "buttons": {
-        "scanAll": "Scan for Discrepancies"
+        "scanAll": "Scan for Discrepancies",
+        "syncAllExternal": "Sync All from BT"
       }
     },
     "bt-backups": {
