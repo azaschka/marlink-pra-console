@@ -8,6 +8,7 @@ import { PraUsersService } from "../../pra-users.service";
 import { PraUser, PraUserCreateRequest, PraUserUpdateRequest } from "../../models";
 import { BusinessUnit, BusinessUnitLabels, UserRole } from "../../enums";
 import { PraUser as AuthPraUser } from "../../../../shared/models";
+import { BtUserDefaults } from "../../../../shared/config";
 
 export type PraUserOverlayMode = "add" | "edit";
 
@@ -35,10 +36,6 @@ interface PraUserFormValue {
     templateUrl: "./pra-user-overlay.component.html",
 })
 export class PraUserOverlayComponent implements OnInit, OnDestroy {
-    /**
-     * Default business unit assigned to new Admin users
-     */
-    private static readonly DEFAULT_BUSINESS_UNIT = BusinessUnit.MT;
 
     public isLoading = false;
 
@@ -233,7 +230,7 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
         if (this.mode === "edit" && this.user?.businessUnit) {
             return this.user.businessUnit;
         }
-        return PraUserOverlayComponent.DEFAULT_BUSINESS_UNIT;
+        return BtUserDefaults.defaultAdminBusinessUnit;
     }
 
     /**

@@ -49,16 +49,15 @@ import {
     CreateWebJumpDtoInput,
 } from "../../jump-assets/models";
 import { JumpAssetsService } from "../../jump-assets/jump-assets.service";
+import { ShellJumpProtocolType } from "../../jump-assets/enums";
 import {
-    JumpClientConnectionType,
-    JumpClientGroupType,
-    JumpGroupType,
-    RdpQualityMode,
-    ShellJumpProtocolType,
-    ShellJumpTerminalType,
-    TunnelType,
-    WebJumpUsernameFormatType,
-} from "../../jump-assets/enums";
+    BtJumpClientDefaults,
+    BtProtocolTunnelDefaults,
+    BtRemoteRdpDefaults,
+    BtRemoteVncDefaults,
+    BtShellJumpDefaults,
+    BtWebJumpDefaults,
+} from "../../../shared/config";
 
 export interface ImportWorkflowSummary {
     totalSteps: number;
@@ -585,20 +584,20 @@ export class SiteImportWorkflowService {
             return {
                 name: this.createJumpAssetName(asset),
                 jumpGroupId: jumpGroupId,
-                jumpGroupType: JumpClientGroupType.Shared,
+                jumpGroupType: BtJumpClientDefaults.jumpGroupType,
                 jumpPolicyId: jumpPolicyId,
                 tag: siteTag,
-                connectionType: JumpClientConnectionType.Active,
+                connectionType: BtJumpClientDefaults.connectionType,
                 comments: asset.comments,
-                validDurationInMinutes: 20160,
-                shouldElevateInstall: true,
-                shouldElevatePrompt: true,
-                canOverrideJumpGroup: false,
-                canOverrideJumpPolicy: false,
-                canOverrideName: false,
-                canOverrideTag: false,
-                canOverrideComments: false,
-                canOverrideSessionPolicy: false,
+                validDurationInMinutes: BtJumpClientDefaults.validDurationInMinutes,
+                shouldElevateInstall: BtJumpClientDefaults.shouldElevateInstall,
+                shouldElevatePrompt: BtJumpClientDefaults.shouldElevatePrompt,
+                canOverrideJumpGroup: BtJumpClientDefaults.canOverrideJumpGroup,
+                canOverrideJumpPolicy: BtJumpClientDefaults.canOverrideJumpPolicy,
+                canOverrideName: BtJumpClientDefaults.canOverrideName,
+                canOverrideTag: BtJumpClientDefaults.canOverrideTag,
+                canOverrideComments: BtJumpClientDefaults.canOverrideComments,
+                canOverrideSessionPolicy: BtJumpClientDefaults.canOverrideSessionPolicy,
             } as CreateJumpClientInstallerDtoInput;
         }
 
@@ -609,15 +608,15 @@ export class SiteImportWorkflowService {
                     jumpointId: jumpointId,
                     hostname: asset.hostname,
                     jumpGroupId: jumpGroupId,
-                    jumpGroupType: JumpGroupType.Shared,
-                    qualityMode: RdpQualityMode.Video,
-                    mustStartNewConsoleSession: false,
-                    mustIgnoreUntrustedServerCert: false,
+                    jumpGroupType: BtRemoteRdpDefaults.jumpGroupType,
+                    qualityMode: BtRemoteRdpDefaults.qualityMode,
+                    mustStartNewConsoleSession: BtRemoteRdpDefaults.mustStartNewConsoleSession,
+                    mustIgnoreUntrustedServerCert: BtRemoteRdpDefaults.mustIgnoreUntrustedServerCert,
                     tag: siteTag,
                     comments: asset.comments,
                     jumpPolicyId: jumpPolicyId,
-                    isSessionForensicsEnabled: false,
-                    sessionPolicyId: null,
+                    isSessionForensicsEnabled: BtRemoteRdpDefaults.isSessionForensicsEnabled,
+                    sessionPolicyId: BtRemoteRdpDefaults.sessionPolicyId,
                 } as CreateRemoteRdpDtoInput;
             case ParsedJumpType.RemoteVnc:
                 return {
@@ -625,12 +624,12 @@ export class SiteImportWorkflowService {
                     jumpointId: jumpointId,
                     hostname: asset.hostname,
                     jumpGroupId: jumpGroupId,
-                    port: asset.port || 5900,
-                    jumpGroupType: JumpGroupType.Shared,
+                    port: asset.port || BtRemoteVncDefaults.defaultPort,
+                    jumpGroupType: BtRemoteVncDefaults.jumpGroupType,
                     tag: siteTag,
                     comments: asset.comments,
                     jumpPolicyId: jumpPolicyId,
-                    sessionPolicyId: null,
+                    sessionPolicyId: BtRemoteVncDefaults.sessionPolicyId,
                 } as CreateRemoteVncDtoInput;
             case ParsedJumpType.WebJump:
                 return {
@@ -638,17 +637,17 @@ export class SiteImportWorkflowService {
                     jumpointId: jumpointId,
                     url: asset.hostname,
                     jumpGroupId: jumpGroupId,
-                    jumpGroupType: JumpGroupType.Shared,
-                    usernameFormatType: WebJumpUsernameFormatType.Default,
-                    mustVerifyCertificate: false, // Default to false
-                    authenticationTimeoutInSeconds: 3,
+                    jumpGroupType: BtWebJumpDefaults.jumpGroupType,
+                    usernameFormatType: BtWebJumpDefaults.usernameFormatType,
+                    mustVerifyCertificate: BtWebJumpDefaults.mustVerifyCertificate,
+                    authenticationTimeoutInSeconds: BtWebJumpDefaults.authenticationTimeoutInSeconds,
                     tag: siteTag,
                     comments: asset.comments,
                     jumpPolicyId: jumpPolicyId,
-                    usernameField: "",
-                    passwordField: "",
-                    submitField: "",
-                    sessionPolicyId: null,
+                    usernameField: BtWebJumpDefaults.usernameField,
+                    passwordField: BtWebJumpDefaults.passwordField,
+                    submitField: BtWebJumpDefaults.submitField,
+                    sessionPolicyId: BtWebJumpDefaults.sessionPolicyId,
                 };
             case ParsedJumpType.ShellJump:
                 return {
@@ -657,14 +656,14 @@ export class SiteImportWorkflowService {
                     hostname: asset.hostname,
                     jumpGroupId: jumpGroupId,
                     protocolType: asset.protocolType as ShellJumpProtocolType,
-                    port: asset.port || asset.protocolType === ShellJumpProtocolType.SSH ? 22 : 23,
-                    jumpGroupType: JumpGroupType.Shared,
-                    terminalType: ShellJumpTerminalType.Xterm,
-                    keepAliveIdleSessionInSeconds: 0,
+                    port: asset.port || (asset.protocolType === ShellJumpProtocolType.SSH ? BtShellJumpDefaults.defaultPortSsh : BtShellJumpDefaults.defaultPortTelnet),
+                    jumpGroupType: BtShellJumpDefaults.jumpGroupType,
+                    terminalType: BtShellJumpDefaults.terminalType,
+                    keepAliveIdleSessionInSeconds: BtShellJumpDefaults.keepAliveIdleSessionInSeconds,
                     tag: siteTag,
                     comments: asset.comments,
                     jumpPolicyId: jumpPolicyId,
-                    sessionPolicyId: null,
+                    sessionPolicyId: BtShellJumpDefaults.sessionPolicyId,
                 };
             case ParsedJumpType.ProtocolTunnelJump:
                 return {
@@ -672,16 +671,16 @@ export class SiteImportWorkflowService {
                     jumpointId: jumpointId,
                     hostname: asset.hostname,
                     jumpGroupId: jumpGroupId,
-                    jumpGroupType: JumpGroupType.Shared,
-                    tunnelType: TunnelType.Tcp,
-                    username: "",
-                    database: "",
-                    url: "",
-                    caCertificates: "",
+                    jumpGroupType: BtProtocolTunnelDefaults.jumpGroupType,
+                    tunnelType: BtProtocolTunnelDefaults.tunnelType,
+                    username: BtProtocolTunnelDefaults.username,
+                    database: BtProtocolTunnelDefaults.database,
+                    url: BtProtocolTunnelDefaults.url,
+                    caCertificates: BtProtocolTunnelDefaults.caCertificates,
                     tag: siteTag,
                     comments: asset.comments,
                     jumpPolicyId: jumpPolicyId,
-                    sessionPolicyId: null,
+                    sessionPolicyId: BtProtocolTunnelDefaults.sessionPolicyId,
                 };
             default:
                 return;

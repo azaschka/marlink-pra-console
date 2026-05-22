@@ -1,4 +1,5 @@
 import { Injectable } from "@angular/core";
+import { BtApiDefaults } from "../../shared/config";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
 import {
@@ -288,7 +289,7 @@ export class JumpAssetsService {
 
     /* ------------------------------------------------------------------ */
     private async get<T>(url: string, tenantId: number): Promise<T> {
-        const params = new HttpParams().set("pageSize", "9999");
+        const params = new HttpParams().set("pageSize", BtApiDefaults.FETCH_ALL_PAGE_SIZE);
         return firstValueFrom(
             this.http.get<T>(`${url}`, {
                 params,

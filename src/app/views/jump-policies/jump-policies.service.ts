@@ -4,6 +4,7 @@ import { firstValueFrom } from "rxjs";
 import { distinctUntilChanged, skip } from "rxjs/operators";
 import { AppService } from "../../app.service";
 import { TenantCache } from "../../shared/helpers/tenant-cache";
+import { BtApiDefaults } from "../../shared/config";
 import { JumpPolicy } from "./models";
 
 @Injectable({ providedIn: "root" })
@@ -30,7 +31,7 @@ export class JumpPoliciesService {
     }
 
     public async fetchJumpPolicies(tenantId: number): Promise<JumpPolicy[]> {
-        const params = new HttpParams().set("pageSize", "9999");
+        const params = new HttpParams().set("pageSize", BtApiDefaults.FETCH_ALL_PAGE_SIZE);
         return this.cache.get(tenantId, async () => {
             const result = await firstValueFrom(
                 this.http.get<JumpPolicy[]>("jump-policies", {

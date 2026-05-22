@@ -12,6 +12,7 @@ import { CustomerCacheService } from "../../../customers/customer-cache.service"
 import { AuthRole } from "../../../../shared/enums/auth-role.enum";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { PraDataFilter } from "../../../../shared/helpers";
+import { BtUserDefaults } from "../../../../shared/config";
 
 export type UserOverlayMode = "add" | "edit";
 
@@ -263,8 +264,8 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
             publicDisplayName: formValue.publicDisplayName.trim(),
             username: formValue.username.trim(),
             email: formValue.email.trim(),
-            isTwoFactorAuthRequired: true,
-            mustResetPasswordOnNextLogin: true,
+            isTwoFactorAuthRequired: BtUserDefaults.isTwoFactorAuthRequired,
+            mustResetPasswordOnNextLogin: BtUserDefaults.mustResetPasswordOnNextLogin,
         };
 
         const createdUser = await this.usersService.createUser(this.data.tenantId, request);

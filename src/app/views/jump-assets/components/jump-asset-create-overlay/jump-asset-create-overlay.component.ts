@@ -18,6 +18,7 @@ import { CustomerCacheService } from "../../../customers/customer-cache.service"
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
+import { BT_JUMP_ITEM_GROUP_TYPE, BT_PORT_RANGE, BtRemoteVncDefaults, BtShellJumpDefaults } from "../../../../shared/config";
 
 export type JumpAssetType =
     | "remoteRdp"
@@ -51,11 +52,6 @@ interface JumpAssetForm {
     templateUrl: "./jump-asset-create-overlay.component.html",
 })
 export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
-    private static readonly DEFAULT_REMOTE_VNC_PORT = 5900;
-    private static readonly DEFAULT_SHELL_JUMP_PORT = 22;
-    private static readonly MIN_PORT = 1;
-    private static readonly MAX_PORT = 65535;
-    private static readonly DEFAULT_JUMP_GROUP_TYPE = "shared";
 
     private readonly destroy$ = new Subject<void>();
 
@@ -273,8 +269,8 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
         if (this.showPortField()) {
             portCtrl.setValidators([
                 Validators.required,
-                Validators.min(JumpAssetCreateOverlayComponent.MIN_PORT),
-                Validators.max(JumpAssetCreateOverlayComponent.MAX_PORT),
+                Validators.min(BT_PORT_RANGE.MIN),
+                Validators.max(BT_PORT_RANGE.MAX),
             ]);
             portCtrl.setValue(this.getDefaultPort());
         } else {
@@ -292,8 +288,8 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
     /** Get default port based on asset type */
     private getDefaultPort(): number {
         return this.data.assetType === "remoteVnc"
-            ? JumpAssetCreateOverlayComponent.DEFAULT_REMOTE_VNC_PORT
-            : JumpAssetCreateOverlayComponent.DEFAULT_SHELL_JUMP_PORT;
+            ? BtRemoteVncDefaults.defaultPort
+            : BtShellJumpDefaults.defaultPortSsh;
     }
 
     /** Determines if the Port field should be visible */
@@ -342,8 +338,7 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
             port: this.showPortField() ? formValue.port! : undefined,
             jumpointId: formValue.jumpoint!.id,
             jumpGroupId: formValue.jumpGroup!.id,
-            jumpGroupType:
-                JumpAssetCreateOverlayComponent.DEFAULT_JUMP_GROUP_TYPE,
+            jumpGroupType: BT_JUMP_ITEM_GROUP_TYPE,
             jumpPolicyId: formValue.jumpPolicy?.id ?? null,
             sessionPolicyId: formValue.sessionPolicy?.id ?? null,
             mustVerifyCertificate: this.showMustVerifyCertificate()

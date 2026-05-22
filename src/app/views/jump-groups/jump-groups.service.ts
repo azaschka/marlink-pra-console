@@ -5,6 +5,7 @@ import { distinctUntilChanged, skip } from "rxjs/operators";
 import { JumpGroup } from "./models/jump-group.model";
 import { JumpGroupUpdateRequest } from "./models";
 import { TenantCache } from "../../shared/helpers/tenant-cache";
+import { BtApiDefaults } from "../../shared/config";
 import { AppService } from "../../app.service";
 
 @Injectable({ providedIn: "root" })
@@ -33,7 +34,7 @@ export class JumpGroupsService {
 
     public fetchJumpGroups(tenantId: number): Promise<JumpGroup[]> {
         return this.cache.get(tenantId, async () => {
-            const params = new HttpParams().set("pageSize", "9999");
+            const params = new HttpParams().set("pageSize", BtApiDefaults.FETCH_ALL_PAGE_SIZE);
             const result = await firstValueFrom(
                 this.http.get<JumpGroup[]>("jump-groups", {
                     params,

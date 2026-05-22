@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
 import { PraUser, PraUserCreateRequest, PraUserUpdateRequest } from "./models";
 import { TenantCache } from "../../shared/helpers/tenant-cache";
+import { BtApiDefaults } from "../../shared/config";
 
 @Injectable()
 export class PraUsersService {
@@ -18,7 +19,7 @@ export class PraUsersService {
 
     public fetchPraUsers(): Promise<PraUser[]> {
         return this.cache.get(PraUsersService.CACHE_KEY, () => {
-            const params = new HttpParams().set("pageSize", "9999");
+            const params = new HttpParams().set("pageSize", BtApiDefaults.FETCH_ALL_PAGE_SIZE);
             return firstValueFrom(this.http.get<PraUser[]>("pra-users", { params }));
         });
     }

@@ -10,6 +10,7 @@ import { CustomerCacheService } from "../../../customers/customer-cache.service"
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
+import { BT_JUMP_ITEM_GROUP_TYPE } from "../../../../shared/config";
 import { AutocompleteValidators } from "../../../../shared/validators";
 
 export interface CopyJumpAssetDialogData {
@@ -145,7 +146,7 @@ export class JumpAssetCopyOverlayComponent implements OnInit, OnDestroy {
         const request: JumpAssetCopyRequest = {
             name: formValue.name.trim(),
             jumpGroupId: formValue.jumpGroup!.id,
-            jumpGroupType: "shared",
+            jumpGroupType: BT_JUMP_ITEM_GROUP_TYPE,
         };
         this.dialogRef.close(request);
     }

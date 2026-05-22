@@ -1,4 +1,5 @@
 import { Injectable } from "@angular/core";
+import { BtApiDefaults } from "../../shared/config";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { firstValueFrom, Observable } from "rxjs";
 import {
@@ -22,7 +23,7 @@ export class BtDiscrepanciesService {
         params: RetrieveDiscrepanciesParams = {},
     ): Promise<Discrepancy[]> {
         let httpParams = new HttpParams();
-        httpParams = httpParams.set("pageSize", "9999");
+        httpParams = httpParams.set("pageSize", BtApiDefaults.FETCH_ALL_PAGE_SIZE);
 
         if (params.pageSize !== undefined) {
             httpParams = httpParams.set("pageSize", params.pageSize.toString());

@@ -16,6 +16,7 @@ import { CustomerCacheService } from "../../../customers/customer-cache.service"
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
+import { BT_JUMP_ITEM_GROUP_TYPE, BT_PORT_RANGE, BtRemoteVncDefaults, BtShellJumpDefaults } from "../../../../shared/config";
 
 export interface JumpAssetUpdateDialogData {
     assetType:
@@ -55,10 +56,6 @@ interface UpdateForm {
     templateUrl: "./jump-asset-update-overlay.component.html",
 })
 export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
-    private static readonly DEFAULT_REMOTE_VNC_PORT = 5900;
-    private static readonly DEFAULT_SHELL_JUMP_PORT = 22;
-    private static readonly MINIMUM_PORT_NUMBER = 1;
-    private static readonly MAXIMUM_PORT_NUMBER = 65535;
 
     private readonly destroy$ = new Subject<void>();
 
@@ -298,7 +295,7 @@ export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
                     : undefined,
             port: this.showPortField() ? formValue.port! : undefined,
             jumpGroupId: formValue.jumpGroup!.id,
-            jumpGroupType: "shared",
+            jumpGroupType: BT_JUMP_ITEM_GROUP_TYPE,
             jumpPolicyId: formValue.jumpPolicy?.id ?? null,
             sessionPolicyId: formValue.sessionPolicy?.id ?? null,
             mustVerifyCertificate: this.showMustVerifyCertificate()
@@ -334,19 +331,15 @@ export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
         if (this.showPortField()) {
             portCtrl.setValidators([
                 Validators.required,
-                Validators.min(
-                    JumpAssetUpdateOverlayComponent.MINIMUM_PORT_NUMBER,
-                ),
-                Validators.max(
-                    JumpAssetUpdateOverlayComponent.MAXIMUM_PORT_NUMBER,
-                ),
+                Validators.min(BT_PORT_RANGE.MIN),
+                Validators.max(BT_PORT_RANGE.MAX),
             ]);
             if (!portCtrl.value) {
                 portCtrl.setValue(
                     this.data.currentPort ??
                         (this.data.assetType === "remoteVnc"
-                            ? JumpAssetUpdateOverlayComponent.DEFAULT_REMOTE_VNC_PORT
-                            : JumpAssetUpdateOverlayComponent.DEFAULT_SHELL_JUMP_PORT),
+                            ? BtRemoteVncDefaults.defaultPort
+                            : BtShellJumpDefaults.defaultPortSsh),
                 );
             }
         } else {

@@ -10,12 +10,12 @@ import { JumpGroup } from "../../../jump-groups/models";
 import { JumpPolicy } from "../../../jump-policies/models";
 import { SessionPolicy } from "../../../session-policies/models";
 import { CreateJumpClientInstallerDtoInput } from "../../models";
-import { JumpClientConnectionType, JumpClientGroupType } from "../../enums";
 import { CustomerCacheService } from "../../../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
 import { AutocompleteValidators } from "../../../../shared/validators";
+import { BtJumpClientDefaults } from "../../../../shared/config";
 
 export interface JumpClientInstallerCreateDialogData {
     /** The tenant ID of the selected BeyondTrust instance. */
@@ -220,20 +220,20 @@ export class JumpClientInstallerCreateOverlayComponent
             name: formValue.name.trim(),
             tag: trimmedTag || undefined,
             jumpGroupId: formValue.jumpGroup!.id,
-            jumpGroupType: JumpClientGroupType.Shared,
+            jumpGroupType: BtJumpClientDefaults.jumpGroupType,
             jumpPolicyId: formValue.jumpPolicy?.id ?? undefined,
             sessionPolicyId: formValue.sessionPolicy?.id ?? null,
             // Defaults aligned with site-import-workflow.ts (fields not exposed in the form)
-            connectionType: JumpClientConnectionType.Active,
-            validDurationInMinutes: 20160, // 14 days
-            shouldElevateInstall: true,
-            shouldElevatePrompt: true,
-            canOverrideJumpGroup: false,
-            canOverrideJumpPolicy: false,
-            canOverrideName: false,
-            canOverrideTag: false,
-            canOverrideComments: false,
-            canOverrideSessionPolicy: false,
+            connectionType: BtJumpClientDefaults.connectionType,
+            validDurationInMinutes: BtJumpClientDefaults.validDurationInMinutes,
+            shouldElevateInstall: BtJumpClientDefaults.shouldElevateInstall,
+            shouldElevatePrompt: BtJumpClientDefaults.shouldElevatePrompt,
+            canOverrideJumpGroup: BtJumpClientDefaults.canOverrideJumpGroup,
+            canOverrideJumpPolicy: BtJumpClientDefaults.canOverrideJumpPolicy,
+            canOverrideName: BtJumpClientDefaults.canOverrideName,
+            canOverrideTag: BtJumpClientDefaults.canOverrideTag,
+            canOverrideComments: BtJumpClientDefaults.canOverrideComments,
+            canOverrideSessionPolicy: BtJumpClientDefaults.canOverrideSessionPolicy,
         };
 
         this.dialogRef.close(request);
