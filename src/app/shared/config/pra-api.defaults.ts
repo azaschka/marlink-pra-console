@@ -1,8 +1,7 @@
 /**
- * API-level defaults used when communicating with the PRA / BeyondTrust API.
- * Not related to UI presentation.
+ * API-level defaults used when communicating with the PRA API.
  */
-export const BtApiDefaults = {
+export const PraApiDefaults = {
     /**
      * pageSize value used in "fetch-all" requests where server-side pagination
      * is bypassed intentionally (e.g. dropdown population).

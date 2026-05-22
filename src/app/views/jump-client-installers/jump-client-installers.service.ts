@@ -6,7 +6,7 @@ import {
     JumpClientInstaller,
 } from "./models";
 import { JumpClientConnectionType, JumpClientGroupType } from "./enums";
-import { BtApiDefaults } from "../../shared/config";
+import { PraApiDefaults } from "../../shared/config";
 
 export interface RetrieveJumpClientInstallersParams {
     pageSize?: number;
@@ -35,7 +35,7 @@ export class JumpClientInstallersService {
     ): Promise<JumpClientInstaller[]> {
         let httpParams = new HttpParams().set(
             "pageSize",
-            (params.pageSize ?? +BtApiDefaults.FETCH_ALL_PAGE_SIZE).toString(),
+            (params.pageSize ?? +PraApiDefaults.FETCH_ALL_PAGE_SIZE).toString(),
         );
 
         if (params.pageNumber !== undefined) {

@@ -8,7 +8,7 @@ import { PraUsersService } from "../../pra-users.service";
 import { PraUser, PraUserCreateRequest, PraUserUpdateRequest } from "../../models";
 import { BusinessUnit, BusinessUnitLabels, UserRole } from "../../enums";
 import { PraUser as AuthPraUser } from "../../../../shared/models";
-import { BtUserDefaults } from "../../../../shared/config";
+import { PraUserDefaults } from "../../../../shared/config";
 
 export type PraUserOverlayMode = "add" | "edit";
 
@@ -230,7 +230,7 @@ export class PraUserOverlayComponent implements OnInit, OnDestroy {
         if (this.mode === "edit" && this.user?.businessUnit) {
             return this.user.businessUnit;
         }
-        return BtUserDefaults.defaultAdminBusinessUnit;
+        return PraUserDefaults.defaultAdminBusinessUnit;
     }
 
     /**

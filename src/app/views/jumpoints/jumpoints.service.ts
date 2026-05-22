@@ -4,7 +4,7 @@ import { firstValueFrom, Observable } from "rxjs";
 import { distinctUntilChanged, skip } from "rxjs/operators";
 import { AppService } from "../../app.service";
 import { TenantCache } from "../../shared/helpers/tenant-cache";
-import { BtApiDefaults } from "../../shared/config";
+import { PraApiDefaults } from "../../shared/config";
 import { JumpointDeploymentNode, Jumpoint } from "./models";
 import { JumpointNodeBusinessUnit } from "./enums";
 
@@ -34,7 +34,7 @@ export class JumpointsService {
 
     public fetchJumpoints(tenantId: number): Promise<Jumpoint[]> {
         return this.cache.get(tenantId, async () => {
-            const params = new HttpParams().set("pageSize", BtApiDefaults.FETCH_ALL_PAGE_SIZE);
+            const params = new HttpParams().set("pageSize", PraApiDefaults.FETCH_ALL_PAGE_SIZE);
             const result = await firstValueFrom(
                 this.http.get<Jumpoint[]>("jumpoints", {
                     params,
@@ -73,7 +73,7 @@ export class JumpointsService {
     // -------------------------------------------------------------------------
 
     public fetchDeploymentNodes(): Promise<JumpointDeploymentNode[]> {
-        const params = new HttpParams().set("pageSize", BtApiDefaults.FETCH_ALL_PAGE_SIZE);
+        const params = new HttpParams().set("pageSize", PraApiDefaults.FETCH_ALL_PAGE_SIZE);
         return firstValueFrom(this.http.get<JumpointDeploymentNode[]>("deployments/jumpoint-nodes", { params }));
     }
 
@@ -88,7 +88,7 @@ export class JumpointsService {
 
     public createDeploymentNodeService(id: number): Promise<JumpointDeploymentNode> {
         return firstValueFrom(
-            this.http.post<JumpointDeploymentNode>(`deployments/jumpoint-nodes/${id}/services`, { serviceType: BtApiDefaults.DEPLOYMENT_SERVICE_TYPE }),
+            this.http.post<JumpointDeploymentNode>(`deployments/jumpoint-nodes/${id}/services`, { serviceType: PraApiDefaults.DEPLOYMENT_SERVICE_TYPE }),
         );
     }
 

@@ -6,7 +6,7 @@ import {
 } from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
 import { ErrorUtils } from "../../shared/helpers";
-import { BtApiDefaults } from "../../shared/config";
+import { PraApiDefaults } from "../../shared/config";
 import {
     User,
     UserCreateRequest,
@@ -33,7 +33,7 @@ export class UsersService {
     }
 
     public async fetchUsers(tenantId: number): Promise<User[]> {
-        const params = new HttpParams().set("pageSize", BtApiDefaults.FETCH_ALL_PAGE_SIZE);
+        const params = new HttpParams().set("pageSize", PraApiDefaults.FETCH_ALL_PAGE_SIZE);
         return firstValueFrom(
             this.http.get<User[]>("users", {
                 params,

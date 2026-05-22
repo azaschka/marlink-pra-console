@@ -4,7 +4,7 @@ import { firstValueFrom } from "rxjs";
 import { distinctUntilChanged, skip } from "rxjs/operators";
 import { SessionPolicy, RetrieveSessionPoliciesParams } from "./models";
 import { AppService } from "../../app.service";
-import { BtApiDefaults } from "../../shared/config";
+import { PraApiDefaults } from "../../shared/config";
 import { TenantCache } from "../../shared/helpers/tenant-cache";
 
 @Injectable({ providedIn: "root" })
@@ -46,7 +46,7 @@ export class SessionPoliciesService {
         return this.cache.get(cacheKey, async () => {
             let httpParams = new HttpParams().set(
                 "pageSize",
-                (params.pageSize ?? +BtApiDefaults.FETCH_ALL_PAGE_SIZE).toString(),
+                (params.pageSize ?? +PraApiDefaults.FETCH_ALL_PAGE_SIZE).toString(),
             );
 
             if (params.pageNumber !== undefined) {

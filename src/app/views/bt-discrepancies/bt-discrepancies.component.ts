@@ -13,7 +13,7 @@ import { JwtAuthService } from "../../shared/services/auth/jwt-auth.service";
 import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
 import { BtDiscrepanciesService } from "./bt-discrepancies.service";
 import { Discrepancy } from "./models";
-import { BtApiDefaults } from "../../shared/config";
+import { PraApiDefaults } from "../../shared/config";
 import { AppService } from "../../app.service";
 import { DiscrepancyEntityType, DiscrepancyScanStatus, DiscrepancySyncType } from "./enums";
 
@@ -295,7 +295,7 @@ export class BtDiscrepanciesComponent extends PraBaseComponent implements OnInit
         this.isLoading = true;
         try {
             const discrepancies = await this.btDiscrepanciesService.fetchDiscrepancies(this.currentTenantId, {
-                pageSize: +BtApiDefaults.FETCH_ALL_PAGE_SIZE,
+                pageSize: +PraApiDefaults.FETCH_ALL_PAGE_SIZE,
             });
 
             this.dataSource.data = discrepancies;

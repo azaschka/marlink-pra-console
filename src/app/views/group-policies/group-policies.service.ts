@@ -5,7 +5,7 @@ import { distinctUntilChanged, skip } from "rxjs/operators";
 import { GroupPolicy, GroupPolicyAddMemberRequest, GroupPolicyMember } from "./models";
 import { TenantCache } from "../../shared/helpers/tenant-cache";
 import { AppService } from "../../app.service";
-import { BtApiDefaults } from "../../shared/config";
+import { PraApiDefaults } from "../../shared/config";
 
 @Injectable({ providedIn: "root" })
 export class GroupPoliciesService {
@@ -37,7 +37,7 @@ export class GroupPoliciesService {
 
     public async fetchGroupPolicies(tenantId: number): Promise<GroupPolicy[]> {
         return this.policiesCache.get(tenantId, async () => {
-            const params = new HttpParams().set("pageSize", BtApiDefaults.FETCH_ALL_PAGE_SIZE);
+            const params = new HttpParams().set("pageSize", PraApiDefaults.FETCH_ALL_PAGE_SIZE);
             const result = await firstValueFrom(
                 this.http.get<GroupPolicy[]>("group-policies", {
                     params,
@@ -60,7 +60,7 @@ export class GroupPoliciesService {
     public async fetchGroupPolicyMembers(tenantId: number, groupPolicyId: number): Promise<GroupPolicyMember[]> {
         const cacheKey = `${tenantId}_${groupPolicyId}`;
         return this.membersCache.get(cacheKey, async () => {
-            const params = new HttpParams().set("pageSize", BtApiDefaults.FETCH_ALL_PAGE_SIZE);
+            const params = new HttpParams().set("pageSize", PraApiDefaults.FETCH_ALL_PAGE_SIZE);
             const result = await firstValueFrom(
                 this.http.get<GroupPolicyMember[]>(`group-policies/${groupPolicyId}/members`, {
                     params,
