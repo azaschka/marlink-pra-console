@@ -49,5 +49,12 @@ Thumbs.db
 *.wmv
 
 .vscode/mcp.json
-.vscode/mcp.json
+
+# Allow GitHub Copilot instruction files and project docs while keeping other .github content private
 .github/*
+!.github/instructions/
+!.github/instructions/*.md
+!.github/copilot-instructions.md
+
+# Local runtime env — never commit generated keys
+src/assets/scripts/env.js
