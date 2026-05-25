@@ -180,7 +180,7 @@ export class NavigationService {
             type: "download",
             tooltip: "Download Postman Collection",
             icon: "download",
-            state: `/assets/docs/Marlink PRA API v3.0.0.postman_collection.json`,
+            state: `/assets/docs/Marlink PRA API v3.1.x.postman.collection.yaml`,
             roles: [AuthRole.SUPER_ADMIN, AuthRole.DATA_CENTER_ENGINEER],
         },
     ];

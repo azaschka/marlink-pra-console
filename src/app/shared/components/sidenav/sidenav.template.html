@@ -47,7 +47,7 @@
                     <span class="menuitem-badge mat-bg-{{ badge.color }}" [ngStyle]="{background: badge.color}"
                         *ngFor="let badge of item.badges">{{ badge.value }}</span>
                 </a>
-                <a (click)="handleDownload(item.state, 'Marlink PRA API v3.0.0.postman_collection.json')"
+                <a (click)="handleDownload(item.state, 'Marlink PRA API v3.1.x.postman.collection.yaml')"
                     appDropdownToggle matRipple *ngIf="item.type === 'download'" style="cursor: pointer">
                     <mat-icon *ngIf="item.icon" class="sidenav-mat-icon">{{item.icon}}</mat-icon>
                     <span class="item-name lvl1 fw-500">{{item.name | translate}}</span>
