@@ -10,8 +10,7 @@ import {
 export const BtJumpClientDefaults = {
     jumpGroupType: JumpClientGroupType.Shared,
     connectionType: JumpClientConnectionType.Active,
-    /** 20160 minutes = 14 days */
-    validDurationInMinutes: 20160,
+    validDurationInMinutes: 43200, // 30 days
     shouldElevateInstall: true,
     shouldElevatePrompt: true,
     canOverrideJumpGroup: false,
