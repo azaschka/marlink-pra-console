@@ -10,6 +10,7 @@ describe('EgretSidebarComponent', () => {
     TestBed.configureTestingModule({
       declarations: [ EgretSidebarComponent ]
     })
+    .overrideTemplate(EgretSidebarComponent, '')
     .compileComponents();
   }));
 

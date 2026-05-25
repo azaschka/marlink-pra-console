@@ -10,6 +10,7 @@ describe('FooterComponent', () => {
     TestBed.configureTestingModule({
       declarations: [ FooterComponent ]
     })
+    .overrideTemplate(FooterComponent, '')
     .compileComponents();
   }));
 

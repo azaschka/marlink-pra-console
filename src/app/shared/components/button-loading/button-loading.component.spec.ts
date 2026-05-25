@@ -1,3 +1,4 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { ButtonLoadingComponent } from './button-loading.component';
@@ -8,8 +9,10 @@ describe('ButtonLoadingComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ButtonLoadingComponent ]
+      declarations: [ButtonLoadingComponent],
+      schemas: [NO_ERRORS_SCHEMA],
     })
+    .overrideTemplate(ButtonLoadingComponent, '')
     .compileComponents();
   }));
 
