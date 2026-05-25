@@ -58,9 +58,13 @@ export class JwtAuthService {
                 this.saveJwtTokenToLocalStorage(res.accessToken);
                 await this.checkTokenIsValid();
             })
-            .catch((reason) => {
+            .catch((reason: unknown) => {
                 this.signout();
-                throw new Error(reason.message);
+                const detail =
+                    reason instanceof Error ? reason.message : String(reason);
+                throw new Error(
+                    `[JwtAuthService.login] Failed to sign in: ${detail}`,
+                );
             });
     }
 
@@ -70,9 +74,13 @@ export class JwtAuthService {
                 this.userProfile.next(res);
                 this.saveUserObjectToLocalStorage(res);
             })
-            .catch((reason) => {
+            .catch((reason: unknown) => {
                 this.signout();
-                console.error(reason.message);
+                const detail =
+                    reason instanceof Error ? reason.message : String(reason);
+                throw new Error(
+                    `[JwtAuthService.checkTokenIsValid] Token validation failed: ${detail}`,
+                );
             });
     }
 

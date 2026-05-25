@@ -272,7 +272,7 @@ export class JumpAssetsService {
         tenantId: number,
         id: number
     ): Promise<void> {
-        this.delete(`jump-clients/installers/${id}`, tenantId);
+        await this.delete(`jump-clients/installers/${id}`, tenantId);
     }
     public async downloadJumpClientInstallerPlatform(
         tenantId: number,

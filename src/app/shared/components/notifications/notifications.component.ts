@@ -1,13 +1,16 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
-import { MatSidenav } from '@angular/material/sidenav';
+import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
+import { Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-notifications',
   templateUrl: './notifications.component.html'
 })
-export class NotificationsComponent implements OnInit {
-  @Input() notificPanel;
+export class NotificationsComponent implements OnInit, OnDestroy {
+  @Input() notificPanel!: { close: () => void };
+
+  private readonly destroy$ = new Subject<void>();
 
   // Dummy notifications
   notifications = [{
@@ -33,13 +36,21 @@ export class NotificationsComponent implements OnInit {
   constructor(private router: Router) {}
 
   ngOnInit() {
-    this.router.events.subscribe((routeChange) => {
-        if (routeChange instanceof NavigationEnd) {
+    this.router.events
+      .pipe(
+        filter((routeChange) => routeChange instanceof NavigationEnd),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(() => {
           this.notificPanel.close();
-        }
-    });
+      });
   }
-  clearAll(e) {
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+  clearAll(e: Event) {
     e.preventDefault();
     this.notifications = [];
   }

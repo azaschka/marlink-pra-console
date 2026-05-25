@@ -1,7 +1,9 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { Title } from "@angular/platform-browser";
 import { Router, NavigationEnd, ActivatedRoute } from "@angular/router";
+import { Subject } from "rxjs";
 import { filter } from "rxjs/operators";
+import { takeUntil } from "rxjs/operators";
 
 import { RoutePartsService } from "./shared/services/route-parts.service";
 
@@ -9,9 +11,11 @@ import { RoutePartsService } from "./shared/services/route-parts.service";
     selector: "app-root",
     templateUrl: "./app.component.html",
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
     public appTitle = "PRA Admin";
     public pageTitle = "";
+
+    private readonly destroy$ = new Subject<void>();
 
     constructor(
         public title: Title,
@@ -24,9 +28,17 @@ export class AppComponent implements OnInit {
         this.changePageTitle();
     }
 
+    public ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
     private changePageTitle(): void {
         this.router.events
-            .pipe(filter((event) => event instanceof NavigationEnd))
+            .pipe(
+                filter((event) => event instanceof NavigationEnd),
+                takeUntil(this.destroy$),
+            )
             .subscribe((routeChange) => {
                 const routeParts = this.routePartsService.generateRouteParts(
                     this.activeRoute.snapshot
