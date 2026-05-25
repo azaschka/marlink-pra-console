@@ -1,18 +1,37 @@
 # PRA Console - AI Coding Agent Instructions
 
-## Scope
+Guidance for AI coding agents working in this repository.
 
-Angular 14 admin UI for PRA operations. Keep changes aligned with current patterns in `src/app/views/*` and shared platform code under `src/app/shared/*`.
+## Project Snapshot
+
+- Stack: Angular 14, Nx, Angular Material, RxJS.
+- Purpose: frontend admin console for PRA operations and management workflows.
+- Architecture center: feature modules under src/app/views with shared platform code under src/app/shared.
+
+## System Boundaries and Dependencies
+
+- This project is the UI layer in the PRA stack.
+- Primary downstream API: PRA API.
+- Do not call PRA Sync API directly from the frontend.
+- Do not implement direct BeyondTrust API calls in frontend services.
+- Keep API base URL and auth header composition centralized in interceptors/runtime config.
+- If endpoint contracts change in PRA API, coordinate corresponding frontend service/model updates.
+
+## Coupled-Change Policy
+
+- Mark changes as coupled across at least two repositories when contract surface changes occur (headers, DTO shapes, status/error shape, auth behavior).
+- Use the shared checklist in [.github/CROSS_REPO_CONTRACT_CHECKLIST.md](./CROSS_REPO_CONTRACT_CHECKLIST.md) and include affected repos in PR notes.
+- For coupled changes, document compatibility impact and rollout order.
 
 ## Fast Start Commands
 
-- Install: `npm install`
-- Dev server: `nx serve` (do not prefer `ng serve` in this repo)
-- Unit tests: `nx test`
-- Production build: `npm run build:console`
-- Type check: `npm run typecheck`
-- Lint: `npm run lint`
-- Docker pipeline: `npm run docker:prepare:console`, `npm run publish:console`
+- Install: npm install
+- Dev server: nx serve (do not prefer ng serve in this repo)
+- Unit tests: nx test
+- Production build: npm run build:console
+- Type check: npm run typecheck
+- Lint: npm run lint
+- Docker pipeline: npm run docker:prepare:console, npm run publish:console
 
 Command source of truth: [package.json](../package.json).
 
@@ -55,10 +74,35 @@ Command source of truth: [package.json](../package.json).
 - Add translation keys in [src/assets/i18n/en.json](../src/assets/i18n/en.json).
 - Prefer service methods returning `Promise<T>` via `firstValueFrom(...)` when integrating with existing async/await flows.
 
+## Coding Rules That Matter Here
+
+- Keep API communication in Angular services; keep components focused on UI orchestration/state.
+- Preserve route guard and role behavior consistency between app routing and navigation service.
+- Use existing shared dialog and helper services for confirmations, notifications, and error display.
+- Keep startup auth/bootstrap behavior aligned with APP_INITIALIZER flow in app.module.
+- Reuse established feature patterns in neighboring modules before introducing new abstractions.
+
+## Linting, Naming, and Quality Rules
+
+- Run npm run typecheck and npm run lint before completion.
+- Avoid any unless unavoidable and keep explicit typing for API payloads/models.
+- Keep naming aligned with current conventions in src/app/views and shared services.
+- Keep user-facing text translatable; add keys in src/assets/i18n/en.json instead of hardcoded strings.
+
+## Validation Checklist Before Finalizing
+
+- npm run typecheck
+- npm run lint
+- npm run build:console
+- For flow-critical changes, run nx test or targeted tests and validate key smoke flows manually (login, role-based navigation, affected CRUD path).
+
 ## Canonical Domain Docs (Link, Don’t Re-embed)
 
 - Cache behavior and invalidation strategy: [docs/cache-strategy.md](../docs/cache-strategy.md)
 - BeyondTrust naming conventions: [docs/pra-beyondtrust-object-naming.md](../docs/pra-beyondtrust-object-naming.md)
+- Primary backend contract repo: [pra-api/README.md](../../pra-api/README.md)
+- Sync backend repo (indirect dependency via PRA API): [pra-sync-api/README.md](../../pra-sync-api/README.md)
+- Shared contract checklist: [.github/CROSS_REPO_CONTRACT_CHECKLIST.md](./CROSS_REPO_CONTRACT_CHECKLIST.md)
 
 ## Common Pitfalls
 
@@ -66,13 +110,6 @@ Command source of truth: [package.json](../package.json).
 - Keep role checks consistent between routes and navigation.
 - Preserve startup auth initialization via `APP_INITIALIZER` in [src/app/app.module.ts](../src/app/app.module.ts).
 - Prefer `nx` scripts used by this workspace over legacy Angular CLI defaults from [README.md](../README.md).
-
-## Required Quality Gates Per Changeset
-
-- Run `npm run typecheck`.
-- Run `npm run lint`.
-- Run `npm run build:console`.
-- For test-related or risk-sensitive changes, run `npm test -- --watch=false --browsers=ChromeHeadless`.
 
 ## Testing Baseline
 

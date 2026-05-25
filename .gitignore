@@ -54,7 +54,10 @@ Thumbs.db
 .github/*
 !.github/instructions/
 !.github/instructions/*.md
+!.github/prompts/
+!.github/prompts/*.md
 !.github/copilot-instructions.md
+!.github/CROSS_REPO_CONTRACT_CHECKLIST.md
 
 # Local runtime env — never commit generated keys
 src/assets/scripts/env.js
