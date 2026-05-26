@@ -20,6 +20,7 @@ Execution requirements:
 - Use relative endpoints only; keep headers/base URL logic in interceptor/runtime config.
 - If contract changes are needed, apply [Cross-Repo Contract Checklist](../CROSS_REPO_CONTRACT_CHECKLIST.md) and flag coupled repo follow-ups.
 - Update routing/navigation/i18n when the feature requires it.
+- Preserve existing feature semantics unless the request explicitly asks to change behavior. Do not introduce new UI meaning (for example, "empty field means keep current value") only because a backend field is optional.
 
 Required output format:
 1. Files changed and one-line purpose each.

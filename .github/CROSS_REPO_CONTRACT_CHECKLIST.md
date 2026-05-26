@@ -4,6 +4,9 @@
 
 - Use this checklist when a change may affect contracts between PRA Console, PRA API, and PRA Sync API.
 - Keep this file synchronized across all three repositories.
+- Responsibility split reminder (PRA Console): UI orchestration, frontend DTO mapping, form/display behavior.
+- Responsibility split reminder (PRA API): public contract owner for Console (endpoints, DTOs, validation semantics).
+- Responsibility split reminder (PRA Sync API): internal downstream integration behind PRA API; Console must not call it directly.
 
 ## Contract Surface
 
@@ -27,6 +30,7 @@
 - Document rollout order (which repository should be released first).
 - List test evidence per impacted boundary (API tests, frontend integration checks, sync adapter checks).
 - Add links to related PRs or tracking tasks in sibling repositories.
+- If API marks a field optional, explicitly confirm whether UI semantics should remain strict/required in the current flow or be relaxed; avoid silent UI semantic drift.
 
 ## Minimal Verification
 

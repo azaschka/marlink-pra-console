@@ -73,6 +73,7 @@ Command source of truth: [package.json](../package.json).
 - Add navigation item in [src/app/shared/services/navigation.service.ts](../src/app/shared/services/navigation.service.ts).
 - Add translation keys in [src/assets/i18n/en.json](../src/assets/i18n/en.json).
 - Prefer service methods returning `Promise<T>` via `firstValueFrom(...)` when integrating with existing async/await flows.
+- Be aware of legacy path naming in dashboard BeyondTrust code: the folder is `beyondtrust-instaces` (without the second `n`). Preserve this naming unless the task explicitly requires a rename migration.
 
 ## Coding Rules That Matter Here
 
@@ -81,6 +82,9 @@ Command source of truth: [package.json](../package.json).
 - Use existing shared dialog and helper services for confirmations, notifications, and error display.
 - Keep startup auth/bootstrap behavior aligned with APP_INITIALIZER flow in app.module.
 - Reuse established feature patterns in neighboring modules before introducing new abstractions.
+- UI behavior rule for this repo:
+  - Do not introduce ad-hoc semantic changes unless it follows angular best practices.
+  - Keep form behavior aligned with existing feature logic patterns and document intentional deviations.
 
 ## Linting, Naming, and Quality Rules
 
