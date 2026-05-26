@@ -9,4 +9,5 @@ export interface CreateBeyondtrustInstanceDto {
     apiBaseUrl: string;
     billingType: BillingType;
     businessUnit?: BusinessUnit | null;
+    cname: string;
 }

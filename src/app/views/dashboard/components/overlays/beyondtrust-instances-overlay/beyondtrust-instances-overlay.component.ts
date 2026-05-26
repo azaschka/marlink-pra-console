@@ -24,6 +24,8 @@ export interface BeyondtrustInstanceOverlayDialogData {
     templateUrl: "./beyondtrust-instances-overlay.component.html",
 })
 export class BeyondtrustInstancesOverlayComponent implements OnInit {
+    private static readonly HTTPS_URL_PATTERN = /^https:\/\/.+/;
+
     public isLoading = false;
     public mode: BeyondtrustInstanceOverlayMode;
     public instance?: BeyondtrustInstance;
@@ -51,6 +53,10 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
         authClientSecret: new FormControl("", [Validators.required]),
         oauth2TokenUrl: new FormControl("", [Validators.required]),
         apiBaseUrl: new FormControl("", [Validators.required]),
+        cname: new FormControl<string | null>("", [
+            Validators.required,
+            Validators.pattern(BeyondtrustInstancesOverlayComponent.HTTPS_URL_PATTERN),
+        ]),
         billingType: new FormControl<BillingType>(BillingType.User, [
             Validators.required,
         ]),
@@ -77,6 +83,7 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
                 authClientSecret: this.instance.authClientSecret,
                 oauth2TokenUrl: this.instance.oauth2TokenUrl,
                 apiBaseUrl: this.instance.apiBaseUrl,
+                cname: this.instance.cname,
                 billingType: this.instance.billingType,
                 businessUnit: this.instance.businessUnit,
             });
@@ -128,6 +135,7 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
             apiBaseUrl: form.apiBaseUrl!.trim(),
             billingType: form.billingType!,
             businessUnit: form.businessUnit ?? null,
+            cname: form.cname!.trim(),
         };
         await this.beyondtrustInstancesService.create(body);
     }
@@ -141,6 +149,7 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
             authClientSecret: form.authClientSecret!.trim(),
             oauth2TokenUrl: form.oauth2TokenUrl!.trim(),
             apiBaseUrl: form.apiBaseUrl!.trim(),
+            cname: form.cname!.trim(),
             billingType: form.billingType!,
             businessUnit: form.businessUnit ?? null,
         };
@@ -161,6 +170,9 @@ export class BeyondtrustInstancesOverlayComponent implements OnInit {
     }
     get apiBaseUrl() {
         return this.instanceFormGroup.get("apiBaseUrl");
+    }
+    get cname() {
+        return this.instanceFormGroup.get("cname");
     }
     get billingType() {
         return this.instanceFormGroup.get("billingType");

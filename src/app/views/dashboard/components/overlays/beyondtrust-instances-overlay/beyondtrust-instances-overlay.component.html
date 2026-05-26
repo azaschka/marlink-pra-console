@@ -86,6 +86,17 @@
                 </mat-form-field>
             </div>
 
+            <div fxFlex="100" class="m-0 mt-16">
+                <mat-form-field class="full-width">
+                    <mat-label>Console CNAME (Custom Hostname)</mat-label>
+                    <input matInput formControlName="cname" placeholder="https://pra.example.com" />
+                    <mat-hint>Custom HTTPS hostname used in user activation emails. Required.</mat-hint>
+                    <mat-error *ngIf="cname?.hasError('required')">Console CNAME is
+                        <strong>required</strong></mat-error>
+                    <mat-error *ngIf="cname?.hasError('pattern')">Must be a valid HTTPS URL</mat-error>
+                </mat-form-field>
+            </div>
+
             <!-- Submit -->
             <div fxFlex="100" class="mt-32" fxLayout="row" fxLayoutAlign="end center">
                 <span fxFlex></span>

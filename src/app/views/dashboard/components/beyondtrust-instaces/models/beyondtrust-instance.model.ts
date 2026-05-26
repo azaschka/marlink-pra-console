@@ -10,6 +10,7 @@ export interface BeyondtrustInstance {
     apiBaseUrl: string;
     billingType: BillingType;
     businessUnit: BusinessUnit | null;
+    cname: string | null;
     creationDate: Date;
     lastModificationDate?: Date;
 }
