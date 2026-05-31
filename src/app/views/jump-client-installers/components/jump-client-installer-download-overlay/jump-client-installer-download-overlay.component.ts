@@ -173,10 +173,8 @@ export class JumpClientInstallerDownloadOverlayComponent
                 return;
             }
 
-            const url = new URL(instance.apiBaseUrl);
-            const baseUrl = `${url.protocol}//${url.host}`;
             const mappedPlatform = LINK_PLATFORM_MAP[this.platformCtrl.value];
-            this.downloadUrl = `${baseUrl}/download_client_connector?jc=${this.data.installerId}&p=${mappedPlatform}`;
+            this.downloadUrl = `${instance.cname}/download_client_connector?jc=${this.data.installerId}&p=${mappedPlatform}`;
         } catch (error) {
             console.error("Failed to generate download URL:", error);
             this.downloadUrl = "";
