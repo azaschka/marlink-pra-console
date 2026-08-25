@@ -17,7 +17,7 @@ export interface ParsedSite {
 // SITE AUDITORS
 export interface ParsedSiteAuditor {
     email: string; // SITE AUDITOR EMAIL
-    isAdminOperator: boolean; // IS ADMIN OPERATOR ("YES"/"NO")
+    isAdminOperator: boolean; // IS AUDITOR OPERATOR ("YES"/"NO")
 }
 
 // SITE MANAGERS
@@ -121,7 +121,7 @@ export class SiteExcelParserService {
         MARLINK_SITE_ID: "MARLINK SITE ID",
         SITE_NAME: "SITE NAME",
         SITE_AUDITOR_EMAIL: "SITE AUDITOR EMAIL",
-        IS_ADMIN_OPERATOR: "IS ADMIN OPERATOR",
+        IS_ADMIN_OPERATOR: "IS AUDITOR OPERATOR",
         SITE_MANAGER_EMAIL: "SITE MANAGER EMAIL",
         SITE_APPROVER_EMAIL: "SITE APPROVER EMAIL",
     };
