@@ -53,4 +53,12 @@ export class SitesService {
     public async calculateLicenseUsage(id: number): Promise<SiteLicenseUsage> {
         return firstValueFrom(this.http.post<SiteLicenseUsage>(`license-usages/sites/${id}`, {}));
     }
+
+    public async downloadImportTemplate(): Promise<Blob> {
+        return firstValueFrom(
+            this.http.get("/assets/templates/PRA%20Ingestion%20Template.xlsx", {
+                responseType: "blob",
+            }),
+        );
+    }
 }

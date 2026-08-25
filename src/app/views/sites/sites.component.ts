@@ -99,11 +99,23 @@ export class SitesComponent
         this.applyFilter();
     }
 
-    public downloadTemplateHandler(): void {
-        const link = document.createElement("a");
-        link.href = "assets/templates/PRA Ingestion Template.xlsx";
-        link.download = "PRA Ingestion Template.xlsx";
-        link.click();
+    public async downloadTemplateHandler(): Promise<void> {
+        try {
+            const blob = await this.sitesService.downloadImportTemplate();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "PRA Ingestion Template.xlsx";
+            link.click();
+            window.URL.revokeObjectURL(url);
+        } catch (err: any) {
+            this.errorDialog.show({
+                title: "Template Download Failed",
+                message:
+                    err?.message ??
+                    "The import template could not be downloaded. Please try again later.",
+            });
+        }
     }
 
     public importExcelHandler(): void {
