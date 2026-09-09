@@ -4,7 +4,7 @@ import {
     ConfirmDialogComponent,
     ConfirmationDialogData,
 } from "./confirm-dialog.component";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, map } from "rxjs";
 
 @Injectable()
 export class ConfirmDialogService {
@@ -15,12 +15,16 @@ export class ConfirmDialogService {
         data.message = data.message || "Are you sure?";
         data.cancelLabel = data.cancelLabel || "Cancel";
         data.okLabel = data.okLabel || "OK";
+
         const dialogRef: MatDialogRef<ConfirmDialogComponent, boolean> =
             this.dialog.open(ConfirmDialogComponent, {
                 width: "380px",
                 disableClose: true,
                 data,
             });
-        return firstValueFrom(dialogRef.afterClosed());
+
+        return firstValueFrom(
+            dialogRef.afterClosed().pipe(map((result) => result ?? false))
+        );
     }
 }
