@@ -41,6 +41,7 @@ export class JumpClientInstallersComponent
     private static readonly DISPLAYED_COLUMNS = [
         "name",
         "jumpGroupName",
+        "tag",
         "jumpPolicyName",
         "expirationDate",
         "lastSyncDate",

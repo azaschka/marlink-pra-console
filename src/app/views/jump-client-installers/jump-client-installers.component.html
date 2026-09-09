@@ -41,6 +41,12 @@
                         [matTooltip]="row.jumpGroupName">{{ row.jumpGroupName || '—' }}</mat-cell>
                 </ng-container>
 
+                <!-- Tag -->
+                <ng-container matColumnDef="tag">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Tag</mat-header-cell>
+                    <mat-cell *matCellDef="let row" [matTooltip]="row.tag">{{ row.tag || '—' }}</mat-cell>
+                </ng-container>
+
                 <!-- JumpPolicy Name -->
                 <ng-container matColumnDef="jumpPolicyName">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>JumpPolicy Name</mat-header-cell>
