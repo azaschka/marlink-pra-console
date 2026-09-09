@@ -4,6 +4,8 @@ import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material/dialog";
 export interface ConfirmationDialogData {
     title?: string;
     message?: string;
+    cancelLabel?: string;
+    okLabel?: string;
 }
 
 @Component({
@@ -25,7 +27,7 @@ export interface ConfirmationDialogData {
                 mat-raised-button
                 (click)="dialogRef.close(false)"
             >
-                Cancel
+                {{ data.cancelLabel }}
             </button>
 
             <span fxFlex></span>
@@ -36,7 +38,7 @@ export interface ConfirmationDialogData {
                 color="primary"
                 (click)="dialogRef.close(true)"
             >
-                OK
+                {{ data.okLabel }}
             </button>
         </div>
     `,

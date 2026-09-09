@@ -13,6 +13,8 @@ export class ConfirmDialogService {
     public show(data: ConfirmationDialogData = {}): Promise<boolean> {
         data.title = data.title || "Confirm";
         data.message = data.message || "Are you sure?";
+        data.cancelLabel = data.cancelLabel || "Cancel";
+        data.okLabel = data.okLabel || "OK";
         const dialogRef: MatDialogRef<ConfirmDialogComponent, boolean> =
             this.dialog.open(ConfirmDialogComponent, {
                 width: "380px",
