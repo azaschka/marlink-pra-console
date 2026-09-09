@@ -39,7 +39,7 @@
     "@ctrl/ngx-csv": "^6.0.0",
     "@ngx-translate/core": "^14.0.0",
     "@ngx-translate/http-loader": "^7.0.0",
-    "caniuse-lite": "^1.0.30001760",
+    "caniuse-lite": "^1.0.30001810",
     "core-js": "^3.25.1",
     "echarts": "^5.3.3",
     "jsondiffpatch": "^0.7.3",
@@ -55,8 +55,6 @@
     "zone.js": "~0.11.4"
   },
   "devDependencies": {
-      "@typescript-eslint/eslint-plugin": "^5.62.0",
-      "@typescript-eslint/parser": "^5.62.0",
     "@angular-devkit/build-angular": "^14.2.3",
     "@angular-devkit/core": "~14.2.3",
     "@angular-devkit/schematics": "~14.2.3",
@@ -69,6 +67,8 @@
     "@types/node": "18.19.17",
     "@types/uuid": "^10.0.0",
     "@types/xlsx": "^0.0.35",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
     "eslint": "^8.57.1",
     "https-proxy-agent": "^7.0.6",
     "jasmine-core": "~4.3.0",
