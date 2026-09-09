@@ -70,6 +70,10 @@
       "headline": "Jumpoints",
       "buttons": {
         "export": "Export to CSV"
+      },
+      "deployConfirm": {
+        "title": "Confirm Deployment",
+        "message": "For XChange NG deployments you should use the 1Edge Manager to deploy the service.<br><br>Please confirm this is not an XChange NG deployment and you would like to continue"
       }
     },
     "jump-groups": {

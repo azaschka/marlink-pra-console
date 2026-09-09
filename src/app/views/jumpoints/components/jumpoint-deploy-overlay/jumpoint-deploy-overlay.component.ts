@@ -1,5 +1,7 @@
 import { ChangeDetectorRef, Component, Inject } from "@angular/core";
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
+import { TranslateService } from "@ngx-translate/core";
+import { ConfirmDialogService } from "../../../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { JumpointDeploymentNode } from "../../models";
 import { JumpointNodeBusinessUnit } from "../../enums";
 import { JumpointsService } from "../../jumpoints.service";
@@ -50,6 +52,8 @@ export class JumpointDeployOverlayComponent {
         public readonly dialogRef: MatDialogRef<JumpointDeployOverlayComponent>,
         @Inject(MAT_DIALOG_DATA) public readonly data: JumpointDeployDialogData,
         private readonly jumpointsService: JumpointsService,
+        private readonly confirmDialog: ConfirmDialogService,
+        private readonly translate: TranslateService,
         private readonly cdr: ChangeDetectorRef,
     ) {
         this.currentNode = data.existingNode ?? null;
@@ -116,6 +120,17 @@ export class JumpointDeployOverlayComponent {
     // ── Deployment sequence ─────────────────────────────────────────────────
 
     public async startDeployment(): Promise<void> {
+        const confirmed = await this.confirmDialog.show({
+            title: this.translate.instant("views.jumpoints.deployConfirm.title"),
+            message: this.translate.instant(
+                "views.jumpoints.deployConfirm.message",
+            ),
+            okLabel: "Continue",
+        });
+        if (!confirmed) {
+            return;
+        }
+
         this.isDeploying = true;
         try {
             // ── Step 1: Create Node ────────────────────────────────────────
