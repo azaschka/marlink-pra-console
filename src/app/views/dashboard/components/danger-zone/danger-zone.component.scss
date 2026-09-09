@@ -1,0 +1,57 @@
+.danger-zone-card {
+    border: 1px solid var(--mat-warn, #f44336);
+}
+
+.danger-zone-title-icon {
+    color: #f44336;
+    margin-right: 8px;
+}
+
+.danger-zone-description {
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.danger-zone-actions {
+    display: flex;
+    gap: 12px;
+    margin: 12px 0;
+
+    button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+}
+
+.danger-zone-preview {
+    background: rgba(244, 67, 54, 0.06);
+    border-radius: 4px;
+    padding: 12px;
+    margin: 12px 0;
+    font-size: 13px;
+
+    summary {
+        cursor: pointer;
+        user-select: none;
+    }
+}
+
+.danger-zone-table-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+
+    code {
+        background: rgba(0, 0, 0, 0.06);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 12px;
+    }
+}
+
+.full-width {
+    width: 100%;
+}

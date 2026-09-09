@@ -1,0 +1,63 @@
+<mat-card class="my-0 p-0 danger-zone-card" style="height: 100%;">
+    <mat-card-title class="mb-0">
+        <div class="card-title-text">
+            <mat-icon class="text-18 danger-zone-title-icon">warning</mat-icon>
+            <span class="text-13 pt-4">Danger Zone — Reset Environment Data</span>
+        </div>
+        <mat-divider></mat-divider>
+        <mat-progress-bar *ngIf="isLoading" mode="indeterminate" color="warn"></mat-progress-bar>
+    </mat-card-title>
+
+    <mat-card-content class="p-16">
+        <p class="danger-zone-description">
+            This permanently truncates <strong>all</strong> data tables and resets their primary keys.
+            The following are <strong>kept</strong>: PRA users, access keys and BeyondTrust instances.
+            BeyondTrust-mirrored data is repopulated automatically in the background afterwards.
+            Physical backup files on the storage volume are <strong>not</strong> deleted
+            (read-only filesystem access).
+        </p>
+
+        <div class="danger-zone-actions">
+            <button mat-stroked-button color="primary" [disabled]="isLoading" (click)="previewResetHandler()">
+                <mat-icon>visibility</mat-icon>
+                <span>Preview (dry run)</span>
+            </button>
+        </div>
+
+        <div class="danger-zone-preview" *ngIf="previewResult">
+            <p class="mb-4">
+                <strong>{{ previewResult.truncatedTables.length }}</strong>
+                table(s) {{ previewResult.dryRun ? "would be" : "were" }} truncated.
+            </p>
+            <p class="mb-4 text-muted">
+                Kept: {{ previewResult.keptTables.join(", ") }}
+            </p>
+            <details>
+                <summary>Affected tables</summary>
+                <div class="danger-zone-table-list">
+                    <code *ngFor="let table of previewResult.truncatedTables">{{ table }}</code>
+                </div>
+            </details>
+        </div>
+
+        <mat-divider class="my-16"></mat-divider>
+
+        <p class="danger-zone-description">
+            To execute, type <code>{{ confirmationPhrase }}</code> below and confirm.
+        </p>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Confirmation phrase</mat-label>
+            <input matInput [formControl]="confirmationControl" [placeholder]="confirmationPhrase"
+                autocomplete="off" spellcheck="false" />
+        </mat-form-field>
+
+        <div class="danger-zone-actions">
+            <button mat-raised-button color="warn" [disabled]="isLoading || !isConfirmationValid"
+                (click)="resetDataHandler()">
+                <mat-icon>delete_forever</mat-icon>
+                <span>Reset environment data</span>
+            </button>
+        </div>
+    </mat-card-content>
+</mat-card>

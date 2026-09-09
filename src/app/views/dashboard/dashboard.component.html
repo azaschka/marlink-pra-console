@@ -13,3 +13,8 @@
     fxLayoutGap="16px" fxLayoutAlign="space-between stretch">
     <app-dashboard-access-keys fxFlex="50" fxFlex.gt-sm="50" fxFlex.sm="100"></app-dashboard-access-keys>
 </div>
+
+<div *ngIf="canResetData" class="p-0 mt-40" [@animate]="{ value: '*', params: { y: '50px', delay: '450ms' } }"
+    fxLayout="row" fxLayoutGap="16px" fxLayoutAlign="space-between stretch">
+    <app-dashboard-danger-zone fxFlex="100"></app-dashboard-danger-zone>
+</div>

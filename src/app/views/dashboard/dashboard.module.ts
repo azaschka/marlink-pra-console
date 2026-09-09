@@ -13,6 +13,7 @@ import { DashboardComponent } from "./dashboard.component";
 import { BeyondtrustInstancesComponent } from "./components/beyondtrust-instaces/beyondtrust-instances.component";
 import { HealthComponent } from "./components/health/health.component";
 import { AccessKeysComponent } from "./components/access-keys/access-keys.component";
+import { DangerZoneComponent } from "./components/danger-zone/danger-zone.component";
 
 // Overlays
 import { BeyondtrustInstancesOverlayComponent } from "./components/overlays/beyondtrust-instances-overlay/beyondtrust-instances-overlay.component";
@@ -24,6 +25,7 @@ const COMPONENTS = [
     BeyondtrustInstancesOverlayComponent,
     HealthComponent,
     AccessKeysComponent,
+    DangerZoneComponent,
 ];
 
 const OVERLAYS = [
