@@ -14,7 +14,7 @@ export interface CreateShellJumpDtoInput {
     jumpGroupType?: JumpGroupType;
     terminalType?: ShellJumpTerminalType;
     keepAliveIdleSessionInSeconds?: number;
-    tag?: string;
+    tag: string;
     comments?: string;
     jumpPolicyId?: number | null;
     username?: string;

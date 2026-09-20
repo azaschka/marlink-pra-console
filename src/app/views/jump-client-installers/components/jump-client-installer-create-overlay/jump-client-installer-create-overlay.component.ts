@@ -15,7 +15,10 @@ import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
 import { StringSanitizer } from "../../../../shared/helpers/string-sanitizer";
-import { AutocompleteValidators } from "../../../../shared/validators";
+import {
+    AssetTagValidators,
+    AutocompleteValidators,
+} from "../../../../shared/validators";
 import { BtJumpClientDefaults } from "../../../../shared/config";
 
 export interface JumpClientInstallerCreateDialogData {
@@ -78,7 +81,10 @@ export class JumpClientInstallerCreateOverlayComponent
                 nonNullable: true,
                 validators: [Validators.required],
             }),
-            tag: new FormControl<string>("", { nonNullable: true }),
+            tag: new FormControl<string>("", {
+                nonNullable: true,
+                validators: [Validators.required, AssetTagValidators.canonical],
+            }),
             jumpGroup: new FormControl<JumpGroup | null>(null, [
                 Validators.required,
                 AutocompleteValidators.requireSelection,
@@ -201,6 +207,11 @@ export class JumpClientInstallerCreateOverlayComponent
         );
     }
 
+    /** Canonical form of the typed tag, as it will be sent to the PRA API */
+    public canonicalTag(): string {
+        return StringSanitizer.sanitizeTag(this.form.controls.tag.value);
+    }
+
     /** Close without result */
     public cancel(): void {
         this.dialogRef.close(null);
@@ -219,7 +230,7 @@ export class JumpClientInstallerCreateOverlayComponent
         const request: CreateJumpClientInstallerDtoInput = {
             // User-provided fields (form values — never overridden by defaults)
             name: formValue.name.trim(),
-            tag: sanitizedTag || undefined,
+            tag: sanitizedTag,
             jumpGroupId: formValue.jumpGroup!.id,
             jumpGroupType: BtJumpClientDefaults.jumpGroupType,
             jumpPolicyId: formValue.jumpPolicy?.id ?? undefined,

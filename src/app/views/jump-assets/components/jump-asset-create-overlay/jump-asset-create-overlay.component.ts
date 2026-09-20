@@ -4,7 +4,10 @@ import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { Observable, of, Subject, firstValueFrom } from "rxjs";
 import { map, startWith, takeUntil } from "rxjs/operators";
 import { StringSanitizer } from "../../../../shared/helpers";
-import { AutocompleteValidators } from "../../../../shared/validators";
+import {
+    AssetTagValidators,
+    AutocompleteValidators,
+} from "../../../../shared/validators";
 import { Jumpoint } from "../../../jumpoints/models";
 import { JumpointsService } from "../../../jumpoints/jumpoints.service";
 import { JumpGroupsService } from "../../../jump-groups/jump-groups.service";
@@ -104,7 +107,10 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
                 nonNullable: true,
                 validators: [Validators.required],
             }),
-            tag: new FormControl<string>("", { nonNullable: true }),
+            tag: new FormControl<string>("", {
+                nonNullable: true,
+                validators: [Validators.required, AssetTagValidators.canonical],
+            }),
             hostname: new FormControl<string>("", {
                 nonNullable: true,
                 validators: [Validators.required],
@@ -308,6 +314,11 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
     /** Get human-readable asset type name */
     public getAssetTypeName(): string {
         return this.assetTypeNames[this.data.assetType] || "Jump Asset";
+    }
+
+    /** Canonical form of the typed tag, as it will be sent to the PRA API */
+    public canonicalTag(): string {
+        return StringSanitizer.sanitizeTag(this.form.controls.tag.value);
     }
 
     /** Close without result */

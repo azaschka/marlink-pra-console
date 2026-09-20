@@ -5,7 +5,7 @@ export interface CreateJumpClientInstallerDtoInput {
     jumpGroupId: number;
     jumpGroupType?: JumpClientGroupType;
     jumpPolicyId?: number;
-    tag?: string;
+    tag: string;
     connectionType?: JumpClientConnectionType;
     sessionPolicyId?: number | null;
     comments?: string;

@@ -9,7 +9,7 @@ export interface CreateRemoteRdpDtoInput {
     qualityMode?: RdpQualityMode;
     mustStartNewConsoleSession?: boolean;
     mustIgnoreUntrustedServerCert?: boolean;
-    tag?: string;
+    tag: string;
     comments?: string;
     rdpUsername?: string;
     domain?: string;

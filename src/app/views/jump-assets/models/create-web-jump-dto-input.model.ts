@@ -9,7 +9,7 @@ export interface CreateWebJumpDtoInput {
     usernameFormatType?: WebJumpUsernameFormatType;
     mustVerifyCertificate?: boolean;
     authenticationTimeoutInSeconds?: number;
-    tag?: string;
+    tag: string;
     comments?: string;
     jumpPolicyId?: number | null;
     usernameField?: string | null;

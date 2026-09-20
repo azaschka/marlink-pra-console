@@ -11,7 +11,10 @@ import { JumpPolicy } from "../../../jump-policies/models";
 import { SessionPolicy } from "../../../session-policies/models";
 import { JumpAssetUpdateRequest } from "../../models";
 import { StringSanitizer } from "app/shared/helpers";
-import { AutocompleteValidators } from "../../../../shared/validators";
+import {
+    AssetTagValidators,
+    AutocompleteValidators,
+} from "../../../../shared/validators";
 import { CustomerCacheService } from "../../../customers/customer-cache.service";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
@@ -107,6 +110,7 @@ export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
             }),
             tag: new FormControl<string>(this.data.currentTag ?? "", {
                 nonNullable: true,
+                validators: [Validators.required, AssetTagValidators.canonical],
             }),
             hostname: new FormControl<string>(this.data.currentHostname ?? "", {
                 nonNullable: true,
@@ -302,6 +306,11 @@ export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
                 ? formValue.mustVerifyCertificate
                 : undefined,
         } as JumpAssetUpdateRequest);
+    }
+
+    /** Canonical form of the typed tag, as it will be sent to the PRA API */
+    public canonicalTag(): string {
+        return StringSanitizer.sanitizeTag(this.form.controls.tag.value);
     }
 
     public cancel(): void {
