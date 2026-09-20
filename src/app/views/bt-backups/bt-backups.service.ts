@@ -1,16 +1,22 @@
 import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpParams } from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
 import { BtBackup } from "./models";
+import { PraApiDefaults } from "../../shared/config";
 
 @Injectable()
 export class BtBackupsService {
     constructor(private http: HttpClient) {}
 
     public async fetchBackups(instanceId: number): Promise<BtBackup[]> {
+        const params = new HttpParams().set(
+            "pageSize",
+            PraApiDefaults.FETCH_ALL_PAGE_SIZE
+        );
         return firstValueFrom(
             this.http.get<BtBackup[]>(
-                `/beyondtrust-instances/${instanceId}/backups`
+                `/beyondtrust-instances/${instanceId}/backups`,
+                { params }
             )
         );
     }

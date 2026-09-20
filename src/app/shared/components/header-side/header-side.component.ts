@@ -103,7 +103,6 @@ export class HeaderSideComponent implements OnInit, OnDestroy {
             "/sites",
             "/customers",
             "/pra-users",
-            "/bt-backups",
             "/logs",
         ];
         this.showInstanceSelector = !hiddenRoutes.some((route) =>
