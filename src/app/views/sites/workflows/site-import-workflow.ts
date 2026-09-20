@@ -716,8 +716,8 @@ export class SiteImportWorkflowService {
     }
 
     private createSiteTag(customer: ParsedCustomer, site: ParsedSite): string {
-        const customerName = SiteImportWorkflowService.sanitizeString(customer.name);
-        const siteName = SiteImportWorkflowService.sanitizeString(site.name);
+        const customerName = StringSanitizer.sanitizeTag(customer.name);
+        const siteName = StringSanitizer.sanitizeTag(site.name);
 
         return `${customerName}_${siteName}`;
     }
@@ -760,7 +760,8 @@ export class SiteImportWorkflowService {
     }
 
     /**
-     * Sanitizes a string by replacing whitespace with underscores, removing special characters,and converting to uppercase.
+     * Sanitizes a string by replacing whitespace and hyphens with underscores and removing special characters.
+     * Does NOT change the case. Use StringSanitizer.sanitizeTag for asset tags.
      * @param value The string to sanitize.
      * @returns The sanitized string.
      */

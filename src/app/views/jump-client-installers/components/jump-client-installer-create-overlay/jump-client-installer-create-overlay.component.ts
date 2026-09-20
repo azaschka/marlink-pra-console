@@ -14,6 +14,7 @@ import { CustomerCacheService } from "../../../customers/customer-cache.service"
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { JwtAuthService } from "../../../../shared/services/auth/jwt-auth.service";
 import { PraDataFilter } from "../../../../shared/helpers/pra-data-filter";
+import { StringSanitizer } from "../../../../shared/helpers/string-sanitizer";
 import { AutocompleteValidators } from "../../../../shared/validators";
 import { BtJumpClientDefaults } from "../../../../shared/config";
 
@@ -213,12 +214,12 @@ export class JumpClientInstallerCreateOverlayComponent
         }
 
         const formValue = this.form.getRawValue();
-        const trimmedTag = formValue.tag.trim();
+        const sanitizedTag = StringSanitizer.sanitizeTag(formValue.tag);
 
         const request: CreateJumpClientInstallerDtoInput = {
             // User-provided fields (form values — never overridden by defaults)
             name: formValue.name.trim(),
-            tag: trimmedTag || undefined,
+            tag: sanitizedTag || undefined,
             jumpGroupId: formValue.jumpGroup!.id,
             jumpGroupType: BtJumpClientDefaults.jumpGroupType,
             jumpPolicyId: formValue.jumpPolicy?.id ?? undefined,

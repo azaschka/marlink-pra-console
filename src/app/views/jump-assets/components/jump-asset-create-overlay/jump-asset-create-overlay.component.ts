@@ -326,7 +326,7 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
 
         const request: JumpAssetCreateRequest = {
             name: formValue.name.trim(),
-            tag: this.sanitizeString(formValue.tag),
+            tag: StringSanitizer.sanitizeTag(formValue.tag),
             hostname:
                 this.data.assetType !== "webJump"
                     ? formValue.hostname.trim()
@@ -370,12 +370,4 @@ export class JumpAssetCreateOverlayComponent implements OnInit, OnDestroy {
     ): string => {
         return sessionPolicy?.displayName ?? "— No Session Policy —";
     };
-
-    /** Replace whitespace with underscores, remove special chars, uppercase */
-    private sanitizeString(value: string): string {
-        let s = StringSanitizer.replaceWhitespaceWithUnderscore(value);
-        s = StringSanitizer.replaceSpecialCharacters(s);
-        s = StringSanitizer.removeSpecialCharacters(s);
-        return s.toUpperCase();
-    }
 }

@@ -284,7 +284,7 @@ export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
 
         this.dialogRef.close({
             name: formValue.name.trim(),
-            tag: JumpAssetUpdateOverlayComponent.sanitizeString(formValue.tag),
+            tag: StringSanitizer.sanitizeTag(formValue.tag),
             hostname:
                 this.data.assetType !== "webJump"
                     ? formValue.hostname.trim()
@@ -396,12 +396,5 @@ export class JumpAssetUpdateOverlayComponent implements OnInit, OnDestroy {
         return this.sessionPolicies.filter((p) =>
             p.displayName.toLowerCase().includes(filter),
         );
-    }
-
-    private static sanitizeString(value: string): string {
-        let s = StringSanitizer.replaceWhitespaceWithUnderscore(value);
-        s = StringSanitizer.replaceSpecialCharacters(s);
-        s = StringSanitizer.removeSpecialCharacters(s);
-        return s.toUpperCase();
     }
 }
