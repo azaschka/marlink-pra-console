@@ -13,6 +13,7 @@ import { AuthRole } from "../../../../shared/enums/auth-role.enum";
 import { CustomerBusinessUnit } from "../../../customers/enums";
 import { PraDataFilter } from "../../../../shared/helpers";
 import { BtUserDefaults } from "../../../../shared/config";
+import { UserSourceType } from "../../enums";
 
 export type UserOverlayMode = "add" | "edit";
 
@@ -108,7 +109,24 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         } finally {
             this.isLoading = false;
             this.userFormGroup.enable();
+            this.applyUserTypeRestrictions();
         }
+    }
+
+    /**
+     * R3.2-A004: username and password of an account provisioned by an identity provider are owned by that
+     * provider. The PRA API rejects changes to them; the form does not offer them.
+     */
+    public get isExternalUser(): boolean {
+        return this.mode === "edit" && this.user?.sourceType === UserSourceType.External;
+    }
+
+    private applyUserTypeRestrictions(): void {
+        if (!this.isExternalUser) {
+            return;
+        }
+        this.userFormGroup.get("username")?.disable();
+        this.userFormGroup.get("regeneratePassword")?.disable();
     }
 
     /**
@@ -283,12 +301,18 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
 
         const formValue = this.userFormGroup.value as UserFormValue;
 
-        const request: UserUpdateRequest = {
-            publicDisplayName: formValue.publicDisplayName.trim(),
-            username: formValue.username.trim(),
-            email: formValue.email.trim(),
-            regeneratePassword: formValue.regeneratePassword || false,
-        };
+        // Disabled controls are not part of the form value; for an external user only the editable fields are sent.
+        const request: UserUpdateRequest = this.isExternalUser
+            ? {
+                  publicDisplayName: formValue.publicDisplayName.trim(),
+                  email: formValue.email.trim(),
+              }
+            : {
+                  publicDisplayName: formValue.publicDisplayName.trim(),
+                  username: formValue.username.trim(),
+                  email: formValue.email.trim(),
+                  regeneratePassword: formValue.regeneratePassword || false,
+              };
 
         await this.usersService.updateUser(this.data.tenantId, this.user.id, request);
 

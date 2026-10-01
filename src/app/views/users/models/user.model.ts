@@ -1,4 +1,5 @@
 import {
+    UserSourceType,
     UserAllowedAccessPermissionType,
     UserEndpointAutomationPermissionType,
     UserViewSupportReportsPermissionType,
@@ -9,6 +10,8 @@ export interface User {
     id: number;
     publicDisplayName: string;
     securityProviderId?: number;
+    /** Local or provisioned by an identity provider (R3.2-A003). Absent when the PRA API predates R3.2. */
+    sourceType?: UserSourceType;
     username?: string;
     passwordExpirationDate?: string | null;
     email?: string;

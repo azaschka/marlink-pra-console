@@ -49,6 +49,13 @@
                     <mat-cell *matCellDef="let row">{{ row.username }}</mat-cell>
                 </ng-container>
 
+                <!-- Source Type (R3.2-A003) -->
+                <ng-container matColumnDef="sourceType">
+                    <mat-header-cell *matHeaderCellDef mat-sort-header>Type</mat-header-cell>
+                    <mat-cell *matCellDef="let row"
+                        [matTooltip]="isExternalUser(row) ? 'Provisioned by an identity provider' : ''">{{ sourceTypeLabel(row) }}</mat-cell>
+                </ng-container>
+
                 <!-- Email Address -->
                 <ng-container matColumnDef="email">
                     <mat-header-cell *matHeaderCellDef mat-sort-header>Email Address</mat-header-cell>
@@ -83,9 +90,12 @@
                             (click)="reactivateUserHandler(row)">
                             <mat-icon>person_add</mat-icon>
                         </button>
-                        <button mat-icon-button color="warn" (click)="deleteUserHandler(row)">
-                            <mat-icon>delete</mat-icon>
-                        </button>
+                        <span [matTooltip]="isExternalUser(row) ? 'Accounts provisioned by an identity provider cannot be deleted here' : ''">
+                            <button mat-icon-button color="warn" [disabled]="isExternalUser(row)"
+                                (click)="deleteUserHandler(row)">
+                                <mat-icon>delete</mat-icon>
+                            </button>
+                        </span>
                     </mat-cell>
                 </ng-container>
 

@@ -11,6 +11,7 @@ import { NotificationDialogService } from "../../shared/dialogs/notification-dia
 import { UserOverlayComponent, UserOverlayDialogData } from "./components/user-overlay/user-overlay.component";
 import { UsersService } from "./users.service";
 import { User } from "./models";
+import { UserSourceType } from "./enums";
 import { AppService } from "app/app.service";
 
 import { CustomerCacheService } from "../customers/customer-cache.service";
@@ -31,6 +32,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
         "status",
         "publicDisplayName",
         "username",
+        "sourceType",
         "email",
         "lastAuthenticationDate",
         "lastSyncDate",
@@ -245,7 +247,34 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
         }
     }
 
+    /** Local, External or unknown (PRA API without R3.2-A003). */
+    public sourceTypeLabel(user: User): string {
+        switch (user.sourceType) {
+            case UserSourceType.External:
+                return "External";
+            case UserSourceType.Internal:
+                return "Local";
+            default:
+                return "—";
+        }
+    }
+
+    public isExternalUser(user: User): boolean {
+        return user.sourceType === UserSourceType.External;
+    }
+
     public async deleteUserHandler(user: User): Promise<void> {
+        // R3.2-A004: an account provisioned by an identity provider is not deleted here; the PRA API rejects it too.
+        if (this.isExternalUser(user)) {
+            await this.errorDialog.show({
+                title: "Delete Not Available",
+                message:
+                    "This account is provisioned by an identity provider and would be created again at the next login. " +
+                    "Deactivate it or remove its group policies instead.",
+            });
+            return;
+        }
+
         if (!this.currentTenantId) {
             await this.errorDialog.show({
                 title: "No Instance Selected",
