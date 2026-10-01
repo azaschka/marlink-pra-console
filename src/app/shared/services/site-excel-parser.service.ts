@@ -1,5 +1,6 @@
 import { Injectable } from "@angular/core";
 import * as XLSX from "xlsx";
+import { SiteUserConsolidation } from "./site-user-consolidation";
 
 // CUSTOMER
 export interface ParsedCustomer {
@@ -14,15 +15,29 @@ export interface ParsedSite {
     name: string; // SITE NAME
 }
 
+// USER TYPE (R3.2-A003)
+/**
+ * Whether a person in the workbook has a local BeyondTrust account or one provisioned by an external identity
+ * provider (for example Entra ID). Declared per user entry; never derived from the email domain.
+ */
+export enum ParsedUserType {
+    Local = "LOCAL",
+    External = "EXTERNAL",
+}
+
 // SITE AUDITORS
 export interface ParsedSiteAuditor {
     email: string; // SITE AUDITOR EMAIL
     isAdminOperator: boolean; // IS AUDITOR OPERATOR ("YES"/"NO")
+    userType: ParsedUserType; // SITE AUDITOR TYPE (optional column, default LOCAL)
+    rowNumber: number; // Excel row number in the site sheet
 }
 
 // SITE MANAGERS
 export interface ParsedSiteManager {
     email: string; // SITE MANAGER EMAIL
+    userType: ParsedUserType; // SITE MANAGER TYPE (optional column, default LOCAL)
+    rowNumber: number; // Excel row number in the site sheet
 }
 
 // SUPPORT TEAMS
@@ -47,6 +62,8 @@ export interface ParsedUser {
     lastName: string; // LAST NAME
     email: string; // EMAIL
     teamName: string; // TEAM
+    userType: ParsedUserType; // USER TYPE (optional column, default LOCAL)
+    rowNumber: number; // Excel row number in the users sheet
 }
 
 // JUMP ASSETS (Hosts)
@@ -87,6 +104,36 @@ export interface SiteExcelParseResult {
     supportTeams: ParsedSupportTeam[];
     users: ParsedUser[];
     jumpAssets: ParsedJumpAsset[];
+    /** Non-blocking findings for the preview, for example merged duplicate rows. */
+    notices: string[];
+}
+
+/**
+ * One blocking problem in the workbook, located precisely enough for the user to fix the cell.
+ */
+export interface SiteExcelIssue {
+    sheet: string;
+    row: number; // Excel row number
+    column: string; // header name
+    message: string;
+}
+
+/**
+ * Raised when the workbook contains values that must be corrected before anything is sent to the PRA API.
+ * The message lists every issue, one per line, so a single round trip is enough to fix the file.
+ */
+export class SiteExcelValidationError extends Error {
+    constructor(public readonly issues: SiteExcelIssue[]) {
+        super(SiteExcelValidationError.format(issues));
+        this.name = "SiteExcelValidationError";
+    }
+
+    private static format(issues: SiteExcelIssue[]): string {
+        const lines = issues.map(
+            (issue) => `Sheet "${issue.sheet}", row ${issue.row}, column "${issue.column}": ${issue.message}`,
+        );
+        return `${issues.length} problem(s) found in the workbook:\n${lines.join("\n")}`;
+    }
 }
 
 /**
@@ -124,7 +171,12 @@ export class SiteExcelParserService {
         IS_ADMIN_OPERATOR: "IS AUDITOR OPERATOR",
         SITE_MANAGER_EMAIL: "SITE MANAGER EMAIL",
         SITE_APPROVER_EMAIL: "SITE APPROVER EMAIL",
+        SITE_AUDITOR_TYPE: "SITE AUDITOR TYPE",
+        SITE_MANAGER_TYPE: "SITE MANAGER TYPE",
     };
+
+    // Header of the optional user type column in the users sheet (located by name, not by position)
+    private static readonly USERS_HEADER_USER_TYPE = "USER TYPE";
 
     /**
      * Parses an Excel file and extracts site-related data
@@ -145,29 +197,12 @@ export class SiteExcelParserService {
                     const data = new Uint8Array(e.target.result as ArrayBuffer);
                     const workbook = XLSX.read(data, { type: "array" });
 
-                    this.validateWorkbook(workbook);
-
-                    // Parse all sections
-                    const customer = this.parseCustomer(workbook);
-                    const site = this.parseSite(workbook);
-                    const siteAuditors = this.parseSiteAuditors(workbook);
-                    const siteManagers = this.parseSiteManagers(workbook);
-                    const siteApprovers = this.parseSiteApprovers(workbook);
-                    const supportTeams = this.parseSupportTeams(workbook);
-                    const users = this.parseUsers(workbook);
-                    const jumpAssets = this.parseJumpAssets(workbook);
-
-                    resolve({
-                        customer,
-                        site,
-                        siteAuditors,
-                        siteManagers,
-                        siteApprovers,
-                        supportTeams,
-                        users,
-                        jumpAssets,
-                    });
+                    resolve(this.parseWorkbook(workbook));
                 } catch (err) {
+                    if (err instanceof SiteExcelValidationError) {
+                        reject(err);
+                        return;
+                    }
                     const errorMessage =
                         err instanceof Error ? err.message : "Unknown error occurred while parsing Excel file";
                     reject(new Error(`Excel parsing failed: ${errorMessage}`));
@@ -180,6 +215,44 @@ export class SiteExcelParserService {
 
             reader.readAsArrayBuffer(file);
         });
+    }
+
+    /**
+     * Parses an already loaded workbook. Separated from parse() so it can be tested without a FileReader.
+     * @throws SiteExcelValidationError if user entries carry invalid or contradicting values
+     */
+    public parseWorkbook(workbook: XLSX.WorkBook): SiteExcelParseResult {
+        this.validateWorkbook(workbook);
+
+        const issues: SiteExcelIssue[] = [];
+
+        const customer = this.parseCustomer(workbook);
+        const site = this.parseSite(workbook);
+        const siteAuditors = this.parseSiteAuditors(workbook, issues);
+        const siteManagers = this.parseSiteManagers(workbook, issues);
+        const siteApprovers = this.parseSiteApprovers(workbook);
+        const supportTeams = this.parseSupportTeams(workbook);
+        const users = this.parseUsers(workbook, issues);
+        const jumpAssets = this.parseJumpAssets(workbook);
+
+        const consolidation = SiteUserConsolidation.consolidate(siteAuditors, siteManagers, users);
+        issues.push(...consolidation.issues);
+
+        if (issues.length > 0) {
+            throw new SiteExcelValidationError(issues);
+        }
+
+        return {
+            customer,
+            site,
+            siteAuditors: consolidation.siteAuditors,
+            siteManagers: consolidation.siteManagers,
+            siteApprovers,
+            supportTeams,
+            users: consolidation.users,
+            jumpAssets,
+            notices: consolidation.notices,
+        };
     }
 
     /**
@@ -209,6 +282,45 @@ export class SiteExcelParserService {
             throw new Error(`Sheet "${sheetName}" not found`);
         }
         return XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 });
+    }
+
+    /**
+     * Converts a row index of readSheet() into the row number shown in Excel. sheet_to_json starts at the first
+     * row of the used range and keeps blank rows (default for header: 1), so the offset is the range start.
+     */
+    private toExcelRowNumber(workbook: XLSX.WorkBook, sheetName: string, rowIndex: number): number {
+        const ref = workbook.Sheets[sheetName]?.["!ref"];
+        const firstRow = ref ? XLSX.utils.decode_range(ref).s.r : 0;
+        return firstRow + rowIndex + 1;
+    }
+
+    /**
+     * Reads an optional user type cell. An absent column or an empty cell means LOCAL, which is the behaviour of
+     * templates that predate the column. Any other value than LOCAL or EXTERNAL is reported, never guessed.
+     */
+    private parseUserType(
+        rawValue: string,
+        location: { sheet: string; row: number; column: string; email: string },
+        issues: SiteExcelIssue[],
+    ): ParsedUserType {
+        const normalized = this.sanitizeValue(rawValue).toUpperCase();
+
+        if (normalized === "" || normalized === ParsedUserType.Local) {
+            return ParsedUserType.Local;
+        }
+        if (normalized === ParsedUserType.External) {
+            return ParsedUserType.External;
+        }
+
+        issues.push({
+            sheet: location.sheet,
+            row: location.row,
+            column: location.column,
+            message: `invalid value "${this.sanitizeValue(rawValue)}"${
+                location.email ? ` for ${location.email}` : ""
+            }. Allowed: LOCAL, EXTERNAL.`,
+        });
+        return ParsedUserType.Local;
     }
 
     /**
@@ -253,43 +365,89 @@ export class SiteExcelParserService {
     /**
      * Parses site auditors from the site sheet
      */
-    private parseSiteAuditors(workbook: XLSX.WorkBook): ParsedSiteAuditor[] {
+    private parseSiteAuditors(workbook: XLSX.WorkBook, issues: SiteExcelIssue[]): ParsedSiteAuditor[] {
         const sheet = this.readSheet(workbook, SiteExcelParserService.SHEET_SITE);
         const headers = sheet[SiteExcelParserService.SITE_SHEET_HEADER_ROW] as string[];
         const result: ParsedSiteAuditor[] = [];
 
         for (let i = SiteExcelParserService.SITE_SHEET_DATA_START_ROW; i < sheet.length; i++) {
-            const row = sheet[i];
+            const row = sheet[i] ?? [];
+            const rowNumber = this.toExcelRowNumber(workbook, SiteExcelParserService.SHEET_SITE, i);
             const email = this.getValueByHeader(headers, row, SiteExcelParserService.HEADERS.SITE_AUDITOR_EMAIL);
+            const rawType = this.getValueByHeader(headers, row, SiteExcelParserService.HEADERS.SITE_AUDITOR_TYPE);
 
-            if (email) {
-                result.push({
-                    email,
-                    isAdminOperator: this.parseBoolean(
-                        this.getValueByHeader(headers, row, SiteExcelParserService.HEADERS.IS_ADMIN_OPERATOR),
-                    ),
-                });
+            if (!email) {
+                this.reportTypeWithoutEmail(rawType, rowNumber, SiteExcelParserService.HEADERS.SITE_AUDITOR_TYPE, issues);
+                continue;
             }
+
+            result.push({
+                email,
+                isAdminOperator: this.parseBoolean(
+                    this.getValueByHeader(headers, row, SiteExcelParserService.HEADERS.IS_ADMIN_OPERATOR),
+                ),
+                userType: this.parseUserType(
+                    rawType,
+                    {
+                        sheet: SiteExcelParserService.SHEET_SITE,
+                        row: rowNumber,
+                        column: SiteExcelParserService.HEADERS.SITE_AUDITOR_TYPE,
+                        email,
+                    },
+                    issues,
+                ),
+                rowNumber,
+            });
         }
 
         return result;
     }
 
+    private reportTypeWithoutEmail(rawType: string, rowNumber: number, column: string, issues: SiteExcelIssue[]): void {
+        if (!rawType) {
+            return;
+        }
+        issues.push({
+            sheet: SiteExcelParserService.SHEET_SITE,
+            row: rowNumber,
+            column,
+            message: `a user type is set but the matching email cell is empty.`,
+        });
+    }
+
     /**
      * Parses site managers from the site sheet
      */
-    private parseSiteManagers(workbook: XLSX.WorkBook): ParsedSiteManager[] {
+    private parseSiteManagers(workbook: XLSX.WorkBook, issues: SiteExcelIssue[]): ParsedSiteManager[] {
         const sheet = this.readSheet(workbook, SiteExcelParserService.SHEET_SITE);
         const headers = sheet[SiteExcelParserService.SITE_SHEET_HEADER_ROW] as string[];
         const result: ParsedSiteManager[] = [];
 
         for (let i = SiteExcelParserService.SITE_SHEET_DATA_START_ROW; i < sheet.length; i++) {
-            const row = sheet[i];
+            const row = sheet[i] ?? [];
+            const rowNumber = this.toExcelRowNumber(workbook, SiteExcelParserService.SHEET_SITE, i);
             const email = this.getValueByHeader(headers, row, SiteExcelParserService.HEADERS.SITE_MANAGER_EMAIL);
+            const rawType = this.getValueByHeader(headers, row, SiteExcelParserService.HEADERS.SITE_MANAGER_TYPE);
 
-            if (email) {
-                result.push({ email });
+            if (!email) {
+                this.reportTypeWithoutEmail(rawType, rowNumber, SiteExcelParserService.HEADERS.SITE_MANAGER_TYPE, issues);
+                continue;
             }
+
+            result.push({
+                email,
+                userType: this.parseUserType(
+                    rawType,
+                    {
+                        sheet: SiteExcelParserService.SHEET_SITE,
+                        row: rowNumber,
+                        column: SiteExcelParserService.HEADERS.SITE_MANAGER_TYPE,
+                        email,
+                    },
+                    issues,
+                ),
+                rowNumber,
+            });
         }
 
         return result;
@@ -339,18 +497,40 @@ export class SiteExcelParserService {
     /**
      * Parses users from the users sheet
      */
-    private parseUsers(workbook: XLSX.WorkBook): ParsedUser[] {
+    private parseUsers(workbook: XLSX.WorkBook, issues: SiteExcelIssue[]): ParsedUser[] {
         const sheet = this.readSheet(workbook, SiteExcelParserService.SHEET_USERS);
         const result: ParsedUser[] = [];
+
+        // Columns A to D stay positional for compatibility; the optional type column is located by its header,
+        // so templates without it keep working and a generator may place it after column D.
+        const headers = (sheet[SiteExcelParserService.DEFAULT_HEADER_ROW] ?? []).map((header) =>
+            this.sanitizeValue(header).toUpperCase(),
+        );
+        const userTypeColumnIndex = headers.indexOf(SiteExcelParserService.USERS_HEADER_USER_TYPE);
 
         for (let i = SiteExcelParserService.DEFAULT_DATA_START_ROW; i < sheet.length; i++) {
             const row = sheet[i];
             if (row && row[0]) {
+                const email = this.sanitizeValue(row[2]);
+                const rowNumber = this.toExcelRowNumber(workbook, SiteExcelParserService.SHEET_USERS, i);
+                const rawType = userTypeColumnIndex === -1 ? "" : this.sanitizeValue(row[userTypeColumnIndex]);
+
                 result.push({
                     firstName: this.sanitizeValue(row[0]),
                     lastName: this.sanitizeValue(row[1]),
-                    email: this.sanitizeValue(row[2]),
+                    email,
                     teamName: this.sanitizeValue(row[3]),
+                    userType: this.parseUserType(
+                        rawType,
+                        {
+                            sheet: SiteExcelParserService.SHEET_USERS,
+                            row: rowNumber,
+                            column: SiteExcelParserService.USERS_HEADER_USER_TYPE,
+                            email,
+                        },
+                        issues,
+                    ),
+                    rowNumber,
                 });
             }
         }

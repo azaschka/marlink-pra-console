@@ -1,6 +1,9 @@
 import { Component, Output, EventEmitter } from "@angular/core";
 import { ErrorDialogService } from "../../../../shared/dialogs/error-dialog/error-dialog.service";
-import { SiteExcelParserService } from "../../../../shared/services/site-excel-parser.service";
+import {
+    SiteExcelParserService,
+    SiteExcelValidationError,
+} from "../../../../shared/services/site-excel-parser.service";
 
 @Component({
     selector: "app-excel-import-dragdrop",
@@ -37,6 +40,13 @@ export class ExcelImportDragDropComponent {
             const data = await this.excelParser.parse(file);
             this.parsed.emit(data);
         } catch (err: any) {
+            if (err instanceof SiteExcelValidationError) {
+                this.errorDialog.show({
+                    title: "Please correct the workbook",
+                    message: ExcelImportDragDropComponent.formatIssues(err),
+                });
+                return;
+            }
             this.errorDialog.show({
                 title: "Excel Parsing Error",
                 message:
@@ -44,5 +54,22 @@ export class ExcelImportDragDropComponent {
                     "An error occurred while parsing the Excel file.",
             });
         }
+    }
+
+    /** The dialog renders HTML; workbook values are escaped because they are user input. */
+    private static formatIssues(error: SiteExcelValidationError): string {
+        const escape = (value: string | number) =>
+            String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+        const lines = error.issues.map(
+            (issue) =>
+                `<li>Sheet <strong>${escape(issue.sheet)}</strong>, row ${escape(issue.row)}, column <strong>${escape(
+                    issue.column,
+                )}</strong>: ${escape(issue.message)}</li>`,
+        );
+        return `Nothing was imported. ${error.issues.length} problem(s) found:<ul>${lines.join("")}</ul>`;
     }
 }
