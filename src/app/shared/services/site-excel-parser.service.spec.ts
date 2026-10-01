@@ -18,6 +18,7 @@ const LEGACY_SITE_HEADERS = [
     "SITE MANAGER EMAIL",
 ];
 
+// Same order as the shipped template; the parser locates columns by header name, so the order is not significant.
 const TYPED_SITE_HEADERS = [
     "CUSTOMER NAME",
     "MARLINK CUSTOMER ID",
@@ -25,8 +26,8 @@ const TYPED_SITE_HEADERS = [
     "SITE NAME",
     "MARLINK SITE ID",
     "SITE AUDITOR EMAIL",
-    "SITE AUDITOR TYPE",
     "IS AUDITOR OPERATOR",
+    "SITE AUDITOR TYPE",
     "SITE APPROVER EMAIL",
     "SITE MANAGER EMAIL",
     "SITE MANAGER TYPE",
