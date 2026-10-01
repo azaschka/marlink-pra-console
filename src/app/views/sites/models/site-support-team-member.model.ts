@@ -1,6 +1,7 @@
 import {
     SiteSupportTeamAccessLevel,
     SiteSupportTeamTrustLevel,
+    SiteUserSourceType,
 } from "../enums";
 
 export interface SiteSupportTeamMember {
@@ -10,4 +11,6 @@ export interface SiteSupportTeamMember {
     supportTeamName: string;
     supportTeamAccessLevel: SiteSupportTeamAccessLevel;
     supportTeamTrustLevel: SiteSupportTeamTrustLevel;
+    /** Absent when the PRA API predates R3.2-A003. */
+    sourceType?: SiteUserSourceType;
 }

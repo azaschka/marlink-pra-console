@@ -4,6 +4,7 @@ import {
     ParsedSiteManager,
     ParsedSupportTeam,
     ParsedUser,
+    ParsedUserType,
 } from "../../../shared/services/site-excel-parser.service";
 import { FieldValidators, StringSanitizer } from "../../../shared/helpers";
 import {
@@ -15,6 +16,7 @@ import {
 import {
     SiteSupportTeamAccessLevel,
     SiteSupportTeamTrustLevel,
+    SiteUserSourceType,
 } from "../enums";
 
 export class SiteFactoryError extends Error {
@@ -108,6 +110,7 @@ export class SiteFactory {
             return {
                 username: manager.email,
                 email: manager.email,
+                sourceType: this.toSourceType(manager.userType),
             };
         });
     }
@@ -146,6 +149,7 @@ export class SiteFactory {
                 username: auditor.email,
                 email: auditor.email,
                 isAdminOperator: auditor.isAdminOperator,
+                sourceType: this.toSourceType(auditor.userType),
             };
         });
     }
@@ -216,8 +220,17 @@ export class SiteFactory {
                 supportTeamName,
                 supportTeamAccessLevel,
                 supportTeamTrustLevel,
+                sourceType: this.toSourceType(user.userType),
             };
         });
+    }
+
+    /**
+     * Maps the workbook's LOCAL/EXTERNAL to the API's internal/external. A missing type (for example data built
+     * without the parser) is treated as LOCAL, the behaviour of PRA Console 3.1.
+     */
+    private static toSourceType(userType: ParsedUserType | undefined): SiteUserSourceType {
+        return userType === ParsedUserType.External ? SiteUserSourceType.External : SiteUserSourceType.Internal;
     }
 
     private static sanitizeSupportTeamName(input: string): string {

@@ -1,6 +1,7 @@
 import {
     SiteSupportTeamAccessLevel,
     SiteSupportTeamTrustLevel,
+    SiteUserSourceType,
 } from "../enums";
 
 export interface SiteSupportTeamMemberDtoInput {
@@ -10,4 +11,5 @@ export interface SiteSupportTeamMemberDtoInput {
     supportTeamName: string;
     supportTeamAccessLevel: SiteSupportTeamAccessLevel;
     supportTeamTrustLevel: SiteSupportTeamTrustLevel;
+    sourceType: SiteUserSourceType;
 }
