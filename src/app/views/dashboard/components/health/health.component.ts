@@ -1,29 +1,25 @@
-import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
-import { MatSort } from "@angular/material/sort";
-import { MatPaginator } from "@angular/material/paginator";
-import { Subscription, interval } from "rxjs";
-import { HealthCheckDisplayItem } from "./models";
+import { TranslateService } from "@ngx-translate/core";
+import { Subject, Subscription, fromEvent, interval, merge, of } from "rxjs";
+import { exhaustMap, filter, finalize } from "rxjs/operators";
+import { HealthCheckDisplayItem, HealthFetchResult } from "./models";
 import { HealthService } from "./health.service";
-import { ThreadingUtility } from "app/shared/utilities";
+import { formatTime, mapHealthRows, markStale, unknownRows } from "./health-mapping";
 
+/**
+ * One row per dependency with up (green), warning (amber), down (red) or unknown (grey). When the PRA API does
+ * not answer, a banner is shown and the rows keep their last known state, marked as stale. Polls every 30 s
+ * without overlapping requests and pauses while the browser tab is hidden.
+ */
 @Component({
     selector: "app-dashboard-health",
     templateUrl: "./health.component.html",
     styleUrls: ["./health.component.scss"],
 })
 export class HealthComponent implements OnInit, OnDestroy {
+    public static readonly POLL_INTERVAL_IN_MS = 30000;
     private static readonly DISPLAYED_COLUMNS = ["status", "name"];
-
-    private static readonly SERVICE_NAMES: Record<string, string> = {
-        database: "MariaDB Database",
-        praSyncApi: "PRA Sync API",
-        storage: "Storage Availability",
-        memoryHeap: "Memory Heap Usage",
-    };
-
-    @ViewChild(MatSort) sort!: MatSort;
-    @ViewChild(MatPaginator) paginator!: MatPaginator;
 
     public dataSource = new MatTableDataSource<HealthCheckDisplayItem>();
     public displayedColumns = HealthComponent.DISPLAYED_COLUMNS;
@@ -31,79 +27,69 @@ export class HealthComponent implements OnInit, OnDestroy {
 
     public isLoading = false;
     public isHealthy = true;
+    public isUnreachable = false;
+    public lastUpdated: string | undefined;
 
+    private readonly refresh$ = new Subject<void>();
     private readonly subscriptionsToClear = new Subscription();
 
-    constructor(private readonly healthService: HealthService) {}
+    constructor(
+        private readonly healthService: HealthService,
+        private readonly translateService: TranslateService,
+    ) {}
 
-    public async ngOnInit(): Promise<void> {
-        this.addListeners();
+    public ngOnInit(): void {
+        const becameVisible$ = fromEvent(document, "visibilitychange").pipe(filter(() => !document.hidden));
+        const triggers$ = merge(of(undefined), interval(HealthComponent.POLL_INTERVAL_IN_MS), this.refresh$, becameVisible$);
 
-        await ThreadingUtility.delayForLoadingAnimation(this.checkHealth());
+        this.subscriptionsToClear.add(
+            triggers$
+                .pipe(
+                    filter(() => !document.hidden),
+                    // A poll that is still running makes further triggers wait for nothing: no overlap.
+                    exhaustMap(() => {
+                        this.isLoading = true;
+
+                        return this.healthService.fetchHealth().pipe(finalize(() => (this.isLoading = false)));
+                    }),
+                )
+                .subscribe((result) => this.apply(result)),
+        );
     }
 
     public ngOnDestroy(): void {
         this.subscriptionsToClear.unsubscribe();
     }
 
-    public async refreshHealth(): Promise<void> {
-        await this.checkHealth();
+    public refreshHealth(): void {
+        this.refresh$.next();
     }
 
-    private async checkHealth(): Promise<void> {
-        try {
-            this.isLoading = true;
-            const response = await this.healthService.checkHealth();
+    private apply(result: HealthFetchResult): void {
+        const translate = (key: string, params?: Record<string, unknown>) =>
+            this.translateService.instant(key, params) as string;
 
-            // Check if overall status is healthy
-            this.isHealthy = response.status === "ok";
+        if (result.kind === "response") {
+            this.isUnreachable = false;
+            this.isHealthy = result.body.overallStatus
+                ? result.body.overallStatus !== "unavailable"
+                : result.body.status === "ok";
+            this.lastUpdated = formatTime(new Date());
+            this.show(mapHealthRows(result.body, translate));
 
-            // Transform response to display items
-            const items: HealthCheckDisplayItem[] = [];
-
-            // Process each service
-            Object.keys(HealthComponent.SERVICE_NAMES).forEach((key) => {
-                const serviceStatus = (response.details as Record<string, any>)[key]?.status || "down";
-                const isDown = serviceStatus === "down" || !this.isHealthy;
-
-                items.push({
-                    key,
-                    displayName: HealthComponent.SERVICE_NAMES[key],
-                    status: serviceStatus,
-                    cssClass: isDown ? "offline" : "online",
-                });
-            });
-
-            this.dataSource.data = items;
-            this.dataSource.sort = this.sort;
-            this.dataSource.paginator = this.paginator;
-            this.dataCount = items.length;
-        } catch (error: any) {
-            // If request fails (not 200), mark all as offline
-            this.isHealthy = false;
-            const items: HealthCheckDisplayItem[] = Object.keys(
-                HealthComponent.SERVICE_NAMES
-            ).map((key) => ({
-                key,
-                displayName: HealthComponent.SERVICE_NAMES[key],
-                status: "down",
-                cssClass: "offline",
-            }));
-
-            this.dataSource.data = items;
-            this.dataSource.sort = this.sort;
-            this.dataSource.paginator = this.paginator;
-            this.dataCount = items.length;
-        } finally {
-            this.isLoading = false;
+            return;
         }
+
+        this.isUnreachable = true;
+        this.show(
+            this.lastUpdated
+                ? markStale(this.dataSource.data, translate, this.lastUpdated)
+                : unknownRows(translate),
+        );
     }
 
-    private addListeners(): void {
-        this.subscriptionsToClear.add(
-            interval(30000).subscribe(() => {
-                this.checkHealth();
-            })
-        );
+    private show(rows: HealthCheckDisplayItem[]): void {
+        this.dataSource.data = rows;
+        this.dataCount = rows.length;
     }
 }

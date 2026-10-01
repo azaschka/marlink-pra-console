@@ -37,6 +37,30 @@
           "add": "Add BeyondTrust Instance",
           "refresh": "Instances Health Check"
         }
+      },
+      "health": {
+        "headline": "Health Status",
+        "unreachable": "Health information unavailable: PRA API not reachable.",
+        "lastUpdated": "Last updated {{time}}.",
+        "services": {
+          "database": "MariaDB Database",
+          "praSyncApi": "PRA Sync API",
+          "storage": "Storage Availability",
+          "memoryHeap": "Memory Heap Usage"
+        },
+        "states": {
+          "up": "Up",
+          "warning": "Warning",
+          "down": "Down",
+          "unknown": "Unknown"
+        },
+        "tooltip": {
+          "checkedAt": "Checked at {{time}}",
+          "stale": "Not current, last updated {{time}}",
+          "memory": "Heap used {{used}} MiB, warning threshold {{threshold}} MiB",
+          "storage": "Disk used {{used}} %, warning threshold {{threshold}} %",
+          "latency": "Response time {{latency}} ms"
+        }
       }
     },
     "sites": {

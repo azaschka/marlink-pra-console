@@ -45,3 +45,17 @@
     min-width: 64px;
     width: 64px;
 }
+
+.health-banner {
+    padding: 6px 16px;
+    background-color: rgba(201, 64, 77, 0.12);
+    color: #c9404d;
+}
+
+.mat-row.stale {
+    opacity: 0.5;
+}
+
+::ng-deep .health-tooltip {
+    white-space: pre-line;
+}

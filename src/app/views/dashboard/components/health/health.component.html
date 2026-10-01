@@ -1,7 +1,7 @@
 <mat-card class="my-0 p-0" style="height: 100%;">
     <mat-card-title class="mb-0">
         <div class="card-title-text">
-            <span class="text-13 pt-4">Health Status</span>
+            <span class="text-13 pt-4" translate="views.dashboard.health.headline"></span>
 
             <span fxFlex></span>
         </div>
@@ -10,22 +10,33 @@
     </mat-card-title>
 
     <mat-card-content class="my-0 p-0">
+        <div *ngIf="isUnreachable" class="health-banner text-13" role="status">
+            <span translate="views.dashboard.health.unreachable"></span>
+            <span *ngIf="lastUpdated">
+                {{ "views.dashboard.health.lastUpdated" | translate: { time: lastUpdated } }}
+            </span>
+        </div>
+
         <mat-table [dataSource]="dataSource">
             <ng-container matColumnDef="status">
                 <mat-cell *matCellDef="let row" data-label="status">
-                    <div class="status-light cursor-pointer" [ngClass]="row.cssClass"></div>
+                    <div
+                        class="status-light cursor-pointer"
+                        [ngClass]="row.cssClass"
+                        [matTooltip]="row.tooltip"
+                        matTooltipClass="health-tooltip"
+                    ></div>
                 </mat-cell>
             </ng-container>
 
             <ng-container matColumnDef="name">
                 <mat-header-cell *matHeaderCellDef mat-sort-header>Service</mat-header-cell>
-                <mat-cell *matCellDef="let row" data-label="name">{{ row.displayName }}</mat-cell>
+                <mat-cell *matCellDef="let row" data-label="name" [matTooltip]="row.tooltip" matTooltipClass="health-tooltip">
+                    {{ row.displayName }}
+                </mat-cell>
             </ng-container>
 
-            <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+            <mat-row *matRowDef="let row; columns: displayedColumns" [class.stale]="row.stale"></mat-row>
         </mat-table>
-
-        <mat-paginator #tablePaginator [style.display]="dataCount < 5 ? 'none' : 'block'" [length]="dataCount"
-            pageSize="4"></mat-paginator>
     </mat-card-content>
 </mat-card>
