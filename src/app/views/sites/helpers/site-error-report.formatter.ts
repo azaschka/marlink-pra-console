@@ -21,6 +21,13 @@ export class SiteErrorReportFormatter {
         return Array.isArray(items) ? (items as SiteErrorReportItem[]) : [];
     }
 
+    /** HTML list for dialogs that render HTML; every value is escaped because it comes from user data. */
+    public static formatHtmlList(items: SiteErrorReportItem[]): string {
+        const escape = (value: string) =>
+            value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        return `<ul>${items.map((item) => `<li>${escape(SiteErrorReportFormatter.format(item))}</li>`).join("")}</ul>`;
+    }
+
     public static format(item: SiteErrorReportItem): string {
         const subject = SiteErrorReportFormatter.subjectOf(item);
         return `${subject}: ${SiteErrorReportFormatter.describe(item)}`;

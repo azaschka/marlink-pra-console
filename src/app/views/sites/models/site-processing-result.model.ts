@@ -13,6 +13,11 @@ export interface SiteErrorReport {
     items: SiteErrorReportItem[];
 }
 
+/** Response body of DELETE /sites/{id} (PRA API R3.2-A005); null when the API answers 204. */
+export interface SiteDeletedResult {
+    errorReport?: SiteErrorReport;
+}
+
 /**
  * Response of POST /sites. The site fields stay at the top level (PRA API 3.1 shape); `errorReport` is absent
  * when the API predates R3.2-A003.

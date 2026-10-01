@@ -41,4 +41,13 @@ describe("SiteErrorReportFormatter", () => {
     it("falls back to the raw message for entries without a user", () => {
         expect(SiteErrorReportFormatter.format({ type: "Error", message: "timeout" })).toBe("Site: timeout");
     });
+
+    it("escapes user data in the HTML list for the cleanup dialog", () => {
+        const html = SiteErrorReportFormatter.formatHtmlList([
+            { type: "Error", message: "<img src=x onerror=alert(1)>", siteUserType: "site-manager", email: "a@b.c" },
+        ]);
+
+        expect(html).toContain("&lt;img src=x onerror=alert(1)&gt;");
+        expect(html).not.toContain("<img");
+    });
 });

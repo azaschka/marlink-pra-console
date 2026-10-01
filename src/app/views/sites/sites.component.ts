@@ -17,6 +17,7 @@ import { PraDataFilter } from "app/shared/helpers";
 import { AppService } from "app/app.service";
 import { PraBaseComponent } from "../../shared/components/pra-base/pra-base.component";
 
+import { SiteErrorReportFormatter } from "./helpers/site-error-report.formatter";
 @Component({
     selector: "app-sites",
     templateUrl: "./sites.component.html",
@@ -138,16 +139,31 @@ export class SitesComponent
     public async deleteSiteHandler(site: Site): Promise<void> {
         const confirmed = await this.confirmDialog.show({
             title: "Delete Site",
-            message: `Are you sure you want to delete site:<br><strong>${site.name} (${site.key})</strong>?<br><br>This action <strong>cannot be undone.</strong> All data associated with this site will be permanently deleted and cannot be recovered.`,
+            message:
+                `Are you sure you want to delete site:<br><strong>${site.name} (${site.key})</strong>?<br><br>` +
+                `This action <strong>cannot be undone.</strong> All data associated with this site will be permanently deleted and cannot be recovered.<br><br>` +
+                `Users of this site: their memberships for this site are removed. Local accounts are deleted when they hold no other site role. ` +
+                `Accounts provisioned by an identity provider (external users) are kept, and access they receive through identity provider groups is not changed.`,
         });
         if (confirmed) {
             this.isLoading = true;
             this.loaderMode = "buffer";
             try {
-                await this.sitesService.deleteSite(site.id);
-                this.notificationDialog.show({
-                    message: `Site ${site.name} has been deleted.`,
-                });
+                const result = await this.sitesService.deleteSite(site.id);
+                const cleanupItems = SiteErrorReportFormatter.itemsOf(result);
+                if (cleanupItems.length > 0) {
+                    // R3.2-A005: the site is gone, but some BeyondTrust artefacts could not be removed.
+                    this.errorDialog.show({
+                        title: "Site deleted with cleanup warnings",
+                        message:
+                            `Site <strong>${site.name}</strong> has been deleted, but ${cleanupItems.length} item(s) could not be cleaned up in BeyondTrust and need manual attention:` +
+                            SiteErrorReportFormatter.formatHtmlList(cleanupItems),
+                    });
+                } else {
+                    this.notificationDialog.show({
+                        message: `Site ${site.name} has been deleted.`,
+                    });
+                }
                 await this.loadPage();
             } catch (err: any) {
                 this.errorDialog.show({

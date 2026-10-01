@@ -1,7 +1,14 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
 import { firstValueFrom } from "rxjs";
-import { Site, CreateSiteDtoInput, RetrieveSitesParams, SiteLicenseUsage, SiteProcessingResult } from "./models";
+import {
+    Site,
+    CreateSiteDtoInput,
+    RetrieveSitesParams,
+    SiteDeletedResult,
+    SiteLicenseUsage,
+    SiteProcessingResult,
+} from "./models";
 import { Jumpoint } from "../jumpoints/models";
 
 @Injectable()
@@ -46,8 +53,8 @@ export class SitesService {
         return firstValueFrom(this.http.post<SiteProcessingResult>("sites", body, { observe: "response" }));
     }
 
-    public async deleteSite(id: number): Promise<void> {
-        return firstValueFrom(this.http.delete<void>(`sites/${id}`));
+    public async deleteSite(id: number): Promise<SiteDeletedResult | null> {
+        return firstValueFrom(this.http.delete<SiteDeletedResult | null>(`sites/${id}`));
     }
 
     public async calculateLicenseUsage(id: number): Promise<SiteLicenseUsage> {
