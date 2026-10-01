@@ -16,6 +16,7 @@ import { Discrepancy } from "./models";
 import { PraApiDefaults } from "../../shared/config";
 import { AppService } from "../../app.service";
 import { DiscrepancyEntityType, DiscrepancyScanStatus, DiscrepancySyncType } from "./enums";
+import { describeScanResult } from "./scan-result";
 
 @Component({
     selector: "app-bt-discrepancies",
@@ -66,6 +67,7 @@ export class BtDiscrepanciesComponent extends PraBaseComponent implements OnInit
     public isScanning = false;
     public isSyncingAllExternal = false;
     public scanError: string | null = null;
+    public scanWarning: string | null = null;
     public syncAllExternalError: string | null = null;
     public filterValue = "";
     public dataCount = 0;
@@ -159,6 +161,7 @@ export class BtDiscrepanciesComponent extends PraBaseComponent implements OnInit
             this.isScanning = true;
             this.isLoading = true;
             this.scanError = null;
+            this.scanWarning = null;
             try {
                 const { scanId } = await this.btDiscrepanciesService.scanAllDiscrepancies(this.currentTenantId);
                 this.pollUntilComplete(scanId);
@@ -187,19 +190,27 @@ export class BtDiscrepanciesComponent extends PraBaseComponent implements OnInit
             )
             .subscribe({
                 next: (status) => {
-                    if (Date.now() - startTime > BtDiscrepanciesComponent.MAX_POLL_DURATION_MS) {
-                        this.isScanning = false;
-                        this.isLoading = false;
-                        this.scanError = "Scan timed out after 20 minutes.";
+                    if (
+                        status.status === DiscrepancyScanStatus.Running &&
+                        Date.now() - startTime > BtDiscrepanciesComponent.MAX_POLL_DURATION_MS
+                    ) {
+                        // Stop polling (before, it went on and later reported success). The PRA API returns the
+                        // running scan when the scan is started again, so the user can follow it from there.
+                        this.pollSubscription?.unsubscribe();
+                        this.scanError =
+                            "The scan is still running after 20 minutes. Start the scan again to follow it.";
                         return;
                     }
-                    if (status.status === DiscrepancyScanStatus.Completed) {
-                        this.notificationDialog.show({
-                            message: "Discrepancy scan completed successfully.",
-                        });
-                        this.loadPage();
-                    } else if (status.status === DiscrepancyScanStatus.Failed) {
-                        this.scanError = status.error ?? "Scan failed. Please try again.";
+                    if (status.status !== DiscrepancyScanStatus.Running) {
+                        const result = describeScanResult(status);
+                        if (result.notification) {
+                            this.notificationDialog.show({ message: result.notification });
+                        }
+                        this.scanWarning = result.warning;
+                        this.scanError = result.error;
+                        if (status.status === DiscrepancyScanStatus.Completed) {
+                            this.loadPage();
+                        }
                     }
                 },
                 error: (err: any) => {

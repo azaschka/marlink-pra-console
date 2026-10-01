@@ -97,3 +97,9 @@
         background-color: #ffbbbb;
     }
 }
+
+// Entity types that a manual scan could not scan (amber, like a health warning).
+.scan-warning-message {
+    color: #b26a00;
+    max-width: 640px;
+}
