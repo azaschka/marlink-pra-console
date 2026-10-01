@@ -57,6 +57,28 @@ export class SitesService {
         return firstValueFrom(this.http.delete<SiteDeletedResult | null>(`sites/${id}`));
     }
 
+    /**
+     * Whether the PRA API of the given BeyondTrust instance supports external (non-local) users (R3.2-A003).
+     * Only an API with that support reports `sourceType` on users. Returns undefined when it cannot be decided,
+     * for example because the request failed or the instance has no users.
+     */
+    public async supportsUserSourceType(tenantId: number): Promise<boolean | undefined> {
+        try {
+            const users = await firstValueFrom(
+                this.http.get<{ sourceType?: string }[]>("users", {
+                    params: new HttpParams().set("pageSize", "1").set("pageNumber", "1"),
+                    headers: { "X-Tenant-Id": tenantId.toString() },
+                }),
+            );
+            if (!users?.length) {
+                return undefined;
+            }
+            return users[0].sourceType !== undefined;
+        } catch {
+            return undefined;
+        }
+    }
+
     public async calculateLicenseUsage(id: number): Promise<SiteLicenseUsage> {
         return firstValueFrom(this.http.post<SiteLicenseUsage>(`license-usages/sites/${id}`, {}));
     }

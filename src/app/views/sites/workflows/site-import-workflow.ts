@@ -10,6 +10,7 @@ import {
     ParsedSupportTeam,
     ParsedTrustLevel,
     ParsedUser,
+    ParsedUserType,
 } from "../../../shared/services/site-excel-parser.service";
 import { Observable } from "rxjs";
 import { CreateSiteDtoInput, ImportStatus, ImportStep, Site } from "../models";
@@ -111,6 +112,28 @@ export class SiteImportWorkflowService {
         this.result = { steps };
         return new Observable((sub) => {
             (async () => {
+                // === 0. GUARD: EXTERNAL USERS NEED A PRA API WITH R3.2-A003 ===
+                // An older PRA API ignores sourceType and would create local accounts for external users. The step
+                // is only added when the check fails, so the step indices used below stay unchanged.
+                if (SiteImportWorkflowService.hasExternalUsers(parsed)) {
+                    const supported = await this.sitesService.supportsUserSourceType(tenantId);
+                    if (supported !== true) {
+                        steps.push({
+                            label: "External users cannot be imported",
+                            status: ImportStatus.Error,
+                            result:
+                                supported === false
+                                    ? "The PRA API of this environment does not support external users yet (R3.2). Nothing was imported."
+                                    : "Support for external users could not be verified for this BeyondTrust instance. Nothing was imported; please try again.",
+                        });
+                        sub.next([...steps]);
+                        this.result.steps = [...steps];
+                        this.result.summary = this.makeSummary(steps);
+                        sub.error(steps[0].result);
+                        return;
+                    }
+                }
+
                 // === 1. CREATE CUSTOMER ===
                 steps.push({
                     label: "Creating Customer ...",
@@ -447,6 +470,16 @@ export class SiteImportWorkflowService {
         }
 
         return parts.length > 0 ? parts.join(", ") : null;
+    }
+
+    private static hasExternalUsers(parsed: {
+        siteAuditors: ParsedSiteAuditor[];
+        siteManagers: ParsedSiteManager[];
+        users: ParsedUser[];
+    }): boolean {
+        return [...parsed.siteAuditors, ...parsed.siteManagers, ...parsed.users].some(
+            (entry) => entry.userType === ParsedUserType.External,
+        );
     }
 
     private makeSummary(steps: ImportStep[], createdAssets = 0, erroredAssets = 0): ImportWorkflowSummary {
