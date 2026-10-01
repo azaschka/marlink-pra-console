@@ -58,6 +58,7 @@ import {
     BtShellJumpDefaults,
     BtWebJumpDefaults,
 } from "../../../shared/config";
+import { SiteErrorReportFormatter } from "../helpers/site-error-report.formatter";
 
 export interface ImportWorkflowSummary {
     totalSteps: number;
@@ -539,11 +540,23 @@ export class SiteImportWorkflowService {
                 step.status = ImportStatus.Success;
                 step.result = `Created site: ${site.name} (ID: ${site.id})`;
             }
+
+            // R3.2-A003: users that could not be processed do not abort the import; the API reports them instead.
+            const reportItems = SiteErrorReportFormatter.itemsOf(site);
+            if (reportItems.length > 0) {
+                step.status = ImportStatus.Warning;
+                step.result = `Site ${site.name} (ID: ${site.id}) saved, but ${reportItems.length} item(s) need attention:`;
+                step.details = reportItems.map((item) => SiteErrorReportFormatter.format(item));
+            }
             return site;
         } catch (err: any) {
             step.status = ImportStatus.Error;
             step.label = "Site creation failed!";
             step.result = this.stringifyError(err);
+            const reportItems = SiteErrorReportFormatter.itemsOf(err?.error);
+            if (reportItems.length > 0) {
+                step.details = reportItems.map((item) => SiteErrorReportFormatter.format(item));
+            }
             return undefined;
         }
     }

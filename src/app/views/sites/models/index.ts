@@ -9,3 +9,4 @@ export * from "./site-manager.model";
 export * from "./site-support-team-member-dto-input.model";
 export * from "./site-support-team-member.model";
 export * from "./site.model";
+export * from "./site-processing-result.model";

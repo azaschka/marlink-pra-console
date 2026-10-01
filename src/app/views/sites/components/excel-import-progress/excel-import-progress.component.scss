@@ -10,3 +10,13 @@
 .text-warning {
     color: #ff9800;
 }
+
+.import-step-details {
+    padding-left: 16px;
+    font-size: 13px;
+
+    li {
+        margin-bottom: 4px;
+        word-break: break-word;
+    }
+}

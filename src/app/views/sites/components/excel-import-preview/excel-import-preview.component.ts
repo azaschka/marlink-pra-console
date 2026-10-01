@@ -7,6 +7,7 @@ import {
     ParsedSiteManager,
     ParsedSupportTeam,
     ParsedUser,
+    ParsedUserType,
 } from "../../../../shared/services/site-excel-parser.service";
 import { NestedTreeControl } from "@angular/cdk/tree";
 import { MatTreeNestedDataSource } from "@angular/material/tree";
@@ -31,6 +32,7 @@ type ExcelImportPreviewData = {
     supportTeams: ParsedSupportTeam[];
     users: ParsedUser[];
     jumpAssets: ParsedJumpAsset[];
+    notices?: string[];
 };
 
 @Component({
@@ -92,6 +94,11 @@ export class ExcelImportPreviewComponent implements OnInit {
         }
     }
 
+    /** LOCAL users get a local BeyondTrust account; EXTERNAL users must already exist (first login done). */
+    private typeLabel(userType: ParsedUserType | undefined): string {
+        return userType === ParsedUserType.External ? "Type: External" : "Type: Local";
+    }
+
     private buildPreviewTree(): PreviewTreeNode[] {
         if (!this.preview) return [];
         const {
@@ -106,14 +113,13 @@ export class ExcelImportPreviewComponent implements OnInit {
         // Site Auditors
         const auditorNodes = siteAuditors.map((a) => ({
             label: a.email,
-            value: a.isAdminOperator
-                ? "AdminOperator: Yes"
-                : "AdminOperator: No",
+            value: `${a.isAdminOperator ? "AdminOperator: Yes" : "AdminOperator: No"} | ${this.typeLabel(a.userType)}`,
         }));
 
         // Site Managers
         const managerNodes = siteManagers.map((m) => ({
             label: m.email,
+            value: this.typeLabel(m.userType),
         }));
 
         const approverNodes = siteApprovers.map((approver) => ({
@@ -133,7 +139,7 @@ export class ExcelImportPreviewComponent implements OnInit {
                 children: members.length
                     ? members.map((m) => ({
                           label: `${m.firstName} ${m.lastName}`,
-                          value: `(Email: ${m.email})`,
+                          value: `(Email: ${m.email}, ${this.typeLabel(m.userType)})`,
                       }))
                     : [{ label: "No users assigned", value: "", children: [] }],
             };
@@ -150,7 +156,17 @@ export class ExcelImportPreviewComponent implements OnInit {
                 .join(" | "),
         }));
 
+        const notices = this.preview.notices ?? [];
+
         return [
+            ...(notices.length
+                ? [
+                      {
+                          label: `Notices (${notices.length})`,
+                          children: notices.map((notice) => ({ label: notice })),
+                      },
+                  ]
+                : []),
             {
                 label: "Site Auditors",
                 children: auditorNodes.length

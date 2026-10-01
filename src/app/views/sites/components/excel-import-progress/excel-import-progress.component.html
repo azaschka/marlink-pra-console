@@ -12,5 +12,9 @@
 
         <p fxFlex *ngIf="step.result" class="ml-40" [class.text-warn]="step.status === 'error'"
             [class.text-warning]="step.status === 'warning'">{{ step.result }}</p>
+
+        <ul *ngIf="step.details?.length" class="ml-40 mt-0 import-step-details">
+            <li *ngFor="let detail of step.details">{{ detail }}</li>
+        </ul>
     </div>
 </div>

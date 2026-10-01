@@ -18,4 +18,6 @@ export interface ImportStep {
     label: string;
     status: ImportStatus;
     result?: string;
+    /** One line per affected item, for example per site user the PRA API could not process. */
+    details?: string[];
 }

@@ -31,6 +31,7 @@ export class ImportExcelOverlayComponent {
               supportTeams: ParsedSupportTeam[];
               users: ParsedUser[];
               jumpAssets: ParsedJumpAsset[];
+              notices?: string[];
           }
         | undefined;
     public importResult?: any;

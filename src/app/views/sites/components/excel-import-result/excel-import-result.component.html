@@ -3,12 +3,17 @@
         <div *ngFor="let step of result.steps" fxLayout="column" fxLayoutGap="8px">
             <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="24px" fxFlex="100" class="mr-8">
                 <mat-icon *ngIf="step.status === 'success'" color="primary">check_circle</mat-icon>
+                <mat-icon *ngIf="step.status === 'warning'" class="import-warning-icon">warning</mat-icon>
                 <mat-icon *ngIf="step.status === 'error'" color="warn">error</mat-icon>
-                <span *ngIf="step.status === 'success'" fxFlex>{{ step.result }}</span>
+                <span *ngIf="step.status === 'success' || step.status === 'warning'" fxFlex>{{ step.result }}</span>
                 <span *ngIf="step.status === 'error'" fxFlex>{{ step.label }}</span>
             </div>
 
             <p *ngIf="step.status === 'error'" class="m-0 ml-48 text-13 text-warn">{{ step.result }}</p>
+
+            <ul *ngIf="step.details?.length" class="m-0 ml-48 text-13 import-step-details">
+                <li *ngFor="let detail of step.details">{{ detail }}</li>
+            </ul>
         </div>
     </div>
 
