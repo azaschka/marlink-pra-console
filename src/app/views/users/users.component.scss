@@ -29,13 +29,21 @@
 .mat-column-publicDisplayName {
     flex: 1 1 auto;
 }
+// Every column except the display name has a fixed width. A second flexible column would share the free space
+// with the display name per row, and the cells of the columns after it would no longer line up.
+// The type column takes its 90px from the username and email columns in equal parts, so the display name keeps
+// the width it had before the type column existed, also on narrow screens.
 .mat-column-username {
-    flex: 0 0 22%;
-    width: 22%;
+    flex: 0 0 calc(22% - 45px);
+    width: calc(22% - 45px);
+}
+.mat-column-sourceType {
+    flex: 0 0 90px;
+    width: 90px;
 }
 .mat-column-email {
-    flex: 0 0 22%;
-    width: 22%;
+    flex: 0 0 calc(22% - 45px);
+    width: calc(22% - 45px);
     word-break: break-all;
 }
 .mat-column-lastAuthenticationDate,
