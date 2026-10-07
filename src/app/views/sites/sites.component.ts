@@ -142,8 +142,8 @@ export class SitesComponent
             message:
                 `Are you sure you want to delete site:<br><strong>${site.name} (${site.key})</strong>?<br><br>` +
                 `This action <strong>cannot be undone.</strong> All data associated with this site will be permanently deleted and cannot be recovered.<br><br>` +
-                `Users of this site: their memberships for this site are removed. Local accounts are deleted when they hold no other site role. ` +
-                `Accounts provisioned by an identity provider (external users) are kept, and access they receive through identity provider groups is not changed.`,
+                `Users of this site: their memberships for this site are removed. Accounts, local and external, are deleted when they hold no other site role. ` +
+                `BeyondTrust creates an external account (provisioned by an identity provider) again when the user signs in the next time; access through identity provider groups is not changed.`,
         });
         if (confirmed) {
             this.isLoading = true;
