@@ -3,7 +3,7 @@ import { User } from "./models";
 import { UsersComponent } from "./users.component";
 
 /**
- * R3.2-A003/A004: the Users list shows the account type and does not offer deletion of external accounts.
+ * R3.2-A003/A004: the Users list shows the account type; the type decides the wording of the delete confirmation.
  * The two helpers are pure, so they are exercised without rendering the component.
  */
 describe("UsersComponent user type helpers", () => {

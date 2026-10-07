@@ -90,12 +90,9 @@
                             (click)="reactivateUserHandler(row)">
                             <mat-icon>person_add</mat-icon>
                         </button>
-                        <span [matTooltip]="isExternalUser(row) ? 'Accounts provisioned by an identity provider cannot be deleted here' : ''">
-                            <button mat-icon-button color="warn" [disabled]="isExternalUser(row)"
-                                (click)="deleteUserHandler(row)">
-                                <mat-icon>delete</mat-icon>
-                            </button>
-                        </span>
+                        <button mat-icon-button color="warn" (click)="deleteUserHandler(row)">
+                            <mat-icon>delete</mat-icon>
+                        </button>
                     </mat-cell>
                 </ng-container>
 

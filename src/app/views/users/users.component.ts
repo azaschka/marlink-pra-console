@@ -263,18 +263,26 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
         return user.sourceType === UserSourceType.External;
     }
 
-    public async deleteUserHandler(user: User): Promise<void> {
-        // R3.2-A004: an account provisioned by an identity provider is not deleted here; the PRA API rejects it too.
-        if (this.isExternalUser(user)) {
-            await this.errorDialog.show({
-                title: "Delete Not Available",
-                message:
-                    "This account is provisioned by an identity provider and would be created again at the next login. " +
-                    "Deactivate it or remove its group policies instead.",
-            });
-            return;
+    /**
+     * R3.2-A004: local and external accounts can both be deleted. Deleting an external account does not block the
+     * person: BeyondTrust creates the account again at the next sign-in through the identity provider. The
+     * confirmation says so, because deactivating is the action that keeps a user out.
+     */
+    public deleteConfirmationMessage(user: User): string {
+        const question = `Are you sure you want to delete user:<br><strong>${user.publicDisplayName}</strong>?`;
+
+        if (!this.isExternalUser(user)) {
+            return question;
         }
 
+        return (
+            `${question}<br><br>This account is provisioned by an identity provider. BeyondTrust creates it again, ` +
+            "without its direct group policies, when the user signs in the next time. " +
+            "To keep the user out, deactivate the account instead."
+        );
+    }
+
+    public async deleteUserHandler(user: User): Promise<void> {
         if (!this.currentTenantId) {
             await this.errorDialog.show({
                 title: "No Instance Selected",
@@ -285,7 +293,7 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
 
         const confirmed = await this.confirmDialog.show({
             title: "Delete User",
-            message: `Are you sure you want to delete user:<br><strong>${user.publicDisplayName}</strong>?`,
+            message: this.deleteConfirmationMessage(user),
         });
 
         if (confirmed) {
