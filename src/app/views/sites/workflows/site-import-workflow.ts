@@ -14,7 +14,7 @@ import {
 } from "../../../shared/services/site-excel-parser.service";
 import { Observable } from "rxjs";
 import { CreateSiteDtoInput, ImportStatus, ImportStep, Site } from "../models";
-import { BU_OPERATOR_GP_MAP, ErrorUtils, StringSanitizer } from "../../../shared/helpers";
+import { BU_OPERATOR_GP_MAP, BU_SAML_DEFAULT_GP_MAP, ErrorUtils, StringSanitizer } from "../../../shared/helpers";
 
 // Customer imports
 import { CustomerFactory } from "../../customers/factories/customer.factory";
@@ -403,6 +403,24 @@ export class SiteImportWorkflowService {
                 }
                 sub.next([...steps]);
 
+                // === 6. VERIFY BU DEFAULT GROUP POLICY OF EXTERNAL USERS ===
+                // pra-api adds every external site user to this policy during site creation. The step exists
+                // only for workbooks with external users, and it is a check: nothing is assigned from here.
+                if (SiteImportWorkflowService.hasExternalUsers(parsed)) {
+                    steps.push({
+                        label: "Verifying BU default Group Policy of external users ...",
+                        status: ImportStatus.InProgress,
+                    });
+                    const buSamlGpStepIdx = steps.length - 1;
+                    sub.next([...steps]);
+
+                    Object.assign(
+                        steps[buSamlGpStepIdx],
+                        await this.verifyBuSamlDefaultGroupPolicy(tenantId, parsed.customer.businessUnit),
+                    );
+                    sub.next([...steps]);
+                }
+
                 // === FERTIG ===
                 this.result.steps = [...steps];
                 this.result.summary = this.makeSummary(steps, createdAssets, erroredAssets);
@@ -470,6 +488,51 @@ export class SiteImportWorkflowService {
         }
 
         return parts.length > 0 ? parts.join(", ") : null;
+    }
+
+    /**
+     * Checks that the default group policy of external users exists for the customer's Business Unit. A missing
+     * policy is a warning, not an error: the users were imported, they only lack the membership that shows them
+     * to the BU Admins of that Business Unit.
+     */
+    private async verifyBuSamlDefaultGroupPolicy(
+        tenantId: number,
+        businessUnit: string,
+    ): Promise<Pick<ImportStep, "status" | "result">> {
+        const buCode = businessUnit.trim().split(/\s+/)[0].toUpperCase();
+        const expectedGpName = BU_SAML_DEFAULT_GP_MAP[buCode];
+
+        if (!expectedGpName) {
+            return {
+                status: ImportStatus.Warning,
+                result: `Unknown Business Unit code "${buCode}". Cannot determine the BU default Group Policy of external users.`,
+            };
+        }
+
+        try {
+            const allGroupPolicies = await this.groupPoliciesService.fetchGroupPolicies(tenantId);
+            const buSamlGroupPolicy = allGroupPolicies.find(
+                (gp) => gp.name.toUpperCase() === expectedGpName.toUpperCase(),
+            );
+
+            return buSamlGroupPolicy
+                ? {
+                      status: ImportStatus.Success,
+                      result: `BU default Group Policy "${buSamlGroupPolicy.name}" confirmed. External users of this site are assigned to it by the site creation.`,
+                  }
+                : {
+                      status: ImportStatus.Warning,
+                      result:
+                          `BU default Group Policy "${expectedGpName}" not found on this BeyondTrust instance. ` +
+                          "External users were imported without it and are not visible to BU Admins through this policy. " +
+                          "Create the policy in BeyondTrust and run the import again.",
+                  };
+        } catch (err: any) {
+            return {
+                status: ImportStatus.Warning,
+                result: `Could not verify the BU default Group Policy of external users: ${this.stringifyError(err)}`,
+            };
+        }
     }
 
     private static hasExternalUsers(parsed: {

@@ -337,7 +337,8 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
      *    the API (364 users / 50 per batch ≈ 7 sequential rounds).
      * 4. Per-user decision: visible when **any** assigned GP name passes the
      *    shared `PraDataFilter.isGroupPolicyNameVisibleForBuAdmin` predicate
-     *    (special policy, BU operator, BU prefix, or customer name match).
+     *    (special policy, BU operator, BU default policy of external users,
+     *    BU prefix, or customer name match).
      *    Policies outside these criteria — including global super-user policies
      *    such as `GP_MARLINK_SUPERUSERS` — do not match and are excluded
      *    implicitly, keeping the behaviour consistent with the group-policy
@@ -373,8 +374,8 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
                 /**
                  * A user is visible to the current BU Admin when at least one
                  * of their assigned group policies passes the shared BU Admin
-                 * visibility predicate (special policy, BU operator, BU prefix,
-                 * or customer-name match).
+                 * visibility predicate (special policy, BU operator, BU default
+                 * policy of external users, BU prefix, or customer-name match).
                  *
                  * Global super-user policies (e.g. GP_MARLINK_SUPERUSERS) are
                  * excluded implicitly — they match none of the positive criteria

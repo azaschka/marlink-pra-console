@@ -18,6 +18,25 @@ export const BU_OPERATOR_GP_MAP: Record<string, string> = {
 };
 
 /**
+ * Maps each Business Unit code to the default group policy of its
+ * externally provisioned (SAML) users, e.g. users who sign in through
+ * Entra ID. The policies are created manually on each BeyondTrust instance.
+ *
+ * Membership marks an external user as belonging to the Business Unit:
+ * pra-api adds every external site user to the policy of the customer's
+ * Business Unit during site ingestion (`BU_SAML_DEFAULT_GP_MAP` in
+ * `pra-api/src/site/workflows/group-policies/bu-saml-default-group-policy.workflow.ts`).
+ * Keep both maps in sync.
+ */
+export const BU_SAML_DEFAULT_GP_MAP: Record<string, string> = {
+    MT: "GP_MARITIME_SAML_DEFAULT",
+    EG: "GP_EEG_SAML_DEFAULT",
+    OA: "GP_OMNIACCESS_SAML_DEFAULT",
+    TE: "GP_TELEMAR_SAML_DEFAULT",
+    MC: "GP_CYBER_SAML_DEFAULT",
+};
+
+/**
  * Global group policies that are always visible to **every** BU Admin,
  * regardless of business unit or customer assignment.
  *
@@ -129,8 +148,10 @@ export class PraDataFilter {
      *
      *  1. It is a global special policy (GP_FULL_ACCESS, GP_LIMITED_ACCESS …)
      *  2. It is the BU-specific operator policy (GP_MARITIME_OPERATORS for MT …)
-     *  3. Its name starts with the BU code prefix, e.g. `MT_` or `GP_MT_`
-     *  4. Its name contains one of the customer names belonging to the BU
+     *  3. It is the BU-specific default policy of external users
+     *     (GP_MARITIME_SAML_DEFAULT for MT …)
+     *  4. Its name starts with the BU code prefix, e.g. `MT_` or `GP_MT_`
+     *  5. Its name contains one of the customer names belonging to the BU
      *
      * This is the **single source of truth** for BU Admin visibility and is
      * shared by `GroupPoliciesComponent`, `UserOverlayComponent`, and
@@ -158,13 +179,22 @@ export class PraDataFilter {
             return true;
         }
 
-        // 3. BU prefix match, e.g. "MT_..." or "GP_MT_..."
+        // 3. BU-specific default policy of external (SAML) users, e.g.
+        //    "GP_MARITIME_SAML_DEFAULT" for MT. An external user is a member
+        //    of it for every Business Unit it works for, which is what makes
+        //    the user visible to the BU Admins of exactly those Business Units.
+        const buSamlDefaultGp = BU_SAML_DEFAULT_GP_MAP[buCode];
+        if (buSamlDefaultGp && upperName === buSamlDefaultGp) {
+            return true;
+        }
+
+        // 4. BU prefix match, e.g. "MT_..." or "GP_MT_..."
         const buPrefix = `${buCode}_`;
         if (policyName.startsWith(buPrefix) || policyName.startsWith(`GP_${buPrefix}`)) {
             return true;
         }
 
-        // 4. Customer name substring match
+        // 5. Customer name substring match
         const lowerName = policyName.toLowerCase();
         return customerNames.some((cn) => lowerName.includes(cn));
     }
