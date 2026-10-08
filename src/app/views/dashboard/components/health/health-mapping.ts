@@ -25,25 +25,6 @@ const CSS_CLASSES: Record<HealthRowState, HealthCheckDisplayItem["cssClass"]> = 
 const MEGABYTE = 1024 * 1024;
 
 /**
- * An older PRA API answers 503 through its exception filter, which wraps the health result into "message".
- * Returns the health result in either form, or undefined when the body is not a health answer.
- */
-export function unwrapHealthBody(body: unknown): HealthCheckResponse | undefined {
-    const isHealth = (value: unknown): value is HealthCheckResponse =>
-        typeof value === "object" &&
-        value !== null &&
-        ("checks" in value || "details" in value || "overallStatus" in value);
-
-    if (isHealth(body)) {
-        return body;
-    }
-
-    const message = (body as { message?: unknown } | null | undefined)?.message;
-
-    return isHealth(message) ? message : undefined;
-}
-
-/**
  * One row per check. The state comes from "checks" (3.2 contract), otherwise from the legacy "details". A
  * missing check is unknown (grey), never down; the overall status never overrides a row.
  */

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { TranslateService } from "@ngx-translate/core";
-import { Subject, Subscription, fromEvent, interval, merge, of } from "rxjs";
+import { Subscription, fromEvent, interval, merge, of } from "rxjs";
 import { catchError, exhaustMap, filter, finalize, switchMap, take } from "rxjs/operators";
 import { HealthCheckDisplayItem, HealthFetchResult } from "./models";
 import { HealthService } from "./health.service";
@@ -24,17 +24,14 @@ export class HealthComponent implements OnInit, OnDestroy {
 
     public dataSource = new MatTableDataSource<HealthCheckDisplayItem>();
     public displayedColumns = HealthComponent.DISPLAYED_COLUMNS;
-    public dataCount = 0;
 
     public isLoading = false;
-    public isHealthy = true;
     public isUnreachable = false;
     public lastUpdated: string | undefined;
 
     // Rows of the last answer. Stale rows are derived from them, never from the displayed (already stale) rows.
     private lastKnownRows: HealthCheckDisplayItem[] = [];
 
-    private readonly refresh$ = new Subject<void>();
     private readonly subscriptionsToClear = new Subscription();
 
     constructor(
@@ -44,7 +41,7 @@ export class HealthComponent implements OnInit, OnDestroy {
 
     public ngOnInit(): void {
         const becameVisible$ = fromEvent(document, "visibilitychange").pipe(filter(() => !document.hidden));
-        const triggers$ = merge(of(undefined), interval(HealthComponent.POLL_INTERVAL_IN_MS), this.refresh$, becameVisible$);
+        const triggers$ = merge(of(undefined), interval(HealthComponent.POLL_INTERVAL_IN_MS), becameVisible$);
         // The rows hold translated text, and translate.instant() returns the keys while en.json is still loading.
         // So polling starts once the translations are there (or failed to load).
         const translationsLoaded$ = this.translateService.get(HealthComponent.TRANSLATIONS_LOADED_KEY).pipe(
@@ -57,7 +54,7 @@ export class HealthComponent implements OnInit, OnDestroy {
                 .pipe(
                     switchMap(() => triggers$),
                     filter(() => !document.hidden),
-                    // A poll that is still running makes further triggers wait for nothing: no overlap.
+                    // Triggers while a poll is running are ignored, so requests never overlap.
                     exhaustMap(() => {
                         this.isLoading = true;
 
@@ -72,19 +69,13 @@ export class HealthComponent implements OnInit, OnDestroy {
         this.subscriptionsToClear.unsubscribe();
     }
 
-    public refreshHealth(): void {
-        this.refresh$.next();
-    }
-
     private apply(result: HealthFetchResult): void {
         const translate = (key: string, params?: Record<string, unknown>) =>
             this.translateService.instant(key, params) as string;
 
+        // The rows show every state, including an overall "unavailable" (a critical check is down).
         if (result.kind === "response") {
             this.isUnreachable = false;
-            this.isHealthy = result.body.overallStatus
-                ? result.body.overallStatus !== "unavailable"
-                : result.body.status === "ok";
             this.lastUpdated = formatTime(new Date());
             this.lastKnownRows = mapHealthRows(result.body, translate);
             this.show(this.lastKnownRows);
@@ -102,6 +93,5 @@ export class HealthComponent implements OnInit, OnDestroy {
 
     private show(rows: HealthCheckDisplayItem[]): void {
         this.dataSource.data = rows;
-        this.dataCount = rows.length;
     }
 }

@@ -30,9 +30,7 @@ export interface HealthCheckResponse {
 }
 
 /** Result of one poll: a health answer (HTTP 200 or 503 with a body), or no usable answer at all. */
-export type HealthFetchResult =
-    | { kind: "response"; body: HealthCheckResponse }
-    | { kind: "unreachable"; httpStatus: number };
+export type HealthFetchResult = { kind: "response"; body: HealthCheckResponse } | { kind: "unreachable" };
 
 export interface HealthCheckDisplayItem {
     key: string;

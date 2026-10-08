@@ -3,7 +3,6 @@ import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Observable, of } from "rxjs";
 import { catchError, map, timeout } from "rxjs/operators";
 import { HealthCheckResponse, HealthFetchResult } from "./models";
-import { unwrapHealthBody } from "./health-mapping";
 
 @Injectable({ providedIn: "root" })
 export class HealthService {
@@ -20,20 +19,35 @@ export class HealthService {
     public fetchHealth(): Observable<HealthFetchResult> {
         return this.http.get<HealthCheckResponse>(this.baseEndpoint).pipe(
             timeout(HealthService.TIMEOUT_IN_MS),
-            map((body): HealthFetchResult => {
-                const health = unwrapHealthBody(body);
-
-                return health ? { kind: "response", body: health } : { kind: "unreachable", httpStatus: 200 };
-            }),
-            catchError((error: unknown) => {
-                const health = error instanceof HttpErrorResponse ? unwrapHealthBody(error.error) : undefined;
-
-                return of<HealthFetchResult>(
-                    health
-                        ? { kind: "response", body: health }
-                        : { kind: "unreachable", httpStatus: error instanceof HttpErrorResponse ? error.status : 0 },
-                );
-            }),
+            map((body): HealthFetchResult => HealthService.toResult(body)),
+            catchError((error: unknown) =>
+                of(HealthService.toResult(error instanceof HttpErrorResponse ? error.error : undefined)),
+            ),
         );
+    }
+
+    private static toResult(body: unknown): HealthFetchResult {
+        const health = HealthService.unwrapHealthBody(body);
+
+        return health ? { kind: "response", body: health } : { kind: "unreachable" };
+    }
+
+    /**
+     * An older PRA API answers 503 through its exception filter, which wraps the health result into "message".
+     * Returns the health result in either form, or undefined when the body is not a health answer.
+     */
+    private static unwrapHealthBody(body: unknown): HealthCheckResponse | undefined {
+        const isHealth = (value: unknown): value is HealthCheckResponse =>
+            typeof value === "object" &&
+            value !== null &&
+            ("checks" in value || "details" in value || "overallStatus" in value);
+
+        if (isHealth(body)) {
+            return body;
+        }
+
+        const message = (body as { message?: unknown } | null | undefined)?.message;
+
+        return isHealth(message) ? message : undefined;
     }
 }
