@@ -320,10 +320,20 @@ export class BtDiscrepanciesComponent extends PraBaseComponent implements OnInit
                 // is a BehaviorSubject that emits immediately on subscribe.
                 // Only reload when the instance actually changes mid-session.
                 if (previousTenantId !== null && previousTenantId !== instanceId) {
+                    this.stopFollowingScan();
                     await this.loadPage();
                 }
             }),
         );
+    }
+
+    /** A scan and its messages belong to the tenant it was started for; another tenant must not show them. */
+    private stopFollowingScan(): void {
+        this.pollSubscription?.unsubscribe();
+        this.pollSubscription = null;
+        this.scanError = null;
+        this.scanWarning = null;
+        this.syncAllExternalError = null;
     }
 
     private async loadHtmlFormatter(): Promise<void> {
