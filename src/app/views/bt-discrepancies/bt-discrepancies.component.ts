@@ -5,7 +5,7 @@ import { MatPaginator } from "@angular/material/paginator";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { TranslateService } from "@ngx-translate/core";
 import { interval, Subscription } from "rxjs";
-import { switchMap, takeWhile, finalize } from "rxjs/operators";
+import { exhaustMap, takeWhile, finalize } from "rxjs/operators";
 import * as jsondiffpatch from "jsondiffpatch";
 import { ConfirmDialogService } from "../../shared/dialogs/confirm-dialog/confirm-dialog.service";
 import { ErrorDialogService } from "../../shared/dialogs/error-dialog/error-dialog.service";
@@ -161,7 +161,8 @@ export class BtDiscrepanciesComponent extends PraBaseComponent implements OnInit
         this.pollSubscription?.unsubscribe();
         this.pollSubscription = interval(BtDiscrepanciesComponent.POLL_INTERVAL_MS)
             .pipe(
-                switchMap(() => this.btDiscrepanciesService.getScanStatus(tenantId, scanId)),
+                // A tick while the status request is still running is skipped instead of cancelling the request.
+                exhaustMap(() => this.btDiscrepanciesService.getScanStatus(tenantId, scanId)),
                 takeWhile((status) => status.status === DiscrepancyScanStatus.Running, true),
                 finalize(() => {
                     this.isScanning = false;
