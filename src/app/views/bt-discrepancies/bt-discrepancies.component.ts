@@ -174,11 +174,12 @@ export class BtDiscrepanciesComponent extends PraBaseComponent implements OnInit
                         status.status === DiscrepancyScanStatus.Running &&
                         Date.now() - startTime > BtDiscrepanciesComponent.MAX_POLL_DURATION_MS
                     ) {
-                        // Stop polling (before, it went on and later reported success). The PRA API returns the
-                        // running scan when the scan is started again, so the user can follow it from there.
+                        // Stop polling (before, it went on and later reported success). The scan itself goes on
+                        // in the PRA API; its result shows once the page is reloaded.
                         this.pollSubscription?.unsubscribe();
-                        this.scanError =
-                            "The scan is still running after 20 minutes. Start the scan again to follow it.";
+                        this.scanError = this.translateService.instant(
+                            "views.bt-discrepancies.scan.stillRunning",
+                        ) as string;
                         return;
                     }
                     if (status.status !== DiscrepancyScanStatus.Running) {

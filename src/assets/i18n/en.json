@@ -155,7 +155,8 @@
           "partial": "partial",
           "skipped": "skipped",
           "aborted": "aborted"
-        }
+        },
+        "stillRunning": "The scan is still running after 20 minutes. This view no longer follows it; reload the page later to see the discrepancies it found."
       }
     },
     "bt-backups": {
