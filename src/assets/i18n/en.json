@@ -137,6 +137,25 @@
       "buttons": {
         "scanAll": "Scan for Discrepancies",
         "syncAllExternal": "Sync All from BT"
+      },
+      "scan": {
+        "completed": "Discrepancy scan completed successfully.",
+        "completedWithFailures": "Discrepancy scan completed, but {{count}} could not be scanned.",
+        "entityTypeCount": {
+          "one": "1 entity type",
+          "other": "{{count}} entity types"
+        },
+        "notScanned": "Not scanned: {{items}}.",
+        "item": "{{entityType}} ({{state}})",
+        "itemWithReason": "{{entityType}} ({{state}}: {{reason}})",
+        "outdated": "Their discrepancies may be outdated.",
+        "failed": "Scan failed. Please try again.",
+        "states": {
+          "failed": "failed",
+          "partial": "partial",
+          "skipped": "skipped",
+          "aborted": "aborted"
+        }
       }
     },
     "bt-backups": {

@@ -3,6 +3,7 @@ import { MatTableDataSource } from "@angular/material/table";
 import { MatSort } from "@angular/material/sort";
 import { MatPaginator } from "@angular/material/paginator";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+import { TranslateService } from "@ngx-translate/core";
 import { interval, Subscription } from "rxjs";
 import { switchMap, takeWhile, finalize } from "rxjs/operators";
 import * as jsondiffpatch from "jsondiffpatch";
@@ -16,6 +17,7 @@ import { Discrepancy } from "./models";
 import { PraApiDefaults } from "../../shared/config";
 import { AppService } from "../../app.service";
 import { DiscrepancyEntityType, DiscrepancyScanStatus, DiscrepancySyncType } from "./enums";
+import { getEntityTypeLabel } from "./entity-type-labels";
 import { describeScanResult } from "./scan-result";
 
 @Component({
@@ -29,29 +31,6 @@ export class BtDiscrepanciesComponent extends PraBaseComponent implements OnInit
     private static readonly DISPLAYED_COLUMNS = ["id", "entityType", "diff", "creationDate", "actions"];
     private static readonly POLL_INTERVAL_MS = 5000;
     private static readonly MAX_POLL_DURATION_MS = 20 * 60 * 1000;
-
-    private static readonly ENTITY_TYPE_LABELS: Record<DiscrepancyEntityType, string> = {
-        [DiscrepancyEntityType.GroupPolicy]: "Group Policy",
-        [DiscrepancyEntityType.GroupPolicyJumpGroup]: "Group Policy Jump Group",
-        [DiscrepancyEntityType.GroupPolicyJumpoint]: "Group Policy Jumpoint",
-        [DiscrepancyEntityType.GroupPolicyMember]: "Group Policy Member",
-        [DiscrepancyEntityType.GroupPolicyTeam]: "Group Policy Team",
-        [DiscrepancyEntityType.JumpClient]: "Jump Client",
-        [DiscrepancyEntityType.JumpClientInstaller]: "Jump Client Installer",
-        [DiscrepancyEntityType.JumpGroup]: "Jump Group",
-        [DiscrepancyEntityType.JumpItemProtocolTunnelJump]: "Jump Item (Protocol Tunnel)",
-        [DiscrepancyEntityType.JumpItemRemoteRdp]: "Jump Item (Remote RDP)",
-        [DiscrepancyEntityType.JumpItemRemoteVnc]: "Jump Item (Remote VNC)",
-        [DiscrepancyEntityType.JumpItemShellJump]: "Jump Item (Shell Jump)",
-        [DiscrepancyEntityType.JumpItemWebJump]: "Jump Item (Web Jump)",
-        [DiscrepancyEntityType.JumpPolicy]: "Jump Policy",
-        [DiscrepancyEntityType.Jumpoint]: "Jumpoint",
-        [DiscrepancyEntityType.JumpointNode]: "Jumpoint Node",
-        [DiscrepancyEntityType.Team]: "Team",
-        [DiscrepancyEntityType.TeamUser]: "Team User",
-        [DiscrepancyEntityType.User]: "User",
-        [DiscrepancyEntityType.UserGroupPolicy]: "User Group Policy",
-    };
 
     @ViewChild(MatSort, { static: true }) sort!: MatSort;
     @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -86,6 +65,7 @@ export class BtDiscrepanciesComponent extends PraBaseComponent implements OnInit
         private readonly errorDialog: ErrorDialogService,
         private readonly notificationDialog: NotificationDialogService,
         private readonly sanitizer: DomSanitizer,
+        private readonly translateService: TranslateService,
     ) {
         super(jwtAuthService);
         jsondiffpatch.create({
@@ -202,7 +182,10 @@ export class BtDiscrepanciesComponent extends PraBaseComponent implements OnInit
                         return;
                     }
                     if (status.status !== DiscrepancyScanStatus.Running) {
-                        const result = describeScanResult(status);
+                        const result = describeScanResult(
+                            status,
+                            (key, params) => this.translateService.instant(key, params) as string,
+                        );
                         if (result.notification) {
                             this.notificationDialog.show({ message: result.notification });
                         }
@@ -361,7 +344,7 @@ export class BtDiscrepanciesComponent extends PraBaseComponent implements OnInit
     }
 
     public getEntityTypeLabel(entityType: DiscrepancyEntityType): string {
-        return BtDiscrepanciesComponent.ENTITY_TYPE_LABELS[entityType] || entityType;
+        return getEntityTypeLabel(entityType);
     }
 
     public toggleRowExpansion(row: Discrepancy): void {
