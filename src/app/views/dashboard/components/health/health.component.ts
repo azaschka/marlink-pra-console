@@ -30,6 +30,9 @@ export class HealthComponent implements OnInit, OnDestroy {
     public isUnreachable = false;
     public lastUpdated: string | undefined;
 
+    // Rows of the last answer. Stale rows are derived from them, never from the displayed (already stale) rows.
+    private lastKnownRows: HealthCheckDisplayItem[] = [];
+
     private readonly refresh$ = new Subject<void>();
     private readonly subscriptionsToClear = new Subscription();
 
@@ -75,7 +78,8 @@ export class HealthComponent implements OnInit, OnDestroy {
                 ? result.body.overallStatus !== "unavailable"
                 : result.body.status === "ok";
             this.lastUpdated = formatTime(new Date());
-            this.show(mapHealthRows(result.body, translate));
+            this.lastKnownRows = mapHealthRows(result.body, translate);
+            this.show(this.lastKnownRows);
 
             return;
         }
@@ -83,7 +87,7 @@ export class HealthComponent implements OnInit, OnDestroy {
         this.isUnreachable = true;
         this.show(
             this.lastUpdated
-                ? markStale(this.dataSource.data, translate, this.lastUpdated)
+                ? markStale(this.lastKnownRows, translate, this.lastUpdated)
                 : unknownRows(translate),
         );
     }
