@@ -23,6 +23,11 @@
     transition: background 0.25s, color 0.25s;
 }
 
+// Tooltips with several lines (matTooltipClass="multiline-tooltip"), e.g. the health details on the dashboard.
+.mat-tooltip.multiline-tooltip {
+    white-space: pre-line;
+}
+
 // Optional: Tooltip Arrow färben (ab Angular 15+)
 .mat-tooltip .mat-tooltip-arrow {
     color: #001c39 !important; // gleiche Farbe wie oben

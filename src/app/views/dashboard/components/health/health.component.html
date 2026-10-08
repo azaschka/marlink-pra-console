@@ -10,7 +10,7 @@
     </mat-card-title>
 
     <mat-card-content class="my-0 p-0">
-        <div *ngIf="isUnreachable" class="health-banner text-13" role="status">
+        <div *ngIf="isUnreachable" class="health-banner text-13 text-warn" role="status">
             <span translate="views.dashboard.health.unreachable"></span>
             <span *ngIf="lastUpdated">
                 {{ "views.dashboard.health.lastUpdated" | translate: { time: lastUpdated } }}
@@ -24,14 +24,13 @@
                         class="status-light cursor-pointer"
                         [ngClass]="row.cssClass"
                         [matTooltip]="row.tooltip"
-                        matTooltipClass="health-tooltip"
+                        matTooltipClass="multiline-tooltip"
                     ></div>
                 </mat-cell>
             </ng-container>
 
             <ng-container matColumnDef="name">
-                <mat-header-cell *matHeaderCellDef mat-sort-header>Service</mat-header-cell>
-                <mat-cell *matCellDef="let row" data-label="name" [matTooltip]="row.tooltip" matTooltipClass="health-tooltip">
+                <mat-cell *matCellDef="let row" data-label="name" [matTooltip]="row.tooltip" matTooltipClass="multiline-tooltip">
                     {{ row.displayName }}
                 </mat-cell>
             </ng-container>
