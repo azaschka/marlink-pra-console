@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from "@angular/core";
 import { MatTableDataSource } from "@angular/material/table";
 import { TranslateService } from "@ngx-translate/core";
 import { Subject, Subscription, fromEvent, interval, merge, of } from "rxjs";
-import { exhaustMap, filter, finalize } from "rxjs/operators";
+import { catchError, exhaustMap, filter, finalize, switchMap, take } from "rxjs/operators";
 import { HealthCheckDisplayItem, HealthFetchResult } from "./models";
 import { HealthService } from "./health.service";
 import { formatTime, mapHealthRows, markStale, unknownRows } from "./health-mapping";
@@ -20,6 +20,7 @@ import { formatTime, mapHealthRows, markStale, unknownRows } from "./health-mapp
 export class HealthComponent implements OnInit, OnDestroy {
     public static readonly POLL_INTERVAL_IN_MS = 30000;
     private static readonly DISPLAYED_COLUMNS = ["status", "name"];
+    private static readonly TRANSLATIONS_LOADED_KEY = "views.dashboard.health.headline";
 
     public dataSource = new MatTableDataSource<HealthCheckDisplayItem>();
     public displayedColumns = HealthComponent.DISPLAYED_COLUMNS;
@@ -44,10 +45,17 @@ export class HealthComponent implements OnInit, OnDestroy {
     public ngOnInit(): void {
         const becameVisible$ = fromEvent(document, "visibilitychange").pipe(filter(() => !document.hidden));
         const triggers$ = merge(of(undefined), interval(HealthComponent.POLL_INTERVAL_IN_MS), this.refresh$, becameVisible$);
+        // The rows hold translated text, and translate.instant() returns the keys while en.json is still loading.
+        // So polling starts once the translations are there (or failed to load).
+        const translationsLoaded$ = this.translateService.get(HealthComponent.TRANSLATIONS_LOADED_KEY).pipe(
+            take(1),
+            catchError(() => of(undefined)),
+        );
 
         this.subscriptionsToClear.add(
-            triggers$
+            translationsLoaded$
                 .pipe(
+                    switchMap(() => triggers$),
                     filter(() => !document.hidden),
                     // A poll that is still running makes further triggers wait for nothing: no overlap.
                     exhaustMap(() => {
