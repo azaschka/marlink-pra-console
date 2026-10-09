@@ -40,7 +40,9 @@ export const BU_SAML_DEFAULT_GP_MAP: Record<string, string> = {
 
 /**
  * Global group policies that are always visible to **every** BU Admin,
- * regardless of business unit or customer assignment.
+ * regardless of business unit or customer assignment, in the group policy
+ * list and the policy picker. They do not make a user visible to a BU Admin
+ * in the Users view (EXT-26).
  *
  * Note: `GP_MARLINK_OPERATORS` is intentionally **excluded** here.
  * That policy is reserved for Super Admin assignment only and must not
@@ -155,9 +157,10 @@ export class PraDataFilter {
      *  4. Its name starts with the BU code prefix, e.g. `MT_` or `GP_MT_`
      *  5. Its name contains one of the customer names belonging to the BU
      *
-     * This is the **single source of truth** for BU Admin visibility and is
-     * shared by `GroupPoliciesComponent`, `UserOverlayComponent`, and
-     * `UsersComponent` (where it is applied per-policy on a user's policy list).
+     * This is the **single source of truth** for the policies a BU Admin sees
+     * and may assign, shared by `GroupPoliciesComponent` and
+     * `UserOverlayComponent`. Which users a BU Admin sees is decided by
+     * `isGroupPolicyNameOfBusinessUnit` (criteria 2 to 5).
      *
      * @param policyName    The group policy name to evaluate.
      * @param buCode        The Business Unit code of the current admin (e.g. `"MT"`).
@@ -168,12 +171,35 @@ export class PraDataFilter {
         buCode: string,
         customerNames: string[],
     ): boolean {
-        const upperName = policyName.toUpperCase();
-
         // 1. Global special policies
-        if (GLOBAL_SPECIAL_GROUP_POLICIES.has(upperName)) {
+        if (GLOBAL_SPECIAL_GROUP_POLICIES.has(policyName.toUpperCase())) {
             return true;
         }
+
+        return PraDataFilter.isGroupPolicyNameOfBusinessUnit(policyName, buCode, customerNames);
+    }
+
+    /**
+     * Determines whether a group policy belongs to the Business Unit of a BU
+     * Admin: criteria 2 to 5 of `isGroupPolicyNameVisibleForBuAdmin`, without
+     * the global special policies.
+     *
+     * `UsersComponent` lists a BeyondTrust user for a BU Admin when one of the
+     * user's group policies passes this check (EXT-26). The global special
+     * policies do not count there: FULL_ACCESS and LIMITED_ACCESS are held by
+     * support team members and auditor operators of every Business Unit, so
+     * they made those users visible to all BU Admins.
+     *
+     * @param policyName    The group policy name to evaluate.
+     * @param buCode        The Business Unit code of the current admin (e.g. `"MT"`).
+     * @param customerNames Lower-cased customer names that belong to the BU.
+     */
+    public static isGroupPolicyNameOfBusinessUnit(
+        policyName: string,
+        buCode: string,
+        customerNames: string[],
+    ): boolean {
+        const upperName = policyName.toUpperCase();
 
         // 2. BU-specific operator policy, e.g. "GP_MARITIME_OPERATORS" for MT
         const buOperatorGp = BU_OPERATOR_GP_MAP[buCode];

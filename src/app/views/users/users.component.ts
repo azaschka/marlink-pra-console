@@ -336,13 +336,12 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
      *    processed in parallel batches of BATCH_SIZE to avoid overwhelming
      *    the API (364 users / 50 per batch ≈ 7 sequential rounds).
      * 4. Per-user decision: visible when **any** assigned GP name passes the
-     *    shared `PraDataFilter.isGroupPolicyNameVisibleForBuAdmin` predicate
-     *    (special policy, BU operator, BU default policy of external users,
-     *    BU prefix, or customer name match).
-     *    Policies outside these criteria — including global super-user policies
-     *    such as `GP_MARLINK_SUPERUSERS` — do not match and are excluded
-     *    implicitly, keeping the behaviour consistent with the group-policy
-     *    and user-overlay views.
+     *    shared `PraDataFilter.isGroupPolicyNameOfBusinessUnit` predicate
+     *    (BU operator, BU default policy of external users, BU prefix, or
+     *    customer name match).
+     *    Global policies do not count (EXT-26): FULL_ACCESS and LIMITED_ACCESS
+     *    are held by users of every Business Unit, and super-user policies
+     *    such as `GP_MARLINK_SUPERUSERS` match none of the criteria.
      */
     private async loadPage(): Promise<void> {
         const tenantId = this.currentTenantId;
@@ -373,21 +372,20 @@ export class UsersComponent extends PraBaseComponent implements OnInit {
 
                 /**
                  * A user is visible to the current BU Admin when at least one
-                 * of their assigned group policies passes the shared BU Admin
-                 * visibility predicate (special policy, BU operator, BU default
-                 * policy of external users, BU prefix, or customer-name match).
+                 * of their assigned group policies belongs to the admin's
+                 * Business Unit (BU operator, BU default policy of external
+                 * users, BU prefix, or customer-name match).
                  *
-                 * Global super-user policies (e.g. GP_MARLINK_SUPERUSERS) are
-                 * excluded implicitly — they match none of the positive criteria
-                 * — keeping the behaviour symmetric with the group-policy and
-                 * user-overlay views.
+                 * Global policies (FULL_ACCESS, LIMITED_ACCESS and the
+                 * super-user policies) say nothing about a user's Business
+                 * Unit and do not count (EXT-26).
                  */
                 const matchesBU = async (user: User): Promise<boolean> => {
                     const policies = await this.usersService.fetchUserGroupPolicies(tenantId, user.id).catch(() => []);
                     const policyNames = policies.map((p) => p.groupPolicy?.name ?? "");
 
                     return policyNames.some((name) =>
-                        PraDataFilter.isGroupPolicyNameVisibleForBuAdmin(name, buCode, customerNames),
+                        PraDataFilter.isGroupPolicyNameOfBusinessUnit(name, buCode, customerNames),
                     );
                 };
 
