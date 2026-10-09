@@ -22,9 +22,11 @@ export const BU_OPERATOR_GP_MAP: Record<string, string> = {
  * externally provisioned (SAML) users, e.g. users who sign in through
  * Entra ID. The policies are created manually on each BeyondTrust instance.
  *
- * Membership marks an external user as belonging to the Business Unit:
- * pra-api adds every external site user to the policy of the customer's
- * Business Unit during site ingestion (`BU_SAML_DEFAULT_GP_MAP` in
+ * BeyondTrust adds a new external user to the policy of its Business Unit
+ * at the first sign-in. The membership lets the BU Admins of that Business
+ * Unit find the user before it has a site role and assign group policies
+ * manually. pra-api removes the membership when site ingestion has given
+ * the user the policies of its site role (`BU_SAML_DEFAULT_GP_MAP` in
  * `pra-api/src/site/workflows/group-policies/bu-saml-default-group-policy.workflow.ts`).
  * Keep both maps in sync.
  */
@@ -180,9 +182,9 @@ export class PraDataFilter {
         }
 
         // 3. BU-specific default policy of external (SAML) users, e.g.
-        //    "GP_MARITIME_SAML_DEFAULT" for MT. An external user is a member
-        //    of it for every Business Unit it works for, which is what makes
-        //    the user visible to the BU Admins of exactly those Business Units.
+        //    "GP_MARITIME_SAML_DEFAULT" for MT. BeyondTrust adds a new external
+        //    user to it at the first sign-in, so the BU Admins of that Business
+        //    Unit see the user before site ingestion assigns its site policies.
         const buSamlDefaultGp = BU_SAML_DEFAULT_GP_MAP[buCode];
         if (buSamlDefaultGp && upperName === buSamlDefaultGp) {
             return true;

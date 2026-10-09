@@ -404,8 +404,9 @@ export class SiteImportWorkflowService {
                 sub.next([...steps]);
 
                 // === 6. VERIFY BU DEFAULT GROUP POLICY OF EXTERNAL USERS ===
-                // pra-api adds every external site user to this policy during site creation. The step exists
-                // only for workbooks with external users, and it is a check: nothing is assigned from here.
+                // BeyondTrust adds new external users to this policy; pra-api removes an external site user from it
+                // once the site policies are assigned. The step exists only for workbooks with external users, and
+                // it is a configuration check: nothing is assigned or removed from here.
                 if (SiteImportWorkflowService.hasExternalUsers(parsed)) {
                     steps.push({
                         label: "Verifying BU default Group Policy of external users ...",
@@ -492,8 +493,8 @@ export class SiteImportWorkflowService {
 
     /**
      * Checks that the default group policy of external users exists for the customer's Business Unit. A missing
-     * policy is a warning, not an error: the users were imported, they only lack the membership that shows them
-     * to the BU Admins of that Business Unit.
+     * policy is a warning, not an error: the import does not depend on it. It means that BU Admins cannot find new
+     * external users of this Business Unit through the policy before their first import.
      */
     private async verifyBuSamlDefaultGroupPolicy(
         tenantId: number,
@@ -518,14 +519,14 @@ export class SiteImportWorkflowService {
             return buSamlGroupPolicy
                 ? {
                       status: ImportStatus.Success,
-                      result: `BU default Group Policy "${buSamlGroupPolicy.name}" confirmed. External users of this site are assigned to it by the site creation.`,
+                      result: `BU default Group Policy "${buSamlGroupPolicy.name}" confirmed. External users of this site leave it once their site Group Policies are assigned.`,
                   }
                 : {
                       status: ImportStatus.Warning,
                       result:
                           `BU default Group Policy "${expectedGpName}" not found on this BeyondTrust instance. ` +
-                          "External users were imported without it and are not visible to BU Admins through this policy. " +
-                          "Create the policy in BeyondTrust and run the import again.",
+                          "The import does not depend on it, but BU Admins cannot find new external users of this " +
+                          "Business Unit through it. Check the policy name in BeyondTrust.",
                   };
         } catch (err: any) {
             return {
