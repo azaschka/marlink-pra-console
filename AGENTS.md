@@ -2,7 +2,7 @@
 
 Admin console of the Marlink PRA Platform (Angular 14, Nx 20, Angular Material, RxJS). Talks only to pra-api, through relative URLs and the central API interceptor. Never calls pra-sync-api or BeyondTrust directly.
 
-Last reviewed: 2026-10-09
+Last reviewed: 2026-10-11
 
 ## Read first
 
@@ -35,6 +35,7 @@ Last reviewed: 2026-10-09
 - Text built in TypeScript with `translate.instant()` needs loaded translations: prefer the `translate` pipe in templates, otherwise wait for `TranslateService.get()` before building view models.
 - Unit tests: the console is not ready for systematic unit testing yet (decision by André, 2026-10-07). Do not add new specs unless asked; keep the existing ones green (`npx nx test`).
 - Never commit secrets; runtime configuration comes from `src/assets/scripts/env.js` at container start.
+- Postman download (`src/assets/docs/Marlink PRA API.postman_collection.json`): a byte-identical copy of the pra-api customer export, written by `npm run postman:export:console` in pra-api. Never edit it here. The asset path in `src/app/shared/services/navigation.service.ts` and the download name in `src/app/shared/components/sidenav/sidenav.template.html` must match `scripts/postman/config/collection.config.ts` in pra-api; `npm run postman:check` there verifies it.
 
 ## Documentation duty
 
