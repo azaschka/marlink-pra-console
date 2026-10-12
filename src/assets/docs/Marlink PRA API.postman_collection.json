@@ -2,7 +2,7 @@
     "info": {
         "_postman_id": "529b2aeb-9ade-52aa-92f5-e3e10ec8555f",
         "name": "Marlink PRA API v3.2.0",
-        "description": "# Marlink PRA API v3.2.0\n\nPRA API collection for customers and operators: every approved operation authenticated with an access key. Internal operations (X-API-Key, access management) are not part of it.\n\nGenerated from the pra-api source code (package version 3.2.0): 125 operations in 34 controllers. Do not edit it by hand; it is regenerated from code at the end of every iteration.\n\n## One-time setup\n\n1. Import this collection. Optionally import the environment template `marlink-pra-api.postman_environment.json` shipped with pra-api.\n2. Create an environment (or use the Postman Vault) and set `baseUrl`, `accessKey` and `tenantId`. Keep secrets in the environment or the vault: the collection variables are exported empty on purpose and must never hold credentials.\n3. Set the resource id variables (for example `customerId`, `siteId`) when you need them. They are empty on purpose, so that no request addresses an existing resource by accident.\n\nNo access to the Marlink Postman workspace and no Postman API key are needed.\n\n## Base URL\n\n`baseUrl` is the scheme, host and optional path prefix in front of the controller paths, without a trailing slash. The API has no global prefix and no URI versioning (`src/main.ts`).\n\n- Calling the API service directly: use the API host, for example `https://pra-api-pp.cdn-vas.net`. Do not add `/api`.\n- Calling through the PRA Console: use `https://<console-host>/api`. The Console forwards `/api` to the API; the OpenAPI document declares this relative server `/api`.\n\n## Authentication\n\n- Default: `X-Access-Key: {{accessKey}}`, configured once on the collection (API Key auth) and inherited by the requests.\n- Requests without an authentication guard override it with \"No Auth\".\n- Credentials are never sent to an endpoint that does not read them.\n\n## X-Tenant-Id\n\n`X-Tenant-Id` carries the **BeyondTrust instance id** (see GET /beyondtrust-instances), never a customer id. It is an enabled row where the handler requires it and a disabled row where it only narrows the customer scope. `tenantId` is empty and never defaults to an instance.\n\n## Request conventions\n\n- Required path, query and header inputs are enabled. Optional query parameters and headers are included but disabled; enable them when needed.\n- `X-Transaction-Id` is optional wherever the API reads it and disabled by default.\n- Array query parameters are sent by repeating the key (`?name=a&name=b`).\n- Request bodies hold the minimal valid body (required fields). The saved example \"Full body\" holds every writable field with representative nested objects and arrays.\n- JSON body properties cannot be disabled like query or header rows: remove the optional properties you do not want to send. Each request documents its fields (path, type, required, null accepted, rules).\n- PATCH requests change only the fields you send; where an empty object is rejected, the minimal body sends one field.\n- All example data is synthetic. Examples are validated locally against the DTO validation rules of the API; they were not executed against an environment. The response part of saved examples is illustrative (status code only).\n\n## Variables\n\n| Variable | Purpose |\n|---|---|\n| `baseUrl` | Scheme, host and optional path prefix in front of the controller paths, without a trailing slash. API host directly: no /api. Through the PRA Console ingress: https://<console-host>/api. |\n| `accessKey` | Access key sent as X-Access-Key. Secret: set it in a local environment or the Postman Vault, never here. |\n| `tenantId` | BeyondTrust instance id sent as X-Tenant-Id (GET /beyondtrust-instances). Not a customer id. Intentionally empty, never defaulted. |\n| `transactionId` | Optional correlation id for X-Transaction-Id (disabled rows). The API generates one when absent. |\n| `backupId` | Id of the backup addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `beyondtrustInstanceId` | Id of the beyondtrust instance addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `customerId` | Id of the customer addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `discrepancyId` | Id of the discrepancy addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `groupPolicyId` | Id of the group policy addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `groupPolicyMemberId` | Id of the group policy member addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `jumpClientId` | Id of the jump client addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `jumpClientInstallerId` | Id of the jump client installer addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `jumpGroupId` | Id of the jump group addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `jumpointId` | Id of the jumpoint addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `jumpPolicyId` | Id of the jump policy addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `protocolTunnelJumpId` | Id of the protocol tunnel jump addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `remoteRdpId` | Id of the remote rdp addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `remoteVncId` | Id of the remote vnc addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `shellJumpId` | Id of the shell jump addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `siteId` | Id of the site addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `siteManagerId` | Id of the site manager addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `siteSupportTeamMemberId` | Id of the site support team member addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `teamId` | Id of the team addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `userId` | Id of the user addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `webJumpId` | Id of the web jump addressed by path parameters. Set it before sending; it is intentionally empty. |\n\n## Folders\n\n- **Customers**: Customers (one per business unit and BeyondTrust instance) and their lifecycle.\n- **Sites**: Sites of a customer and their manager, auditor, support team and jumpoint assignments.\n- **BeyondTrust Instances**: Registered BeyondTrust instances (tenants) and their configuration backups.\n- **Users**: BeyondTrust users and their group policy memberships.\n- **Teams**: BeyondTrust teams and their members.\n- **Group Policies**: Group policies and their members, teams, jump groups and jumpoints.\n- **Jump Groups**: Jump groups.\n- **Jump Policies**: Jump policies.\n- **Jump Clients**: Installed jump clients and jump client installers.\n- **Jump Items**: Jump items by type: remote RDP, remote VNC, shell jump, web jump and protocol tunnel jump.\n- **Jumpoints**: Jumpoints, their nodes and installers.\n- **License Usage**: License usage calculation per customer and per site.\n- **Discrepancies**: Discrepancy detection between the platform and BeyondTrust, scans and synchronisation.\n- **Logs and Monitoring**: System log and request monitoring records.\n- **Health and Platform**: Liveness, readiness, diagnostics and the root endpoints.",
+        "description": "# Marlink PRA API v3.2.0\n\nPRA API collection for customers and operators: every approved operation authenticated with an access key. Internal operations (X-API-Key, access management) are not part of it.\n\nGenerated from the pra-api source code (package version 3.2.0): 135 operations in 34 controllers. Do not edit it by hand; it is regenerated from code at the end of every iteration.\n\n## One-time setup\n\n1. Import this collection. Optionally import the environment template `marlink-pra-api.postman_environment.json` shipped with pra-api.\n2. Create an environment (or use the Postman Vault) and set `baseUrl`, `accessKey` and `tenantId`. Keep secrets in the environment or the vault: the collection variables are exported empty on purpose and must never hold credentials.\n3. Set the resource id variables (for example `customerId`, `siteId`) when you need them. They are empty on purpose, so that no request addresses an existing resource by accident.\n\nNo access to the Marlink Postman workspace and no Postman API key are needed.\n\n## Base URL\n\n`baseUrl` is the scheme, host and optional path prefix in front of the controller paths, without a trailing slash. The API has no global prefix and no URI versioning (`src/main.ts`).\n\n- Calling the API service directly: use the API host, for example `https://pra-api-pp.cdn-vas.net`. Do not add `/api`.\n- Calling through the PRA Console: use `https://<console-host>/api`. The Console forwards `/api` to the API; the OpenAPI document declares this relative server `/api`.\n\n## Authentication\n\n- Default: `X-Access-Key: {{accessKey}}`, configured once on the collection (API Key auth) and inherited by the requests.\n- Requests without an authentication guard override it with \"No Auth\".\n- Credentials are never sent to an endpoint that does not read them.\n\n## X-Tenant-Id\n\n`X-Tenant-Id` carries the **BeyondTrust instance id** (see GET /beyondtrust-instances), never a customer id. It is an enabled row where the handler requires it and a disabled row where it only narrows the customer scope. `tenantId` is empty and never defaults to an instance.\n\n## Request conventions\n\n- Required path, query and header inputs are enabled. Optional query parameters and headers are included but disabled; enable them when needed.\n- `X-Transaction-Id` is optional wherever the API reads it and disabled by default.\n- Array query parameters are sent by repeating the key (`?name=a&name=b`).\n- Request bodies hold the minimal valid body (required fields). The saved example \"Full body\" holds every writable field with representative nested objects and arrays.\n- JSON body properties cannot be disabled like query or header rows: remove the optional properties you do not want to send. Each request documents its fields (path, type, required, null accepted, rules).\n- PATCH requests change only the fields you send; where an empty object is rejected, the minimal body sends one field.\n- All example data is synthetic. Examples are validated locally against the DTO validation rules of the API; they were not executed against an environment. The response part of saved examples is illustrative (status code only).\n\n## Variables\n\n| Variable | Purpose |\n|---|---|\n| `baseUrl` | Scheme, host and optional path prefix in front of the controller paths, without a trailing slash. API host directly: no /api. Through the PRA Console ingress: https://<console-host>/api. |\n| `accessKey` | Access key sent as X-Access-Key. Secret: set it in a local environment or the Postman Vault, never here. |\n| `tenantId` | BeyondTrust instance id sent as X-Tenant-Id (GET /beyondtrust-instances). Not a customer id. Intentionally empty, never defaulted. |\n| `transactionId` | Optional correlation id for X-Transaction-Id (disabled rows). The API generates one when absent. |\n| `backupId` | Id of the backup addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `beyondtrustInstanceId` | Id of the beyondtrust instance addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `customerId` | Id of the customer addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `groupPolicyId` | Id of the group policy addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `groupPolicyMemberId` | Id of the group policy member addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `jumpClientId` | Id of the jump client addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `jumpClientInstallerId` | Id of the jump client installer addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `jumpGroupId` | Id of the jump group addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `jumpointId` | Id of the jumpoint addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `jumpointNodeId` | Id of the jumpoint node addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `jumpPolicyId` | Id of the jump policy addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `protocolTunnelJumpId` | Id of the protocol tunnel jump addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `remoteRdpId` | Id of the remote rdp addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `remoteVncId` | Id of the remote vnc addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `shellJumpId` | Id of the shell jump addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `siteAuditorId` | Id of the site auditor addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `siteId` | Id of the site addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `siteManagerId` | Id of the site manager addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `siteSupportTeamMemberId` | Id of the site support team member addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `teamId` | Id of the team addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `userId` | Id of the user addressed by path parameters. Set it before sending; it is intentionally empty. |\n| `webJumpId` | Id of the web jump addressed by path parameters. Set it before sending; it is intentionally empty. |\n\n## Folders\n\n- **Customers**: Customers (one per business unit and BeyondTrust instance) and their lifecycle.\n- **Sites**: Sites of a customer and their manager, auditor, support team and jumpoint assignments.\n- **BeyondTrust Instances**: Registered BeyondTrust instances (tenants) and their configuration backups.\n- **Users**: BeyondTrust users and their group policy memberships.\n- **Teams**: BeyondTrust teams and their members.\n- **Group Policies**: Group policies and their members, teams, jump groups and jumpoints.\n- **Jump Groups**: Jump groups.\n- **Jump Policies**: Jump policies.\n- **Jump Clients**: Installed jump clients and jump client installers.\n- **Jump Items**: Jump items by type: remote RDP, remote VNC, shell jump, web jump and protocol tunnel jump.\n- **Jumpoints**: Jumpoints, their nodes and installers.\n- **Session Policies**: Session policies (read only).\n- **License Usage**: License usage calculation per customer and per site.\n- **SOC**: Consolidated projections for the Security Operations Center integration.\n- **Deployments**: Jumpoint node deployments.\n- **Health and Platform**: Liveness, readiness, diagnostics and the root endpoints.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -756,6 +756,219 @@
                                     ]
                                 },
                                 "description": "Remove site manager.\n\n| | |\n|---|---|\n| Source | `SiteManagerController.removeSiteManager()` in `src/site/controllers/site-manager.controller.ts` (module `SiteModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- Resolves the customers of the access key business units; 403 when there are none.\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `id` | integer | yes | Unique identifier for the site. |\n| `managerId` | integer | yes | Unique identifier for the site manager. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Tenant-Id` | integer | no | Optional BeyondTrust instance id. When sent, the customer scope of the access key is narrowed to customers of that instance. |\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Responses**\n\n- 204: Indicates the site manager was successfully removed.\n- 404: The specified resource was not found.\n\n**Notes**\n\n- Records the request path in the monitoring table."
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "id": "8a1bfe22-3179-5a44-b1b1-37e123afcdee",
+                    "name": "SiteAuditorController",
+                    "description": "Operations of `SiteAuditorController` (module `SiteModule`). Source: `src/site/controllers/site-auditor.controller.ts`. Authentication: X-Access-Key header (`{{accessKey}}`)",
+                    "item": [
+                        {
+                            "id": "6fe111d7-fb71-5b5b-8079-9d4fdf242ed9",
+                            "name": "GET /sites/:id/auditors - Retrieve site auditors",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "X-Tenant-Id",
+                                        "value": "{{tenantId}}",
+                                        "description": "Optional BeyondTrust instance id. When sent, the customer scope of the access key is narrowed to customers of that instance.",
+                                        "disabled": true
+                                    },
+                                    {
+                                        "key": "X-Transaction-Id",
+                                        "value": "{{transactionId}}",
+                                        "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                        "disabled": true
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/sites/:id/auditors",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "sites",
+                                        ":id",
+                                        "auditors"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "pageSize",
+                                            "value": "100",
+                                            "description": "The number of items to include in a paginated response. Default: 100. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "pageNumber",
+                                            "value": "1",
+                                            "description": "The 1-based index of the desired page. Default: 1. Optional.",
+                                            "disabled": true
+                                        }
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": "{{siteId}}",
+                                            "description": "Unique identifier for the site. Required."
+                                        }
+                                    ]
+                                },
+                                "description": "Retrieve site auditors.\n\n| | |\n|---|---|\n| Source | `SiteAuditorController.retrieveSiteAuditors()` in `src/site/controllers/site-auditor.controller.ts` (module `SiteModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- Resolves the customers of the access key business units; 403 when there are none.\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `id` | integer | yes | Unique identifier for the site. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Tenant-Id` | integer | no | Optional BeyondTrust instance id. When sent, the customer scope of the access key is narrowed to customers of that instance. |\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Query parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `pageSize` | integer | no | The number of items to include in a paginated response. Default `100`. |\n| `pageNumber` | integer | no | The 1-based index of the desired page. Default `1`. |\n\nOptional query parameters are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: `SiteAuditorDtoOutput[]`\n\n**Notes**\n\n- Records the request path in the monitoring table."
+                            },
+                            "response": []
+                        },
+                        {
+                            "id": "fb0ff95f-d8f9-5dd2-903d-12022108024d",
+                            "name": "POST /sites/:id/auditors - Add site auditor",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-Tenant-Id",
+                                        "value": "{{tenantId}}",
+                                        "description": "Optional BeyondTrust instance id. When sent, the customer scope of the access key is narrowed to customers of that instance.",
+                                        "disabled": true
+                                    },
+                                    {
+                                        "key": "X-Transaction-Id",
+                                        "value": "{{transactionId}}",
+                                        "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                        "disabled": true
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"username\": \"example.user\",\n  \"email\": \"user@example.com\",\n  \"isAdminOperator\": false\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/sites/:id/auditors",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "sites",
+                                        ":id",
+                                        "auditors"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": "{{siteId}}",
+                                            "description": "Unique identifier for the site. Required."
+                                        }
+                                    ]
+                                },
+                                "description": "Add site auditor.\n\n| | |\n|---|---|\n| Source | `SiteAuditorController.addSiteAuditor()` in `src/site/controllers/site-auditor.controller.ts` (module `SiteModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- Resolves the customers of the access key business units; 403 when there are none.\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `id` | integer | yes | Unique identifier for the site. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Tenant-Id` | integer | no | Optional BeyondTrust instance id. When sent, the customer scope of the access key is narrowed to customers of that instance. |\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Body** (`application/json`, `SiteAuditorDtoInput`, validated by ValidationPipe)\n\n| Field | Type | Required | Null accepted | Details |\n|---|---|---|---|---|\n| `username` | string | yes | no | The username of the site auditor. Rules: not empty. |\n| `email` | string | yes | no | The email of the site auditor. Rules: not empty. |\n| `isAdminOperator` | boolean | yes | no | Indicates if the user is an admin operator. Rules: not empty. |\n| `sourceType` | enum | no | no | The source type of the site auditor. One of `internal`, `external`. Default `internal`. Defaults to the value shown when omitted (the DTO initialiser runs during transformation). |\n\n- The request body is the minimal valid body: required fields only.\n- The saved example \"Full body\" sends every writable field with representative nested objects and arrays.\n- JSON properties cannot be disabled individually: delete optional properties you do not want to send. Omitting a property and sending `null` are different; \"Null accepted\" shows what validation allows.\n\n**Responses**\n\n- 201: Indicates the site auditor was added successfully. `SiteAuditorDtoOutput`\n- 404: The specified resource was not found.\n- 409: The specified site auditor already exists.\n\n**Notes**\n\n- Records the request path in the monitoring table.\n\n**Contract notes** (effective behaviour in code versus Swagger metadata)\n\n- SiteAuditorDtoInput.sourceType: Swagger declares required: true; effective validation makes it optional."
+                            },
+                            "response": [
+                                {
+                                    "id": "717b0500-2d28-514d-9894-6f0e24377e69",
+                                    "name": "Full body",
+                                    "originalRequest": {
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "X-Tenant-Id",
+                                                "value": "{{tenantId}}",
+                                                "description": "Optional BeyondTrust instance id. When sent, the customer scope of the access key is narrowed to customers of that instance.",
+                                                "disabled": true
+                                            },
+                                            {
+                                                "key": "X-Transaction-Id",
+                                                "value": "{{transactionId}}",
+                                                "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                                "disabled": true
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"username\": \"example.user\",\n  \"email\": \"user@example.com\",\n  \"isAdminOperator\": false,\n  \"sourceType\": \"internal\"\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "json"
+                                                }
+                                            }
+                                        },
+                                        "url": {
+                                            "raw": "{{baseUrl}}/sites/:id/auditors",
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "path": [
+                                                "sites",
+                                                ":id",
+                                                "auditors"
+                                            ],
+                                            "variable": [
+                                                {
+                                                    "key": "id",
+                                                    "value": "{{siteId}}",
+                                                    "description": "Unique identifier for the site. Required."
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "status": "Created",
+                                    "code": 201,
+                                    "header": [],
+                                    "cookie": [],
+                                    "body": ""
+                                }
+                            ]
+                        },
+                        {
+                            "id": "25ccc456-f00a-5f81-b282-b71eb804bf03",
+                            "name": "DELETE /sites/:id/auditors/:auditorId - Remove site auditor",
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "X-Tenant-Id",
+                                        "value": "{{tenantId}}",
+                                        "description": "Optional BeyondTrust instance id. When sent, the customer scope of the access key is narrowed to customers of that instance.",
+                                        "disabled": true
+                                    },
+                                    {
+                                        "key": "X-Transaction-Id",
+                                        "value": "{{transactionId}}",
+                                        "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                        "disabled": true
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/sites/:id/auditors/:auditorId",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "sites",
+                                        ":id",
+                                        "auditors",
+                                        ":auditorId"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": "{{siteId}}",
+                                            "description": "Unique identifier for the site. Required."
+                                        },
+                                        {
+                                            "key": "auditorId",
+                                            "value": "{{siteAuditorId}}",
+                                            "description": "Unique identifier for the site auditor. Required."
+                                        }
+                                    ]
+                                },
+                                "description": "Remove site auditor.\n\n| | |\n|---|---|\n| Source | `SiteAuditorController.removeSiteAuditor()` in `src/site/controllers/site-auditor.controller.ts` (module `SiteModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- Resolves the customers of the access key business units; 403 when there are none.\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `id` | integer | yes | Unique identifier for the site. |\n| `auditorId` | integer | yes | Unique identifier for the site auditor. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Tenant-Id` | integer | no | Optional BeyondTrust instance id. When sent, the customer scope of the access key is narrowed to customers of that instance. |\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Responses**\n\n- 204: Indicates the site auditor was successfully removed.\n- 404: The specified resource was not found.\n\n**Notes**\n\n- Records the request path in the monitoring table."
                             },
                             "response": []
                         }
@@ -8030,6 +8243,83 @@
             ]
         },
         {
+            "id": "e69c7760-373c-5d65-8821-9dafc0f90fde",
+            "name": "Session Policies",
+            "description": "Session policies (read only).",
+            "item": [
+                {
+                    "id": "d9bf6479-b8fb-5955-addf-135c0b228512",
+                    "name": "SessionPolicyController",
+                    "description": "Operations of `SessionPolicyController` (module `SessionPolicyModule`). Source: `src/session-policy/controllers/session-policy.controller.ts`. Authentication: X-Access-Key header (`{{accessKey}}`)",
+                    "item": [
+                        {
+                            "id": "40254687-9255-5267-ad00-5ba0732b7076",
+                            "name": "GET /session-policies - Retrieve session policies",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "X-Tenant-Id",
+                                        "value": "{{tenantId}}",
+                                        "description": "BeyondTrust instance id (not a customer id). The handler reads it; configure the tenantId variable once, it is never defaulted. Required."
+                                    },
+                                    {
+                                        "key": "X-Transaction-Id",
+                                        "value": "{{transactionId}}",
+                                        "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                        "disabled": true
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/session-policies",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "session-policies"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "pageSize",
+                                            "value": "100",
+                                            "description": "The number of items to include in a paginated response. Default: 100. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "pageNumber",
+                                            "value": "1",
+                                            "description": "The 1-based index of the desired page. Default: 1. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "displayName",
+                                            "value": "Example display name",
+                                            "description": "Display name. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "codeName",
+                                            "value": "Example code name",
+                                            "description": "Code name. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "codeNamePatterns",
+                                            "value": "example-code-name-patterns",
+                                            "description": "Filters results to include only session policies that match the given code name patterns. Repeat the parameter for several values (`?name=a&name=b`). Optional.",
+                                            "disabled": true
+                                        }
+                                    ]
+                                },
+                                "description": "Retrieve session policies.\n\n| | |\n|---|---|\n| Source | `SessionPolicyController.retrieveSessionPolicies()` in `src/session-policy/controllers/session-policy.controller.ts` (module `SessionPolicyModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- Resolves the customers of the access key business units; 403 when there are none.\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Tenant-Id` | integer | yes | BeyondTrust instance id (not a customer id). The handler reads it; configure the tenantId variable once, it is never defaulted. |\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Query parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `pageSize` | integer | no | The number of items to include in a paginated response. Default `100`. |\n| `pageNumber` | integer | no | The 1-based index of the desired page. Default `1`. |\n| `displayName` | string | no | Display name. |\n| `codeName` | string | no | Code name. |\n| `codeNamePatterns` | array<string> | no | Filters results to include only session policies that match the given code name patterns. Repeat the parameter for several values (`?name=a&name=b`). |\n\nOptional query parameters are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: `SessionPolicyRetrievedDtoOutput[]`\n\n**Notes**\n\n- Records the request path in the monitoring table."
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "id": "4b25f550-e2a5-5679-9105-0c870b38a918",
             "name": "License Usage",
             "description": "License usage calculation per customer and per site.",
@@ -8133,18 +8423,18 @@
             ]
         },
         {
-            "id": "b7abd2b3-c15d-55e6-8ac8-202ca1031a50",
-            "name": "Discrepancies",
-            "description": "Discrepancy detection between the platform and BeyondTrust, scans and synchronisation.",
+            "id": "1470dd30-520b-5d77-accf-f75eaba1bc99",
+            "name": "SOC",
+            "description": "Consolidated projections for the Security Operations Center integration.",
             "item": [
                 {
-                    "id": "41787266-c60a-5f9a-8761-676a76a3bbdd",
-                    "name": "DiscrepancyScannerController",
-                    "description": "Operations of `DiscrepancyScannerController` (module `DiscrepancyModule`). Source: `src/discrepancy/controllers/discrepancy-scanner.controller.ts`. Authentication: None. The route has no authentication guard.",
+                    "id": "a81228fb-5e25-5314-9ce0-397f9af63962",
+                    "name": "SocController",
+                    "description": "Operations of `SocController` (module `SocModule`). Source: `src/soc/controllers/soc.controller.ts`. Authentication: X-Access-Key header (`{{accessKey}}`)",
                     "item": [
                         {
-                            "id": "4e8216d4-542e-5d7b-8f36-db074ec80c1c",
-                            "name": "GET /discrepancies - Retrieve discrepancies",
+                            "id": "5637549a-758f-5975-89e8-560e1fc19402",
+                            "name": "GET /soc/jump-items - Retrieve soc jump items",
                             "request": {
                                 "method": "GET",
                                 "header": [
@@ -8161,12 +8451,13 @@
                                     }
                                 ],
                                 "url": {
-                                    "raw": "{{baseUrl}}/discrepancies",
+                                    "raw": "{{baseUrl}}/soc/jump-items",
                                     "host": [
                                         "{{baseUrl}}"
                                     ],
                                     "path": [
-                                        "discrepancies"
+                                        "soc",
+                                        "jump-items"
                                     ],
                                     "query": [
                                         {
@@ -8182,28 +8473,34 @@
                                             "disabled": true
                                         },
                                         {
-                                            "key": "entityType",
-                                            "value": "group-policy",
-                                            "description": "Filters results to include only discrepancies for the given entity type. One of: group-policy, group-policy-jump-group, group-policy-jumpoint, group-policy-member, group-policy-team, jump-client, jump-client-installer, jump-group, jump-item-protocol-tunnel-jump, jump-item-remote-rdp, jump-item-remote-vnc, jump-item-shell-jump, jump-item-web-jump, jump-policy, jumpoint, jumpoint-node, session-policy, team, team-user, user, user-group-policy. Optional.",
+                                            "key": "customerKey",
+                                            "value": "EXAMPLE_CUSTOMER",
+                                            "description": "Restricts the results to the customer with this key. Optional.",
                                             "disabled": true
                                         },
                                         {
-                                            "key": "entityId",
-                                            "value": "1",
-                                            "description": "Filters results to include only discrepancies for the given entity ID. Optional.",
+                                            "key": "siteKey",
+                                            "value": "EXAMPLE_SITE",
+                                            "description": "Restricts the results to the site with this key. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "mappingStatus",
+                                            "value": "customer-and-site",
+                                            "description": "Restricts the results to objects with this attribution status. Use \"unmapped\" to list remote access paths that cannot be attributed to any customer or site. One of: customer-and-site, customer-only, site-only, unmapped. Optional.",
                                             "disabled": true
                                         }
                                     ]
                                 },
-                                "description": "Retrieve discrepancies.\n\n| | |\n|---|---|\n| Source | `DiscrepancyScannerController.retrieveDiscrepancies()` in `src/discrepancy/controllers/discrepancy-scanner.controller.ts` (module `DiscrepancyModule`) |\n| Authentication | None. The route has no authentication guard. |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Tenant-Id` | integer | yes | BeyondTrust instance id (not a customer id). The handler reads it; configure the tenantId variable once, it is never defaulted. |\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Query parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `pageSize` | integer | no | The number of items to include in a paginated response. Default `100`. |\n| `pageNumber` | integer | no | The 1-based index of the desired page. Default `1`. |\n| `entityType` | enum | no | Filters results to include only discrepancies for the given entity type. One of `group-policy`, `group-policy-jump-group`, `group-policy-jumpoint`, `group-policy-member`, `group-policy-team`, `jump-client`, `jump-client-installer`, `jump-group`, `jump-item-protocol-tunnel-jump`, `jump-item-remote-rdp`, `jump-item-remote-vnc`, `jump-item-shell-jump`, `jump-item-web-jump`, `jump-policy`, `jumpoint`, `jumpoint-node`, `session-policy`, `team`, `team-user`, `user`, `user-group-policy`. |\n| `entityId` | integer | no | Filters results to include only discrepancies for the given entity ID. |\n\nOptional query parameters are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: `DiscrepancyDtoOutput[]`\n\n**Notes**\n\n- Records the request path in the monitoring table.\n\n**Contract notes** (effective behaviour in code versus Swagger metadata)\n\n- No authentication guard: the route is reachable without credentials (code-verified).\n- No ValidationPipe on this route: the rules of RetrieveDiscrepanciesDtoInput are documented but not enforced; query values arrive as strings."
+                                "description": "Retrieve soc jump items.\n\n| | |\n|---|---|\n| Source | `SocController.retrieveSocJumpItems()` in `src/soc/controllers/soc.controller.ts` (module `SocModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- Resolves the customers of the access key business units; 403 when there are none.\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n- SOC visibility derived from the access key business units and the customers in scope.\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Tenant-Id` | integer | yes | BeyondTrust instance id (not a customer id). The handler reads it; configure the tenantId variable once, it is never defaulted. |\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Query parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `pageSize` | integer | no | The number of items to include in a paginated response. Default `100`. |\n| `pageNumber` | integer | no | The 1-based index of the desired page. Default `1`. |\n| `customerKey` | string | no | Restricts the results to the customer with this key. |\n| `siteKey` | string | no | Restricts the results to the site with this key. |\n| `mappingStatus` | enum | no | Restricts the results to objects with this attribution status. Use \"unmapped\" to list remote access paths that cannot be attributed to any customer or site. One of `customer-and-site`, `customer-only`, `site-only`, `unmapped`. |\n\nOptional query parameters are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: `SocJumpItemsRetrievedDtoOutput`\n\n**Notes**\n\n- Records the request path in the monitoring table."
                             },
                             "response": []
                         },
                         {
-                            "id": "8f97e17c-b730-5917-99ff-bd030e5c4b3b",
-                            "name": "POST /discrepancies/scan/all - Scan all discrepancies",
+                            "id": "2fe034c6-20fc-5201-a7e8-15bf2b529ae4",
+                            "name": "GET /soc/jumpoints - Retrieve soc jumpoints",
                             "request": {
-                                "method": "POST",
+                                "method": "GET",
                                 "header": [
                                     {
                                         "key": "X-Tenant-Id",
@@ -8218,81 +8515,177 @@
                                     }
                                 ],
                                 "url": {
-                                    "raw": "{{baseUrl}}/discrepancies/scan/all",
+                                    "raw": "{{baseUrl}}/soc/jumpoints",
                                     "host": [
                                         "{{baseUrl}}"
                                     ],
                                     "path": [
-                                        "discrepancies",
-                                        "scan",
-                                        "all"
-                                    ]
-                                },
-                                "description": "Scan all discrepancies.\n\n| | |\n|---|---|\n| Source | `DiscrepancyScannerController.scanAllDiscrepancies()` in `src/discrepancy/controllers/discrepancy-scanner.controller.ts` (module `DiscrepancyModule`) |\n| Authentication | None. The route has no authentication guard. |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Tenant-Id` | integer | yes | BeyondTrust instance id (not a customer id). The handler reads it; configure the tenantId variable once, it is never defaulted. |\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: `ScanStatusDtoOutput`\n- 202\n\n**Notes**\n\n- Records the request path in the monitoring table.\n\n**Contract notes** (effective behaviour in code versus Swagger metadata)\n\n- No authentication guard: the route is reachable without credentials (code-verified)."
-                            },
-                            "response": []
-                        },
-                        {
-                            "id": "65bb5540-635b-5cb0-bfc9-c8d9c4c4d4c2",
-                            "name": "POST /discrepancies/scan/:entityType - Scan discrepancies",
-                            "request": {
-                                "method": "POST",
-                                "header": [
-                                    {
-                                        "key": "X-Tenant-Id",
-                                        "value": "{{tenantId}}",
-                                        "description": "BeyondTrust instance id (not a customer id). The handler reads it; configure the tenantId variable once, it is never defaulted. Required."
-                                    },
-                                    {
-                                        "key": "X-Transaction-Id",
-                                        "value": "{{transactionId}}",
-                                        "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
-                                        "disabled": true
-                                    }
-                                ],
-                                "url": {
-                                    "raw": "{{baseUrl}}/discrepancies/scan/:entityType",
-                                    "host": [
-                                        "{{baseUrl}}"
+                                        "soc",
+                                        "jumpoints"
                                     ],
-                                    "path": [
-                                        "discrepancies",
-                                        "scan",
-                                        ":entityType"
-                                    ],
-                                    "variable": [
+                                    "query": [
                                         {
-                                            "key": "entityType",
-                                            "value": "group-policy",
-                                            "description": "The type of entity to scan for discrepancies. One of: group-policy, group-policy-jump-group, group-policy-jumpoint, group-policy-member, group-policy-team, jump-client, jump-client-installer, jump-group, jump-item-protocol-tunnel-jump, jump-item-remote-rdp, jump-item-remote-vnc, jump-item-shell-jump, jump-item-web-jump, jump-policy, jumpoint, jumpoint-node, session-policy, team, team-user, user, user-group-policy. Required."
+                                            "key": "pageSize",
+                                            "value": "100",
+                                            "description": "The number of items to include in a paginated response. Default: 100. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "pageNumber",
+                                            "value": "1",
+                                            "description": "The 1-based index of the desired page. Default: 1. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "customerKey",
+                                            "value": "EXAMPLE_CUSTOMER",
+                                            "description": "Restricts the results to the customer with this key. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "siteKey",
+                                            "value": "EXAMPLE_SITE",
+                                            "description": "Restricts the results to the site with this key. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "mappingStatus",
+                                            "value": "customer-and-site",
+                                            "description": "Restricts the results to objects with this attribution status. Use \"unmapped\" to list remote access paths that cannot be attributed to any customer or site. One of: customer-and-site, customer-only, site-only, unmapped. Optional.",
+                                            "disabled": true
                                         }
                                     ]
                                 },
-                                "description": "Scan discrepancies.\n\n| | |\n|---|---|\n| Source | `DiscrepancyScannerController.scanDiscrepancies()` in `src/discrepancy/controllers/discrepancy-scanner.controller.ts` (module `DiscrepancyModule`) |\n| Authentication | None. The route has no authentication guard. |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `entityType` | enum | yes | The type of entity to scan for discrepancies. One of `group-policy`, `group-policy-jump-group`, `group-policy-jumpoint`, `group-policy-member`, `group-policy-team`, `jump-client`, `jump-client-installer`, `jump-group`, `jump-item-protocol-tunnel-jump`, `jump-item-remote-rdp`, `jump-item-remote-vnc`, `jump-item-shell-jump`, `jump-item-web-jump`, `jump-policy`, `jumpoint`, `jumpoint-node`, `session-policy`, `team`, `team-user`, `user`, `user-group-policy`. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Tenant-Id` | integer | yes | BeyondTrust instance id (not a customer id). The handler reads it; configure the tenantId variable once, it is never defaulted. |\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: `DiscrepancyOverviewDtoOutput`\n\n**Notes**\n\n- Records the request path in the monitoring table.\n\n**Contract notes** (effective behaviour in code versus Swagger metadata)\n\n- No authentication guard: the route is reachable without credentials (code-verified)."
+                                "description": "Retrieve soc jumpoints.\n\n| | |\n|---|---|\n| Source | `SocController.retrieveSocJumpoints()` in `src/soc/controllers/soc.controller.ts` (module `SocModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- Resolves the customers of the access key business units; 403 when there are none.\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n- SOC visibility derived from the access key business units and the customers in scope.\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Tenant-Id` | integer | yes | BeyondTrust instance id (not a customer id). The handler reads it; configure the tenantId variable once, it is never defaulted. |\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Query parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `pageSize` | integer | no | The number of items to include in a paginated response. Default `100`. |\n| `pageNumber` | integer | no | The 1-based index of the desired page. Default `1`. |\n| `customerKey` | string | no | Restricts the results to the customer with this key. |\n| `siteKey` | string | no | Restricts the results to the site with this key. |\n| `mappingStatus` | enum | no | Restricts the results to objects with this attribution status. Use \"unmapped\" to list remote access paths that cannot be attributed to any customer or site. One of `customer-and-site`, `customer-only`, `site-only`, `unmapped`. |\n\nOptional query parameters are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: `SocJumpointsRetrievedDtoOutput`\n\n**Notes**\n\n- Records the request path in the monitoring table."
                             },
                             "response": []
                         }
-                    ],
-                    "auth": {
-                        "type": "noauth"
-                    }
-                },
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "adcd1b58-1d4f-54bf-98eb-176a329f1397",
+            "name": "Deployments",
+            "description": "Jumpoint node deployments.",
+            "item": [
                 {
-                    "id": "044b6c47-768e-5257-93db-99fd82755566",
-                    "name": "DiscrepancySyncController",
-                    "description": "Operations of `DiscrepancySyncController` (module `DiscrepancyModule`). Source: `src/discrepancy/controllers/discrepancy-sync.controller.ts`. Authentication: None. The route has no authentication guard.",
+                    "id": "6be53615-6fbf-55d6-b85b-711c96a7f8bc",
+                    "name": "JumpointNodeController",
+                    "description": "Operations of `JumpointNodeController` (module `JumpointNodeModule`). Source: `src/deployment/jumpoint-node/controllers/jumpoint-node.controller.ts`. Authentication: X-Access-Key header (`{{accessKey}}`)",
                     "item": [
                         {
-                            "id": "b6dbffbe-2d35-5ff5-8067-a24779208aa1",
-                            "name": "POST /discrepancies/:id/sync - Sync discrepancy",
+                            "id": "7eb4f25a-0eb1-5817-becb-2b80b54dbc1b",
+                            "name": "GET /deployments/jumpoint-nodes/:id - Retrieve jumpoint node",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "X-Transaction-Id",
+                                        "value": "{{transactionId}}",
+                                        "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                        "disabled": true
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/deployments/jumpoint-nodes/:id",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "deployments",
+                                        "jumpoint-nodes",
+                                        ":id"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": "{{jumpointNodeId}}",
+                                            "description": "Unique identifier for the resource. Required."
+                                        }
+                                    ]
+                                },
+                                "description": "Retrieve jumpoint node.\n\n| | |\n|---|---|\n| Source | `JumpointNodeController.retrieveJumpointNode()` in `src/deployment/jumpoint-node/controllers/jumpoint-node.controller.ts` (module `JumpointNodeModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- The access key must define at least one business unit (403 otherwise).\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `id` | integer | yes | Unique identifier for the resource. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: `DeploymentJumpointNodeRetrievedDtoOutput`\n- 404: The specified resource was not found.\n\n**Notes**\n\n- Records the request path in the monitoring table."
+                            },
+                            "response": []
+                        },
+                        {
+                            "id": "460053d7-cade-55d3-b712-330172e78b89",
+                            "name": "GET /deployments/jumpoint-nodes - Retrieve jumpoint nodes",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "X-Transaction-Id",
+                                        "value": "{{transactionId}}",
+                                        "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                        "disabled": true
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/deployments/jumpoint-nodes",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "deployments",
+                                        "jumpoint-nodes"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "pageSize",
+                                            "value": "100",
+                                            "description": "The number of items to include in a paginated response. Default: 100. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "pageNumber",
+                                            "value": "1",
+                                            "description": "The 1-based index of the desired page. Default: 1. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "certname",
+                                            "value": "Example certname",
+                                            "description": "The name of the jumpoint node cert. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "businessUnits",
+                                            "value": "MT",
+                                            "description": "The business units associated with the jumpoint node. Repeat the parameter for several values (`?name=a&name=b`). One of: MT, OA, MC, EG, TE. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "siteKey",
+                                            "value": "EXAMPLE_SITE",
+                                            "description": "The key of the site where the jumpoint node will be created. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "customerName",
+                                            "value": "Example customer name",
+                                            "description": "The name of the customer associated with the jumpoint node. Optional.",
+                                            "disabled": true
+                                        },
+                                        {
+                                            "key": "puppetServerDomain",
+                                            "value": "example-puppet-server-domain",
+                                            "description": "The domain of the Puppet server associated with the jumpoint node. Optional.",
+                                            "disabled": true
+                                        }
+                                    ]
+                                },
+                                "description": "Retrieve jumpoint nodes.\n\n| | |\n|---|---|\n| Source | `JumpointNodeController.retrieveJumpointNodes()` in `src/deployment/jumpoint-node/controllers/jumpoint-node.controller.ts` (module `JumpointNodeModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- The access key must define at least one business unit (403 otherwise).\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Query parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `pageSize` | integer | no | The number of items to include in a paginated response. Default `100`. |\n| `pageNumber` | integer | no | The 1-based index of the desired page. Default `1`. |\n| `certname` | string | no | The name of the jumpoint node cert. |\n| `businessUnits` | array<enum> | no | The business units associated with the jumpoint node. Repeat the parameter for several values (`?name=a&name=b`). One of `MT`, `OA`, `MC`, `EG`, `TE`. |\n| `siteKey` | string | no | The key of the site where the jumpoint node will be created. |\n| `customerName` | string | no | The name of the customer associated with the jumpoint node. |\n| `puppetServerDomain` | string | no | The domain of the Puppet server associated with the jumpoint node. |\n\nOptional query parameters are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: `DeploymentJumpointNodeRetrievedDtoOutput[]`\n\n**Notes**\n\n- Records the request path in the monitoring table."
+                            },
+                            "response": []
+                        },
+                        {
+                            "id": "b6bc9e78-82bd-53b6-8387-627bd29897e4",
+                            "name": "POST /deployments/jumpoint-nodes/deploy - Deploy jumpoint node",
                             "request": {
                                 "method": "POST",
                                 "header": [
-                                    {
-                                        "key": "X-Tenant-Id",
-                                        "value": "{{tenantId}}",
-                                        "description": "BeyondTrust instance id (not a customer id). The handler reads it; configure the tenantId variable once, it is never defaulted. Required."
-                                    },
                                     {
                                         "key": "X-Transaction-Id",
                                         "value": "{{transactionId}}",
@@ -8302,7 +8695,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n  \"syncType\": \"internal-to-external\"\n}",
+                                    "raw": "{\n  \"siteKey\": \"EXAMPLE_SITE\",\n  \"businessUnit\": \"MT\"\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -8310,37 +8703,25 @@
                                     }
                                 },
                                 "url": {
-                                    "raw": "{{baseUrl}}/discrepancies/:id/sync",
+                                    "raw": "{{baseUrl}}/deployments/jumpoint-nodes/deploy",
                                     "host": [
                                         "{{baseUrl}}"
                                     ],
                                     "path": [
-                                        "discrepancies",
-                                        ":id",
-                                        "sync"
-                                    ],
-                                    "variable": [
-                                        {
-                                            "key": "id",
-                                            "value": "{{discrepancyId}}",
-                                            "description": "The id of the discrepancy. Required."
-                                        }
+                                        "deployments",
+                                        "jumpoint-nodes",
+                                        "deploy"
                                     ]
                                 },
-                                "description": "Sync discrepancy.\n\n| | |\n|---|---|\n| Source | `DiscrepancySyncController.syncDiscrepancy()` in `src/discrepancy/controllers/discrepancy-sync.controller.ts` (module `DiscrepancyModule`) |\n| Authentication | None. The route has no authentication guard. |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `id` | integer | yes | The id of the discrepancy. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Tenant-Id` | integer | yes | BeyondTrust instance id (not a customer id). The handler reads it; configure the tenantId variable once, it is never defaulted. |\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Body** (`application/json`, `SyncDiscrepancyDtoInput`, NOT validated on this route)\n\n| Field | Type | Required | Null accepted | Details |\n|---|---|---|---|---|\n| `syncType` | enum | yes | no | The type of synchronization to perform. One of `internal-to-external`, `external-to-internal`. Rules: not empty. |\n\n- The request body is the minimal valid body: required fields only.\n- The saved example \"Full body\" sends every writable field with representative nested objects and arrays.\n- JSON properties cannot be disabled individually: delete optional properties you do not want to send. Omitting a property and sending `null` are different; \"Null accepted\" shows what validation allows.\n\n**Responses**\n\n- 200\n\n**Notes**\n\n- Records the request path in the monitoring table.\n\n**Contract notes** (effective behaviour in code versus Swagger metadata)\n\n- No authentication guard: the route is reachable without credentials (code-verified).\n- No ValidationPipe on this route: the rules of SyncDiscrepancyDtoInput are documented but not enforced."
+                                "description": "Deploy jumpoint node.\n\n| | |\n|---|---|\n| Source | `JumpointNodeController.deployJumpointNode()` in `src/deployment/jumpoint-node/controllers/jumpoint-node.controller.ts` (module `JumpointNodeModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- The access key must define at least one business unit (403 otherwise).\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Body** (`application/json`, `CreateJumpointNodeDtoInput`, validated by ValidationPipe)\n\n| Field | Type | Required | Null accepted | Details |\n|---|---|---|---|---|\n| `siteKey` | string | yes | no | The key of the site where the jumpoint node will be created. Rules: not empty. |\n| `businessUnit` | enum | yes | no | The business unit associated with the jumpoint node. One of `MT`, `OA`, `MC`, `EG`, `TE`. Rules: not empty. |\n\n- The request body is the minimal valid body: required fields only.\n- The saved example \"Full body\" sends every writable field with representative nested objects and arrays.\n- JSON properties cannot be disabled individually: delete optional properties you do not want to send. Omitting a property and sending `null` are different; \"Null accepted\" shows what validation allows.\n\n**Responses**\n\n- 201: Indicates the Jumpoint node was created successfully and contains the new instance. `JumpointNodeCreatedDtoOutput`\n\n**Notes**\n\n- Records the request path in the monitoring table."
                             },
                             "response": [
                                 {
-                                    "id": "1c2a6fea-eb37-57e8-8862-1f5fbf8f0715",
+                                    "id": "50c80381-d76c-5d4e-b55f-79fbb27da4e6",
                                     "name": "Full body",
                                     "originalRequest": {
                                         "method": "POST",
                                         "header": [
-                                            {
-                                                "key": "X-Tenant-Id",
-                                                "value": "{{tenantId}}",
-                                                "description": "BeyondTrust instance id (not a customer id). The handler reads it; configure the tenantId variable once, it is never defaulted. Required."
-                                            },
                                             {
                                                 "key": "X-Transaction-Id",
                                                 "value": "{{transactionId}}",
@@ -8350,7 +8731,7 @@
                                         ],
                                         "body": {
                                             "mode": "raw",
-                                            "raw": "{\n  \"syncType\": \"internal-to-external\"\n}",
+                                            "raw": "{\n  \"siteKey\": \"EXAMPLE_SITE\",\n  \"businessUnit\": \"MT\"\n}",
                                             "options": {
                                                 "raw": {
                                                     "language": "json"
@@ -8358,20 +8739,183 @@
                                             }
                                         },
                                         "url": {
-                                            "raw": "{{baseUrl}}/discrepancies/:id/sync",
+                                            "raw": "{{baseUrl}}/deployments/jumpoint-nodes/deploy",
                                             "host": [
                                                 "{{baseUrl}}"
                                             ],
                                             "path": [
-                                                "discrepancies",
+                                                "deployments",
+                                                "jumpoint-nodes",
+                                                "deploy"
+                                            ]
+                                        }
+                                    },
+                                    "status": "Created",
+                                    "code": 201,
+                                    "header": [],
+                                    "cookie": [],
+                                    "body": ""
+                                }
+                            ]
+                        },
+                        {
+                            "id": "75dbc929-6766-5fa1-82b8-c40dfe7238e0",
+                            "name": "POST /deployments/jumpoint-nodes - Create jumpoint node",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-Transaction-Id",
+                                        "value": "{{transactionId}}",
+                                        "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                        "disabled": true
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"siteKey\": \"EXAMPLE_SITE\",\n  \"businessUnit\": \"MT\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/deployments/jumpoint-nodes",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "deployments",
+                                        "jumpoint-nodes"
+                                    ]
+                                },
+                                "description": "Create jumpoint node.\n\n| | |\n|---|---|\n| Source | `JumpointNodeController.createJumpointNode()` in `src/deployment/jumpoint-node/controllers/jumpoint-node.controller.ts` (module `JumpointNodeModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- The access key must define at least one business unit (403 otherwise).\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Body** (`application/json`, `CreateJumpointNodeDtoInput`, validated by ValidationPipe)\n\n| Field | Type | Required | Null accepted | Details |\n|---|---|---|---|---|\n| `siteKey` | string | yes | no | The key of the site where the jumpoint node will be created. Rules: not empty. |\n| `businessUnit` | enum | yes | no | The business unit associated with the jumpoint node. One of `MT`, `OA`, `MC`, `EG`, `TE`. Rules: not empty. |\n\n- The request body is the minimal valid body: required fields only.\n- The saved example \"Full body\" sends every writable field with representative nested objects and arrays.\n- JSON properties cannot be disabled individually: delete optional properties you do not want to send. Omitting a property and sending `null` are different; \"Null accepted\" shows what validation allows.\n\n**Responses**\n\n- 201: Indicates the Jumpoint node was created successfully and contains the new instance. `JumpointNodeCreatedDtoOutput`\n\n**Notes**\n\n- Records the request path in the monitoring table."
+                            },
+                            "response": [
+                                {
+                                    "id": "8d39ee70-9c0f-55e3-8a5d-f63d96409195",
+                                    "name": "Full body",
+                                    "originalRequest": {
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "X-Transaction-Id",
+                                                "value": "{{transactionId}}",
+                                                "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                                "disabled": true
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"siteKey\": \"EXAMPLE_SITE\",\n  \"businessUnit\": \"MT\"\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "json"
+                                                }
+                                            }
+                                        },
+                                        "url": {
+                                            "raw": "{{baseUrl}}/deployments/jumpoint-nodes",
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "path": [
+                                                "deployments",
+                                                "jumpoint-nodes"
+                                            ]
+                                        }
+                                    },
+                                    "status": "Created",
+                                    "code": 201,
+                                    "header": [],
+                                    "cookie": [],
+                                    "body": ""
+                                }
+                            ]
+                        },
+                        {
+                            "id": "73e69ed8-da41-5530-ba07-c82b64ec222f",
+                            "name": "POST /deployments/jumpoint-nodes/:id/services - Create jumpoint node service",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-Transaction-Id",
+                                        "value": "{{transactionId}}",
+                                        "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                        "disabled": true
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"serviceType\": \"pra\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/deployments/jumpoint-nodes/:id/services",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "deployments",
+                                        "jumpoint-nodes",
+                                        ":id",
+                                        "services"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": "{{jumpointNodeId}}",
+                                            "description": "Unique identifier for the resource. Required."
+                                        }
+                                    ]
+                                },
+                                "description": "Create jumpoint node service.\n\n| | |\n|---|---|\n| Source | `JumpointNodeController.createJumpointNodeService()` in `src/deployment/jumpoint-node/controllers/jumpoint-node.controller.ts` (module `JumpointNodeModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- The access key must define at least one business unit (403 otherwise).\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `id` | integer | yes | Unique identifier for the resource. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Body** (`application/json`, `CreateJumpointNodeServiceDtoInput`, validated by ValidationPipe)\n\n| Field | Type | Required | Null accepted | Details |\n|---|---|---|---|---|\n| `serviceType` | enum | yes | no | The type of the service. One of `pra`. Rules: not empty. |\n\n- The request body is the minimal valid body: required fields only.\n- The saved example \"Full body\" sends every writable field with representative nested objects and arrays.\n- JSON properties cannot be disabled individually: delete optional properties you do not want to send. Omitting a property and sending `null` are different; \"Null accepted\" shows what validation allows.\n\n**Responses**\n\n- 200: Indicates the Jumpoint node service was created successfully. `JumpointNodeServiceCreatedDtoOutput`\n- 404: The specified resource was not found.\n\n**Notes**\n\n- Records the request path in the monitoring table."
+                            },
+                            "response": [
+                                {
+                                    "id": "73969669-4262-5e03-bb02-356fdd01f9dd",
+                                    "name": "Full body",
+                                    "originalRequest": {
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "X-Transaction-Id",
+                                                "value": "{{transactionId}}",
+                                                "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                                "disabled": true
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"serviceType\": \"pra\"\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "language": "json"
+                                                }
+                                            }
+                                        },
+                                        "url": {
+                                            "raw": "{{baseUrl}}/deployments/jumpoint-nodes/:id/services",
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "path": [
+                                                "deployments",
+                                                "jumpoint-nodes",
                                                 ":id",
-                                                "sync"
+                                                "services"
                                             ],
                                             "variable": [
                                                 {
                                                     "key": "id",
-                                                    "value": "{{discrepancyId}}",
-                                                    "description": "The id of the discrepancy. Required."
+                                                    "value": "{{jumpointNodeId}}",
+                                                    "description": "Unique identifier for the resource. Required."
                                                 }
                                             ]
                                         }
@@ -8383,27 +8927,82 @@
                                     "body": ""
                                 }
                             ]
-                        }
-                    ],
-                    "auth": {
-                        "type": "noauth"
-                    }
-                }
-            ]
-        },
-        {
-            "id": "aadcdba1-56cd-51f4-95ec-966ca196209c",
-            "name": "Logs and Monitoring",
-            "description": "System log and request monitoring records.",
-            "item": [
-                {
-                    "id": "89441feb-395f-5b3a-8220-a2d96fb02e0b",
-                    "name": "LogController",
-                    "description": "Operations of `LogController` (module `LogModule`). Source: `src/log/controllers/log.controller.ts`. Authentication: None. The route has no authentication guard.",
-                    "item": [
+                        },
                         {
-                            "id": "c17c1c3a-e7e1-5c20-82c0-1e3c5d2820e7",
-                            "name": "GET /logs - Retrieve logs",
+                            "id": "206f5241-a5e1-5842-a6c0-f26018a97878",
+                            "name": "POST /deployments/jumpoint-nodes/:id/approve - Approve jumpoint node",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-Transaction-Id",
+                                        "value": "{{transactionId}}",
+                                        "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                        "disabled": true
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/deployments/jumpoint-nodes/:id/approve",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "deployments",
+                                        "jumpoint-nodes",
+                                        ":id",
+                                        "approve"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": "{{jumpointNodeId}}",
+                                            "description": "Unique identifier for the resource. Required."
+                                        }
+                                    ]
+                                },
+                                "description": "Approve jumpoint node.\n\n| | |\n|---|---|\n| Source | `JumpointNodeController.approveJumpointNode()` in `src/deployment/jumpoint-node/controllers/jumpoint-node.controller.ts` (module `JumpointNodeModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- The access key must define at least one business unit (403 otherwise).\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `id` | integer | yes | Unique identifier for the resource. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: Indicates the Jumpoint node was approved successfully. `JumpointNodeApprovedDtoOutput`\n- 404: The specified resource was not found.\n\n**Notes**\n\n- Records the request path in the monitoring table."
+                            },
+                            "response": []
+                        },
+                        {
+                            "id": "954ea876-d799-5d4e-953d-4997bebbee49",
+                            "name": "POST /deployments/jumpoint-nodes/:id/iso - Download jumpoint node iso",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-Transaction-Id",
+                                        "value": "{{transactionId}}",
+                                        "description": "Optional correlation id for tracing a request across services and logs. Generated by the API when absent.",
+                                        "disabled": true
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/deployments/jumpoint-nodes/:id/iso",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "deployments",
+                                        "jumpoint-nodes",
+                                        ":id",
+                                        "iso"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": "{{jumpointNodeId}}",
+                                            "description": "Unique identifier for the resource. Required."
+                                        }
+                                    ]
+                                },
+                                "description": "Download jumpoint node iso.\n\n| | |\n|---|---|\n| Source | `JumpointNodeController.downloadJumpointNodeIso()` in `src/deployment/jumpoint-node/controllers/jumpoint-node.controller.ts` (module `JumpointNodeModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- The access key must define at least one business unit (403 otherwise).\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `id` | integer | yes | Unique identifier for the resource. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: Indicates the Jumpoint node ISO was downloaded successfully. `JumpointNodeIsoDownloadedDtoOutput`\n- 404: The specified resource was not found.\n\n**Notes**\n\n- Records the request path in the monitoring table."
+                            },
+                            "response": []
+                        },
+                        {
+                            "id": "a9b0d6e0-f9d5-5c19-a54d-934ba4c02039",
+                            "name": "GET /deployments/jumpoint-nodes/:id/iso - Retrieve jumpoint node iso",
                             "request": {
                                 "method": "GET",
                                 "header": [
@@ -8415,65 +9014,31 @@
                                     }
                                 ],
                                 "url": {
-                                    "raw": "{{baseUrl}}/logs",
+                                    "raw": "{{baseUrl}}/deployments/jumpoint-nodes/:id/iso",
                                     "host": [
                                         "{{baseUrl}}"
                                     ],
                                     "path": [
-                                        "logs"
+                                        "deployments",
+                                        "jumpoint-nodes",
+                                        ":id",
+                                        "iso"
                                     ],
-                                    "query": [
+                                    "variable": [
                                         {
-                                            "key": "pageSize",
-                                            "value": "100",
-                                            "description": "The number of items to include in a paginated response. Default: 100. Optional.",
-                                            "disabled": true
-                                        },
-                                        {
-                                            "key": "pageNumber",
-                                            "value": "1",
-                                            "description": "The 1-based index of the desired page. Default: 1. Optional.",
-                                            "disabled": true
-                                        },
-                                        {
-                                            "key": "searchString",
-                                            "value": "example-search-string",
-                                            "description": "A search string to filter logs by service name, action name, or transaction ID. Optional.",
-                                            "disabled": true
-                                        },
-                                        {
-                                            "key": "creationDateFrom",
-                                            "value": "2026-01-01T00:00:00.000Z",
-                                            "description": "The earliest creation date of the logs to retrieve. Optional.",
-                                            "disabled": true
-                                        },
-                                        {
-                                            "key": "creationDateTo",
-                                            "value": "2026-01-01T00:00:00.000Z",
-                                            "description": "The latest creation date of the logs to retrieve. Optional.",
-                                            "disabled": true
-                                        },
-                                        {
-                                            "key": "sortOrderType",
-                                            "value": "desc",
-                                            "description": "The order in which to sort the logs. One of: asc, desc. Default: desc. Optional.",
-                                            "disabled": true
-                                        },
-                                        {
-                                            "key": "tenantId",
-                                            "value": "1",
-                                            "description": "The tenant ID to filter logs for multi-tenant scenarios. Optional.",
-                                            "disabled": true
+                                            "key": "id",
+                                            "value": "{{jumpointNodeId}}",
+                                            "description": "Unique identifier for the resource. Required."
                                         }
                                     ]
                                 },
-                                "description": "Retrieve logs.\n\n| | |\n|---|---|\n| Source | `LogController.retrieveLogs()` in `src/log/controllers/log.controller.ts` (module `LogModule`) |\n| Authentication | None. The route has no authentication guard. |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Query parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `pageSize` | integer | no | The number of items to include in a paginated response. Default `100`. |\n| `pageNumber` | integer | no | The 1-based index of the desired page. Default `1`. |\n| `searchString` | string | no | A search string to filter logs by service name, action name, or transaction ID. |\n| `creationDateFrom` | string | no | The earliest creation date of the logs to retrieve. Format: date-time. |\n| `creationDateTo` | string | no | The latest creation date of the logs to retrieve. Format: date-time. |\n| `sortOrderType` | enum | no | The order in which to sort the logs. One of `asc`, `desc`. Default `desc`. |\n| `tenantId` | integer | no | The tenant ID to filter logs for multi-tenant scenarios. |\n\nOptional query parameters are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: `LogsRetrievedDtoOutput`\n\n**Notes**\n\n- Records the request path in the monitoring table.\n\n**Contract notes** (effective behaviour in code versus Swagger metadata)\n\n- No authentication guard: the route is reachable without credentials (code-verified)."
+                                "description": "Retrieve jumpoint node iso.\n\n| | |\n|---|---|\n| Source | `JumpointNodeController.retrieveJumpointNodeIso()` in `src/deployment/jumpoint-node/controllers/jumpoint-node.controller.ts` (module `JumpointNodeModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- The access key must define at least one business unit (403 otherwise).\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `id` | integer | yes | Unique identifier for the resource. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Responses**\n\n- 200: Returns the content of the ISO file. `Buffer`\n- 404: Indicates either the resource or the ISO file was not found.\n\n**Notes**\n\n- Records the request path in the monitoring table.\n- Response: application/x-iso9660-image (node ISO). Use \"Send and Download\"."
                             },
                             "response": []
                         },
                         {
-                            "id": "7669babb-7f0c-59c6-97f9-24b387741cbe",
-                            "name": "DELETE /logs - Clear logs",
+                            "id": "9a9e496d-4dac-53b4-9995-a2ed1a9fcc8f",
+                            "name": "DELETE /deployments/jumpoint-nodes/:id - Delete jumpoint node",
                             "request": {
                                 "method": "DELETE",
                                 "header": [
@@ -8485,42 +9050,28 @@
                                     }
                                 ],
                                 "url": {
-                                    "raw": "{{baseUrl}}/logs",
+                                    "raw": "{{baseUrl}}/deployments/jumpoint-nodes/:id",
                                     "host": [
                                         "{{baseUrl}}"
                                     ],
                                     "path": [
-                                        "logs"
+                                        "deployments",
+                                        "jumpoint-nodes",
+                                        ":id"
                                     ],
-                                    "query": [
+                                    "variable": [
                                         {
-                                            "key": "creationDateFrom",
-                                            "value": "2026-01-01T00:00:00.000Z",
-                                            "description": "The earliest creation date of the logs to delete. Optional.",
-                                            "disabled": true
-                                        },
-                                        {
-                                            "key": "creationDateTo",
-                                            "value": "2026-01-01T00:00:00.000Z",
-                                            "description": "The latest creation date of the logs to delete. Optional.",
-                                            "disabled": true
-                                        },
-                                        {
-                                            "key": "tenantId",
-                                            "value": "1",
-                                            "description": "The tenant ID to filter logs for multi-tenant scenarios. Optional.",
-                                            "disabled": true
+                                            "key": "id",
+                                            "value": "{{jumpointNodeId}}",
+                                            "description": "Unique identifier for the resource. Required."
                                         }
                                     ]
                                 },
-                                "description": "Clear logs.\n\n| | |\n|---|---|\n| Source | `LogController.clearLogs()` in `src/log/controllers/log.controller.ts` (module `LogModule`) |\n| Authentication | None. The route has no authentication guard. |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Query parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `creationDateFrom` | string | no | The earliest creation date of the logs to delete. Format: date-time. |\n| `creationDateTo` | string | no | The latest creation date of the logs to delete. Format: date-time. |\n| `tenantId` | integer | no | The tenant ID to filter logs for multi-tenant scenarios. |\n\nOptional query parameters are present but disabled; enable them when needed.\n\n**Responses**\n\n- 204: Indicates the site manager was successfully removed.\n\n**Notes**\n\n- Records the request path in the monitoring table.\n\n**Contract notes** (effective behaviour in code versus Swagger metadata)\n\n- No authentication guard: the route is reachable without credentials (code-verified)."
+                                "description": "Delete jumpoint node.\n\n| | |\n|---|---|\n| Source | `JumpointNodeController.deleteJumpointNode()` in `src/deployment/jumpoint-node/controllers/jumpoint-node.controller.ts` (module `JumpointNodeModule`) |\n| Authentication | X-Access-Key header (`{{accessKey}}`) |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Authorisation and scope**\n\n- X-Access-Key must match a configured access entry; its business units define the scope.\n- The access key must define at least one business unit (403 otherwise).\n- Checks that the addressed resource and the filters belong to the business units or customers of the access key (403 otherwise).\n\n**Path parameters**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `id` | integer | yes | Unique identifier for the resource. |\n\n**Headers**\n\n| Name | Type | Required | Details |\n|---|---|---|---|\n| `X-Transaction-Id` | string | no | Optional correlation id for tracing a request across services and logs. Generated by the API when absent. |\n\nOptional headers are present but disabled; enable them when needed.\n\n**Responses**\n\n- 204: Indicates the jumpoint node was successfully deleted.\n- 404: The specified resource was not found.\n\n**Notes**\n\n- Records the request path in the monitoring table."
                             },
                             "response": []
                         }
-                    ],
-                    "auth": {
-                        "type": "noauth"
-                    }
+                    ]
                 }
             ]
         },
@@ -8552,33 +9103,44 @@
                                 "description": "Check health.\n\n| | |\n|---|---|\n| Source | `HealthController.checkHealth()` in `src/health/controllers/health.controller.ts` (module `HealthModule`) |\n| Authentication | None. The route has no authentication guard. |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Responses**\n\n- 200: healthy or degraded\n- 503: unavailable: the database is down or the service shuts down\n\n**Notes**\n\n- Response status: 200 when healthy or degraded, 503 when unavailable.\n\n**Contract notes** (effective behaviour in code versus Swagger metadata)\n\n- No authentication guard: the route is reachable without credentials (code-verified)."
                             },
                             "response": []
-                        }
-                    ],
-                    "auth": {
-                        "type": "noauth"
-                    }
-                },
-                {
-                    "id": "13e3c8f5-5c85-576d-b757-fddaca27ae3a",
-                    "name": "AppController",
-                    "description": "Operations of `AppController` (module `AppModule`). Source: `src/app.controller.ts`. Authentication: None. The route has no authentication guard.",
-                    "item": [
+                        },
                         {
-                            "id": "203d1e44-70e6-5663-ad7e-69372f055e07",
-                            "name": "GET /ping - Ping",
+                            "id": "5e6c2e58-93ea-5364-ae5e-1d861e9c4957",
+                            "name": "GET /health/ready - Check readiness",
                             "request": {
                                 "method": "GET",
                                 "header": [],
                                 "url": {
-                                    "raw": "{{baseUrl}}/ping",
+                                    "raw": "{{baseUrl}}/health/ready",
                                     "host": [
                                         "{{baseUrl}}"
                                     ],
                                     "path": [
-                                        "ping"
+                                        "health",
+                                        "ready"
                                     ]
                                 },
-                                "description": "Ping.\n\n| | |\n|---|---|\n| Source | `AppController.ping()` in `src/app.controller.ts` (module `AppModule`) |\n| Authentication | None. The route has no authentication guard. |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Responses**\n\n- 200\n\n**Contract notes** (effective behaviour in code versus Swagger metadata)\n\n- No authentication guard: the route is reachable without credentials (code-verified)."
+                                "description": "Check readiness.\n\n| | |\n|---|---|\n| Source | `HealthController.checkReadiness()` in `src/health/controllers/health.controller.ts` (module `HealthModule`) |\n| Authentication | None. The route has no authentication guard. |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Responses**\n\n- 200: ready to serve requests\n- 503: the database is not reachable\n\n**Notes**\n\n- Response status: 200 when the database is reachable, 503 otherwise.\n\n**Contract notes** (effective behaviour in code versus Swagger metadata)\n\n- No authentication guard: the route is reachable without credentials (code-verified)."
+                            },
+                            "response": []
+                        },
+                        {
+                            "id": "7bae72cd-1660-583d-91ca-520cd751cf96",
+                            "name": "GET /health/live - Check liveness",
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/health/live",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "health",
+                                        "live"
+                                    ]
+                                },
+                                "description": "Check liveness.\n\n| | |\n|---|---|\n| Source | `HealthController.checkLiveness()` in `src/health/controllers/health.controller.ts` (module `HealthModule`) |\n| Authentication | None. The route has no authentication guard. |\n| Swagger | documented in /open-api |\n| Customer export | included |\n\n**Responses**\n\n- 200: the process answers\n\n**Notes**\n\n- Response status: 200 while the process answers.\n\n**Contract notes** (effective behaviour in code versus Swagger metadata)\n\n- No authentication guard: the route is reachable without credentials (code-verified)."
                             },
                             "response": []
                         }
@@ -8654,12 +9216,6 @@
             "description": "Id of the customer addressed by path parameters. Set it before sending; it is intentionally empty."
         },
         {
-            "key": "discrepancyId",
-            "value": "",
-            "type": "string",
-            "description": "Id of the discrepancy addressed by path parameters. Set it before sending; it is intentionally empty."
-        },
-        {
             "key": "groupPolicyId",
             "value": "",
             "type": "string",
@@ -8696,6 +9252,12 @@
             "description": "Id of the jumpoint addressed by path parameters. Set it before sending; it is intentionally empty."
         },
         {
+            "key": "jumpointNodeId",
+            "value": "",
+            "type": "string",
+            "description": "Id of the jumpoint node addressed by path parameters. Set it before sending; it is intentionally empty."
+        },
+        {
             "key": "jumpPolicyId",
             "value": "",
             "type": "string",
@@ -8724,6 +9286,12 @@
             "value": "",
             "type": "string",
             "description": "Id of the shell jump addressed by path parameters. Set it before sending; it is intentionally empty."
+        },
+        {
+            "key": "siteAuditorId",
+            "value": "",
+            "type": "string",
+            "description": "Id of the site auditor addressed by path parameters. Set it before sending; it is intentionally empty."
         },
         {
             "key": "siteId",
