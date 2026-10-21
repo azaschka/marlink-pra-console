@@ -18,6 +18,7 @@
                 <mat-form-field class="full-width">
                     <mat-label>Display Name</mat-label>
                     <input matInput formControlName="publicDisplayName" placeholder="Display Name" appAutoFocus autoFocusDelay="350" />
+                    <mat-hint *ngIf="isExternalUser">Managed by the identity provider</mat-hint>
                     <mat-error *ngIf="publicDisplayName?.hasError('required')">
                         Display name is <strong>required</strong>
                     </mat-error>
@@ -41,6 +42,7 @@
                     <mat-form-field class="full-width">
                         <mat-label>Email Address</mat-label>
                         <input matInput type="email" formControlName="email" placeholder="Email Address" />
+                        <mat-hint *ngIf="isExternalUser">Managed by the identity provider</mat-hint>
                         <mat-error *ngIf="email?.hasError('required')">
                             Email address is <strong>required</strong>
                         </mat-error>

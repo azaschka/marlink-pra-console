@@ -72,13 +72,28 @@ export class UsersService {
         id: number,
         body: UserUpdateRequest,
     ): Promise<User> {
-        return firstValueFrom(
-            this.http.patch<User>(
-                `users/${id}`,
-                body,
-                this.createHeaders(tenantId),
-            ),
-        );
+        try {
+            return await firstValueFrom(
+                this.http.patch<User>(
+                    `users/${id}`,
+                    body,
+                    this.createHeaders(tenantId),
+                ),
+            );
+        } catch (error) {
+            // An HttpErrorResponse is not an Error, so without this the caller can only show a generic message
+            // and the reason given by the PRA API (MARLINKPRA-79: 422 for display name and email) is lost.
+            if (error instanceof HttpErrorResponse) {
+                const messages = ErrorUtils.extractMessages(error.error);
+                const detail = messages.length > 0 ? messages.join("; ") : error.message;
+
+                throw new Error(
+                    `[UsersService.updateUser] Failed to update user (status ${error.status}): ${detail}`,
+                );
+            }
+
+            throw error;
+        }
     }
 
     public async deleteUser(tenantId: number, id: number): Promise<void> {

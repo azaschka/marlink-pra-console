@@ -115,7 +115,8 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
 
     /**
      * R3.2-A004: username and password of an account provisioned by an identity provider are owned by that
-     * provider. The PRA API rejects changes to them; the form does not offer them.
+     * provider. MARLINKPRA-79: so are the display name and the email address, which BeyondTrust rejects on such an
+     * account. The PRA API rejects changes to all of them; the form does not offer them.
      */
     public get isExternalUser(): boolean {
         return this.mode === "edit" && this.user?.sourceType === UserSourceType.External;
@@ -125,7 +126,9 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         if (!this.isExternalUser) {
             return;
         }
+        this.userFormGroup.get("publicDisplayName")?.disable();
         this.userFormGroup.get("username")?.disable();
+        this.userFormGroup.get("email")?.disable();
         this.userFormGroup.get("regeneratePassword")?.disable();
     }
 
@@ -267,6 +270,8 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
         } catch (err) {
             this.handleSubmitError(err);
             this.userFormGroup.enable();
+            // enable() also re-enables the controls an external user must not edit.
+            this.applyUserTypeRestrictions();
         } finally {
             this.isLoading = false;
         }
@@ -299,22 +304,21 @@ export class UserOverlayComponent implements OnInit, OnDestroy {
             throw new Error("User data missing for edit operation");
         }
 
-        const formValue = this.userFormGroup.value as UserFormValue;
+        // MARLINKPRA-79: nothing in the profile of an external user is editable here, and BeyondTrust rejects
+        // display name and email even when they are unchanged. The profile update is skipped; only the group
+        // policy assignments are saved, through their own endpoint.
+        if (!this.isExternalUser) {
+            const formValue = this.userFormGroup.value as UserFormValue;
 
-        // Disabled controls are not part of the form value; for an external user only the editable fields are sent.
-        const request: UserUpdateRequest = this.isExternalUser
-            ? {
-                  publicDisplayName: formValue.publicDisplayName.trim(),
-                  email: formValue.email.trim(),
-              }
-            : {
-                  publicDisplayName: formValue.publicDisplayName.trim(),
-                  username: formValue.username.trim(),
-                  email: formValue.email.trim(),
-                  regeneratePassword: formValue.regeneratePassword || false,
-              };
+            const request: UserUpdateRequest = {
+                publicDisplayName: formValue.publicDisplayName.trim(),
+                username: formValue.username.trim(),
+                email: formValue.email.trim(),
+                regeneratePassword: formValue.regeneratePassword || false,
+            };
 
-        await this.usersService.updateUser(this.data.tenantId, this.user.id, request);
+            await this.usersService.updateUser(this.data.tenantId, this.user.id, request);
+        }
 
         await this.updateGroupPolicyAssignments(this.user.id);
     }
