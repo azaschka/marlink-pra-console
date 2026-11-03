@@ -63,10 +63,6 @@
             <!-- Group Policies: Chips & Autocomplete -->
             <div fxFlex="100" class="mt-24">
                 <h5 class="mb-16">Assigned Group Policies:</h5>
-                <p *ngIf="isExternalUser" class="text-13 text-muted mt-0 mb-16">
-                    External user: only direct memberships are shown and changed here. Access through identity provider
-                    groups is not listed. Changes appear in this list after the next synchronisation (up to 30 minutes).
-                </p>
                 <div class="mb-24">
                     <mat-chip-list>
                         <div *ngIf="selectedGroupPolicies.length" class="chip-list-scroll full-width">
