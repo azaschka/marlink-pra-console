@@ -8,17 +8,17 @@
 
 The Console talks to the PRA API over HTTPS for every piece of data it displays. Many resources (jump groups, jump policies, jumpoints, session policies, group policies, customers) are:
 
-- **Expensive to fetch** — they may involve downstream calls from the PRA API to the PRA Sync API (and ultimately to BeyondTrust).
-- **Reused across many components** — the same list is needed by dropdowns in create/update overlays, filter panes, and list views.
-- **Slow to change** — these are configuration objects that a human operator changes infrequently, not real-time data.
+- **Expensive to fetch**: they may involve downstream calls from the PRA API to the PRA Sync API (and ultimately to BeyondTrust).
+- **Reused across many components**: the same list is needed by dropdowns in create/update overlays, filter panes, and list views.
+- **Slow to change**: these are configuration objects that a human operator changes infrequently, not real-time data.
 
-Without a cache, opening a single dialog (e.g. *Create Jump Asset*) would fire 3–5 simultaneous API calls for the same data, every single time.
+Without a cache, opening a single dialog (e.g. *Create Jump Asset*) would fire 3 to 5 simultaneous API calls for the same data, every single time.
 
 ---
 
 ## 2. Cache Implementations
 
-### 2.1 `TenantCache<T>` — generic reusable helper
+### 2.1 `TenantCache<T>`: generic reusable helper
 
 **File:** `src/app/shared/helpers/tenant-cache.ts`
 
@@ -29,7 +29,7 @@ A typed, Promise-deduplicating cache designed specifically for tenant-scoped dat
 | **TTL** | `TenantCache.DEFAULT_TTL_MS` = **30 minutes** |
 | **Key type** | `string \| number` (converted to `String(key)` internally) |
 | **On rejection** | Entry removed → next caller triggers a clean retry |
-| **On empty `[]`** | Entry removed immediately (see §4 — Hardening) |
+| **On empty `[]`** | Entry removed immediately (see §4, Hardening) |
 | **Concurrent calls** | Same in-flight `Promise` is returned → single HTTP request |
 
 **Usage pattern:**
@@ -54,7 +54,7 @@ this.cache.invalidate(compositeKey); // flush one composite entry
 
 ---
 
-### 2.2 `CustomerCacheService` — custom Map-based cache
+### 2.2 `CustomerCacheService`: custom Map-based cache
 
 **File:** `src/app/views/customers/customer-cache.service.ts`
 
@@ -65,19 +65,19 @@ Customers are used in 18+ places across 11 feature modules, so they get a dedica
 | **TTL** | `CustomerCacheService.TTL_MS` = **30 minutes** |
 | **Key** | `JSON.stringify({ businessUnits: [...].sort() \| null })` |
 | **On rejection** | Entry deleted via `.catch()` |
-| **On empty `[]`** | Entry deleted via `.then()` (see §4 — Hardening) |
+| **On empty `[]`** | Entry deleted via `.then()` (see §4, Hardening) |
 | **Concurrent calls** | Same in-flight `Promise` is returned → single HTTP request |
 
 ---
 
-## 3. Cached Resources — Inventory
+## 3. Cached Resources: Inventory
 
 ### 3.1 Jump Groups
 
 | | |
 |---|---|
 | **Service** | `src/app/views/jump-groups/jump-groups.service.ts` |
-| **Cache** | `TenantCache<JumpGroup[]>` — field `cache` |
+| **Cache** | `TenantCache<JumpGroup[]>`, field `cache` |
 | **Cache key** | `tenantId` (number) |
 | **Endpoint** | `GET jump-groups?pageSize=9999` + `X-Tenant-Id` |
 | **Read method** | `fetchJumpGroups(tenantId)` |
@@ -95,7 +95,7 @@ Customers are used in 18+ places across 11 feature modules, so they get a dedica
 | | |
 |---|---|
 | **Service** | `src/app/views/jump-policies/jump-policies.service.ts` |
-| **Cache** | `TenantCache<JumpPolicy[]>` — field `cache` |
+| **Cache** | `TenantCache<JumpPolicy[]>`, field `cache` |
 | **Cache key** | `tenantId` (number) |
 | **Endpoint** | `GET jump-policies?pageSize=9999` + `X-Tenant-Id` |
 | **Read method** | `fetchJumpPolicies(tenantId)` |
@@ -112,7 +112,7 @@ Customers are used in 18+ places across 11 feature modules, so they get a dedica
 | | |
 |---|---|
 | **Service** | `src/app/views/jumpoints/jumpoints.service.ts` |
-| **Cache** | `TenantCache<Jumpoint[]>` — field `cache` |
+| **Cache** | `TenantCache<Jumpoint[]>`, field `cache` |
 | **Cache key** | `tenantId` (number) |
 | **Endpoint** | `GET jumpoints?pageSize=9999` + `X-Tenant-Id` |
 | **Read method** | `fetchJumpoints(tenantId)` |
@@ -129,7 +129,7 @@ Customers are used in 18+ places across 11 feature modules, so they get a dedica
 | | |
 |---|---|
 | **Service** | `src/app/views/session-policies/session-policies.service.ts` |
-| **Cache** | `TenantCache<SessionPolicy[]>` — field `cache` |
+| **Cache** | `TenantCache<SessionPolicy[]>`, field `cache` |
 | **Cache key** | `tenantId` when no params; `"${tenantId}::${sortedParamsJson}"` otherwise |
 | **Endpoint** | `GET session-policies?pageSize=9999[&displayName=...&codeName=...&codeNamePatterns=...]` + `X-Tenant-Id` |
 | **Read method** | `fetchSessionPolicies(tenantId, params?)` |
@@ -147,18 +147,18 @@ Customers are used in 18+ places across 11 feature modules, so they get a dedica
 | | |
 |---|---|
 | **Service** | `src/app/views/group-policies/group-policies.service.ts` |
-| **Cache A** | `TenantCache<GroupPolicy[]>` — field `policiesCache` |
+| **Cache A** | `TenantCache<GroupPolicy[]>`, field `policiesCache` |
 | **Cache A key** | `tenantId` (number) |
 | **Cache A endpoint** | `GET group-policies?pageSize=9999` + `X-Tenant-Id` |
 | **Cache A read method** | `fetchGroupPolicies(tenantId)` |
 | **Cache A write invalidation** | `deleteGroupPolicy()` → `policiesCache.invalidate(tenantId)` |
-| **Cache B** | `TenantCache<GroupPolicyMember[]>` — field `membersCache` |
+| **Cache B** | `TenantCache<GroupPolicyMember[]>`, field `membersCache` |
 | **Cache B key** | `"${tenantId}_${groupPolicyId}"` (composite) |
 | **Cache B endpoint** | `GET group-policies/{id}/members?pageSize=9999` + `X-Tenant-Id` |
 | **Cache B read method** | `fetchGroupPolicyMembers(tenantId, groupPolicyId)` |
 | **Cache B write invalidation** | `addMemberToGroupPolicy()` → `membersCache.invalidate(cacheKey)` |
 | | `removeMemberFromGroupPolicy()` → `membersCache.invalidate(cacheKey)` |
-| **Both caches — instance-change** | `policiesCache.invalidate()` + `membersCache.invalidate()` via `selectedInstanceId$` |
+| **Both caches, instance-change** | `policiesCache.invalidate()` + `membersCache.invalidate()` via `selectedInstanceId$` |
 | **Empty-result handling** | Cache entry discarded for both caches; next open re-fetches |
 | **Data source** | PRA API → PRA Sync API → BeyondTrust local DB |
 | **Why empty is possible** | Sync has not run yet; or BeyondTrust has no group policies for this tenant |
@@ -186,13 +186,13 @@ Customers are used in 18+ places across 11 feature modules, so they get a dedica
 
 ### The Problem
 
-All these resources are populated by an asynchronous backend process (BeyondTrust sync or customer creation). On first boot — or after a system migration — the dataset may legitimately be empty. If `[]` is cached for 30 minutes, the user sees empty dropdowns even after the backend data becomes available, with no way to refresh short of waiting for the TTL to expire or switching instances.
+All these resources are populated by an asynchronous backend process (BeyondTrust sync or customer creation). On first boot, or after a system migration, the dataset may legitimately be empty. If `[]` is cached for 30 minutes, the user sees empty dropdowns even after the backend data becomes available, with no way to refresh short of waiting for the TTL to expire or switching instances.
 
 ### The Rule
 
 > **Every fetch method that returns `T[]` must discard the cache entry if the result is an empty array.**
 
-This means the cache's TTL only protects non-empty data. An empty result is never stored — the next open always issues a fresh HTTP request.
+This means the cache's TTL only protects non-empty data. An empty result is never stored. The next open always issues a fresh HTTP request.
 
 ### Pattern for `TenantCache`-based Services
 
@@ -233,7 +233,7 @@ const promise = this.customersService
 
 ### Why `invalidate()` Inside the Fetcher Is Safe
 
-`TenantCache.get()` stores the `Promise` immediately (before it resolves), so the cache entry exists from the moment the request starts. When the resolved result is `[]`, the `invalidate()` call removes that entry. Any *already-in-flight* concurrent callers receive the same Promise and still get `[]` as their result — they just won't find a cached entry on their *next* call. This is exactly the intended behaviour.
+`TenantCache.get()` stores the `Promise` immediately (before it resolves), so the cache entry exists from the moment the request starts. When the resolved result is `[]`, the `invalidate()` call removes that entry. Any *already-in-flight* concurrent callers receive the same Promise and still get `[]` as their result. They just won't find a cached entry on their *next* call. This is exactly the intended behaviour.
 
 ---
 
@@ -272,7 +272,7 @@ When introducing a new service that fetches a list from the API, follow this che
 
 | Limitation | Status |
 |---|---|
-| Cache is **in-memory only** — a page refresh clears everything | By design; avoids stale data across sessions |
-| Cache TTL is **not configurable per-resource** — all use 30 min | Acceptable: all resources have similar staleness tolerance |
-| **No real-time push** — changes made by other operators are invisible until TTL expires or instance is switched | Known gap; would require WebSocket integration to fix |
+| Cache is **in-memory only**: a page refresh clears everything | By design; avoids stale data across sessions |
+| Cache TTL is **not configurable per-resource**: all use 30 min | Acceptable: all resources have similar staleness tolerance |
+| **No real-time push**: changes made by other operators are invisible until TTL expires or instance is switched | Known gap; would require WebSocket integration to fix |
 | Empty-result bypass means **one extra HTTP call** is always made if data doesn't exist yet | Acceptable cost; prevents showing stale `[]` after sync |

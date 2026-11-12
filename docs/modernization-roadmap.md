@@ -1,6 +1,8 @@
 # PRA Console Modernization Roadmap
 
-This roadmap tracks the remaining work from the initial stabilization and modernization prompt.
+This roadmap tracks the planned modernization waves of the console. It is a planning document, not an approved delivery plan: the waves have not been re-prioritised against the current release work, and the progress notes below were not re-verified on 2026-11-12.
+
+Testing constraint: the console is not ready for systematic unit testing (decision by André, 2026-10-07). Wave 4 and the Jest migration are therefore on hold until that decision is revisited; see [frontend-patterns.md](frontend-patterns.md), section "Testing". Rules for new code are in [frontend-patterns.md](frontend-patterns.md) and [api-services.md](api-services.md).
 
 ## Current Snapshot
 
@@ -9,7 +11,6 @@ This roadmap tracks the remaining work from the initial stabilization and modern
   - Quality gates introduced (typecheck, lint, build scripts).
   - Initial test baseline repaired and expanded (auth/interceptor tests added).
 - Known follow-up:
-  - Review env.js before commits to ensure no local keys are included.
   - Continue wave-by-wave to avoid broad regressions.
 
 ## Remaining Waves
@@ -105,11 +106,11 @@ Migration checklist:
 - Migrate remaining suites in batches.
 - Remove Karma only when Jest coverage is equivalent for critical paths.
 
-## Working Agreement for Daily Sessions
+## Working Agreement
 
-For each session:
+For each changeset:
 1. Pick one small changeset from the active wave.
 2. Implement with minimal file scope.
-3. Run typecheck, lint, build, plus targeted tests.
+3. Run the quality gates from [frontend-patterns.md](frontend-patterns.md).
 4. Record outcomes and remaining blockers in this roadmap.
 5. Continue only when the previous step is stable.

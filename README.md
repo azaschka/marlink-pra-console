@@ -1,27 +1,37 @@
-# EgretAngularLatestTest
+# pra-console
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.2.3.
+Angular admin console of the Marlink PRA Platform (BeyondTrust Privileged Remote Access integration), also called "PRA Admin". It talks only to `pra-api`.
 
-## Development server
+Stack: Angular 14, Nx 20, Angular Material 14, RxJS, TypeScript. Repository: GitHub `azaschka/marlink-pra-console`, integration and release branch `main`.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Getting started
 
-## Code scaffolding
+```bash
+npm ci --legacy-peer-deps      # plain "npm ci" fails on a TypeScript peer conflict
+npm run start:local            # generates the local runtime env, then "nx serve"
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+`npm run start:local` needs the shell variables `PRA_DEV_API_KEY` and `PRA_DEV_ACCESS_KEY` (and optionally `PRA_DEV_API_BASE_URL`, default `/api`). `scripts/check-local-env.sh` aborts with instructions when they are missing. The dev server listens on `http://localhost:4200/` and proxies `/api` through `proxy.dev.conf.js` (set `CORPORATE_PROXY_URL` or `HTTPS_PROXY` behind a corporate proxy). Without generated keys use `npm start` (`nx serve`).
 
-## Build
+## Commands
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+| Purpose | Command |
+|---|---|
+| Type check | `npm run typecheck` |
+| Lint | `npm run lint` |
+| Unit tests (Karma, needs Chrome or Chromium) | `npx nx test` |
+| Production build | `npm run build:console` (output in `dist/`) |
+| Container image | `npm run docker:prepare:console`; publish with `npm run publish:console` |
 
-## Running unit tests
+Runtime configuration (`PRA_API_BASE_URL`, `PRA_API_KEY`, `PRA_ACCESS_KEY`) is rendered into `assets/scripts/env.js` from `src/assets/scripts/env.template.js` when the container starts. Never commit secrets or a generated `env.js`.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Documentation
 
-## Running end-to-end tests
+- [AGENTS.md](AGENTS.md): rules and entry point for contributors and AI agents (Claude Code); [CLAUDE.md](CLAUDE.md) imports it.
+- [docs/api-services.md](docs/api-services.md): services, interceptor, error handling, runtime configuration.
+- [docs/frontend-patterns.md](docs/frontend-patterns.md): components, RxJS, quality gates, testing status.
+- [docs/cache-strategy.md](docs/cache-strategy.md): in-memory caches and invalidation.
+- [docs/pra-beyondtrust-object-naming.md](docs/pra-beyondtrust-object-naming.md): how BeyondTrust objects are named by the platform.
+- [docs/modernization-roadmap.md](docs/modernization-roadmap.md): modernization waves and Angular upgrade path.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+Inside the `pra-platform` workspace the shared knowledge base is in `../docs/knowledge/` (start at `index.md`).
